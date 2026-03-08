@@ -42,9 +42,15 @@ const Account = () => {
 
   const handleSave = async () => {
     setSaving(true);
-    await updateProfile(form);
-    setEditing(false);
-    setSaving(false);
+    try {
+      await updateProfile(form);
+      toast.success('Profile updated successfully!');
+      setEditing(false);
+    } catch (e) {
+      toast.error('Failed to save profile. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleLogout = async () => {
