@@ -423,6 +423,8 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number) => {
   lineY += 6;
 
   row('GRAND TOTAL', formatMoney(order.total), { bold: true });
+
+  return y + cardHeight;
 };
 
 const drawFooter = (doc: jsPDF) => {
