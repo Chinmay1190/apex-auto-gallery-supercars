@@ -459,16 +459,20 @@ const drawFooter = (doc: jsPDF) => {
 export const generateInvoicePDF = async (order: InvoiceOrder, items: InvoiceItem[]) => {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
-  // Load logo and car images in parallel
-  const logoPromise = loadImageAsBase64(velocityLogo);
+  // Register custom font for ₹ symbol support + load images in parallel
+  const [fontLoaded, logoData, ...carResults] = await Promise.all([
+    registerNotoSans(doc),
+    loadImageAsBase64(velocityLogo),
+    ...(items || []).map((item, idx) => {
+      const imgSrc = item.car_image || item.car?.image || '';
+      if (!imgSrc) return Promise.resolve({ idx, data: null });
+      return loadImageAsBase64(imgSrc).then((data) => ({ idx, data }));
+    }),
+  ]);
 
-  const carImagePromises = (items || []).map((item, idx) => {
-    const imgSrc = item.car_image || item.car?.image || '';
-    if (!imgSrc) return Promise.resolve({ idx, data: null });
-    return loadImageAsBase64(imgSrc).then((data) => ({ idx, data }));
-  });
-
-  const [logoData, ...carResults] = await Promise.all([logoPromise, ...carImagePromises]);
+  // Use NotoSans if loaded, otherwise fallback to helvetica
+  const fontFamily = fontLoaded ? 'NotoSans' : 'helvetica';
+  doc.setFont(fontFamily, 'normal');
 
   const carImages = new Map<number, string>();
   carResults.forEach((result) => {
