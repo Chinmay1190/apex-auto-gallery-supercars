@@ -283,7 +283,7 @@ const drawItemsTable = (doc: jsPDF, startY: number, items: InvoiceItem[]) => {
 const drawTotalsCard = (doc: jsPDF, order: InvoiceOrder, startY: number) => {
   const pageH = doc.internal.pageSize.height;
   const footerH = 34;
-  const neededH = order.discount > 0 ? 76 : 68;
+  const neededH = toNumber(order.discount) > 0 ? 76 : 68;
 
   let y = startY;
   if (y + neededH + footerH > pageH - 10) {
