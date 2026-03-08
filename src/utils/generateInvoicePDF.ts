@@ -43,6 +43,7 @@ const colors = {
   rowAlt: [17, 17, 24] as RGB,
 };
 
+let FONT = 'helvetica'; // Will be updated to NotoSans if custom font loads
 const PAGE_WIDTH = 210;
 const LEFT = 16;
 const RIGHT = 194;
