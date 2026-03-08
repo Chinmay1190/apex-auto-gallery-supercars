@@ -476,12 +476,12 @@ const drawSignatory = (doc: jsPDF, afterY: number): number => {
   doc.setFont(FONT, 'bold');
   doc.setFontSize(6.5);
   doc.setTextColor(...colors.goldSoft);
-  doc.text('Chinmay Pingle', sigX + sigW / 2, sigLineY + 7, { align: 'center' });
+  doc.text('Chinmay Pinglee', sigX + sigW / 2, sigLineY + 7, { align: 'center' });
 
   doc.setFont(FONT, 'normal');
   doc.setFontSize(5);
   doc.setTextColor(...colors.dim);
-  doc.text('Authorized Signatory  |  Managing Director', sigX + sigW / 2, sigLineY + 11, { align: 'center' });
+  doc.text('Authorized Signatory  | CEOr', sigX + sigW / 2, sigLineY + 11, { align: 'center' });
 
   // Left side — terms + seal
   doc.setFont(FONT, 'normal');
