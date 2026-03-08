@@ -374,8 +374,8 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number): number => {
   const hasDiscount = toNumber(order.discount) > 0;
   const cardHeight = hasDiscount ? 42 : 36;
 
-  let y = fromY + 6;
-  if (y + cardHeight + 80 > pageHeight) {
+  let y = fromY + 4;
+  if (y + cardHeight + 65 > pageHeight) {
     doc.addPage();
     addBackground(doc);
     y = 20;
