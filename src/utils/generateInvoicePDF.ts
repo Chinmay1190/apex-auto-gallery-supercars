@@ -43,16 +43,45 @@ const palette = {
 const PAGE_W = 210;
 const MARGIN_L = 16;
 const MARGIN_R = 194;
-const CONTENT_W = MARGIN_R - MARGIN_L;
 
-const fmtPrice = (value: number): string => `INR ${new Intl.NumberFormat('en-IN', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-}).format(value || 0)}`;
+const toNumber = (value: unknown): number => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  if (typeof value === 'string') {
+    const cleaned = value.replace(/[^\d.-]/g, '');
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+};
 
-const fmtDate = (value: string): string => {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
+const cleanText = (value: unknown, fallback = '-'): string => {
+  const text = String(value ?? '').trim();
+  return text.length > 0 ? text : fallback;
+};
+
+const fmtPrice = (value: unknown): string => {
+  const amount = toNumber(value);
+  return `INR ${new Intl.NumberFormat('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount)}`;
+};
+
+const fmtDate = (value: unknown): string => {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+  }
+
+  if (typeof value === 'number' && value > 1 && value < 100000) {
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    const date = new Date(excelEpoch.getTime() + value * 86400000);
+    if (!Number.isNaN(date.getTime())) {
+      return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+    }
+  }
+
+  const date = new Date(String(value ?? ''));
+  if (Number.isNaN(date.getTime())) return cleanText(value, 'N/A');
   return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 };
 
@@ -102,7 +131,7 @@ const drawHeader = (doc: jsPDF, order: InvoiceOrder) => {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(...palette.goldSoft);
-  doc.text(order.order_number, PAGE_W - 45, 24, { align: 'center' });
+  doc.text(cleanText(order.order_number, 'N/A'), PAGE_W - 45, 24, { align: 'center' });
 
   doc.setTextColor(...palette.textSoft);
   doc.text(fmtDate(order.created_at), PAGE_W - 45, 30, { align: 'center' });
@@ -191,16 +220,18 @@ const drawCustomerSection = (doc: jsPDF, order: InvoiceOrder) => {
 };
 
 const drawItemsTable = (doc: jsPDF, startY: number, items: InvoiceItem[]) => {
-  const rows = items.map((item, index) => {
-    const name = item.car?.name || item.car_name || 'Vehicle';
-    const brand = item.car?.brand || item.car_brand || '-';
-    const unit = item.car?.price ?? item.price ?? 0;
-    const qty = item.quantity || 1;
+  const rows = (items.length ? items : [{ quantity: 1 } as InvoiceItem]).map((item, index) => {
+    const rawName = cleanText(item.car?.name || item.car_name || 'Vehicle');
+    const brand = cleanText(item.car?.brand || item.car_brand || '-');
+    const name = rawName.toLowerCase().startsWith(brand.toLowerCase()) ? rawName : `${brand} ${rawName}`.trim();
+
+    const unit = toNumber(item.car?.price ?? item.price);
+    const qty = Math.max(1, Math.floor(toNumber(item.quantity)));
     const amount = unit * qty;
 
     return [
       String(index + 1).padStart(2, '0'),
-      name.toUpperCase(),
+      cleanText(name).toUpperCase(),
       brand,
       String(qty),
       fmtPrice(unit),
@@ -252,7 +283,7 @@ const drawItemsTable = (doc: jsPDF, startY: number, items: InvoiceItem[]) => {
 const drawTotalsCard = (doc: jsPDF, order: InvoiceOrder, startY: number) => {
   const pageH = doc.internal.pageSize.height;
   const footerH = 34;
-  const neededH = order.discount > 0 ? 76 : 68;
+  const neededH = toNumber(order.discount) > 0 ? 76 : 68;
 
   let y = startY;
   if (y + neededH + footerH > pageH - 10) {
@@ -269,7 +300,7 @@ const drawTotalsCard = (doc: jsPDF, order: InvoiceOrder, startY: number) => {
 
   const cardX = 114;
   const cardW = 80;
-  const cardH = order.discount > 0 ? 58 : 50;
+  const cardH = toNumber(order.discount) > 0 ? 58 : 50;
 
   doc.setFillColor(...palette.darkCard);
   doc.roundedRect(cardX, y - 2, cardW, cardH, 4, 4, 'F');
@@ -297,10 +328,10 @@ const drawTotalsCard = (doc: jsPDF, order: InvoiceOrder, startY: number) => {
     tY += bold ? 0 : 9;
   };
 
-  drawRow('Subtotal', fmtPrice(order.subtotal));
-  drawRow('GST (28%)', fmtPrice(order.gst_amount), { accent: true });
-  if (order.discount > 0) {
-    drawRow('Discount', `- ${fmtPrice(order.discount)}`);
+  drawRow('Subtotal', fmtPrice(toNumber(order.subtotal)));
+  drawRow('GST (28%)', fmtPrice(toNumber(order.gst_amount)), { accent: true });
+  if (toNumber(order.discount) > 0) {
+    drawRow('Discount', `- ${fmtPrice(toNumber(order.discount))}`);
   }
 
   tY += 1;
@@ -309,7 +340,7 @@ const drawTotalsCard = (doc: jsPDF, order: InvoiceOrder, startY: number) => {
   doc.line(cardX + 8, tY, cardX + cardW - 8, tY);
   tY += 6;
 
-  drawRow('GRAND TOTAL', fmtPrice(order.total), { bold: true });
+  drawRow('GRAND TOTAL', fmtPrice(toNumber(order.total)), { bold: true });
 };
 
 const drawFooter = (doc: jsPDF) => {
