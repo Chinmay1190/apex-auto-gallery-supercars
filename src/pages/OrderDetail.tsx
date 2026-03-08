@@ -116,6 +116,9 @@ const OrderDetail = () => {
               <div className="space-y-4">
                 {orderItems.map(item => (
                   <div key={item.id} className="flex items-center gap-4 py-3 border-b border-border/30 last:border-0">
+                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
+                      <img src={item.car_image} alt={item.car_name} className="w-full h-full object-cover" />
+                    </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium">{item.car_name}</p>
                       <p className="text-xs text-muted-foreground">{item.car_brand} • Qty: {item.quantity}</p>

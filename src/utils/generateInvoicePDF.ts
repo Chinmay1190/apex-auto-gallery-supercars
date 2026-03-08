@@ -64,7 +64,7 @@ const toText = (value: unknown, fallback = '-'): string => {
 
 const formatMoney = (value: unknown): string => {
   const amount = toNumber(value);
-  return `INR ${new Intl.NumberFormat('en-IN', {
+  return `\u20B9${new Intl.NumberFormat('en-IN', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount)}`;
