@@ -43,16 +43,45 @@ const palette = {
 const PAGE_W = 210;
 const MARGIN_L = 16;
 const MARGIN_R = 194;
-const CONTENT_W = MARGIN_R - MARGIN_L;
 
-const fmtPrice = (value: number): string => `INR ${new Intl.NumberFormat('en-IN', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-}).format(value || 0)}`;
+const toNumber = (value: unknown): number => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  if (typeof value === 'string') {
+    const cleaned = value.replace(/[^\d.-]/g, '');
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+};
 
-const fmtDate = (value: string): string => {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
+const cleanText = (value: unknown, fallback = '-'): string => {
+  const text = String(value ?? '').trim();
+  return text.length > 0 ? text : fallback;
+};
+
+const fmtPrice = (value: unknown): string => {
+  const amount = toNumber(value);
+  return `INR ${new Intl.NumberFormat('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount)}`;
+};
+
+const fmtDate = (value: unknown): string => {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+  }
+
+  if (typeof value === 'number' && value > 1 && value < 100000) {
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    const date = new Date(excelEpoch.getTime() + value * 86400000);
+    if (!Number.isNaN(date.getTime())) {
+      return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+    }
+  }
+
+  const date = new Date(String(value ?? ''));
+  if (Number.isNaN(date.getTime())) return cleanText(value, 'N/A');
   return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 };
 

@@ -8,10 +8,10 @@ import { formatPrice } from '@/data/cars';
 import { generateInvoicePDF } from '@/utils/generateInvoicePDF';
 
 const statusSteps = [
-  { key: 'confirmed', label: 'Confirmed', icon: CheckCircle2 },
-  { key: 'processing', label: 'Processing', icon: Clock },
-  { key: 'shipped', label: 'Shipped', icon: Truck },
-  { key: 'delivered', label: 'Delivered', icon: Package },
+  { key: 'confirmed', label: 'Confirmed', icon: CheckCircle2, note: 'Order received successfully' },
+  { key: 'processing', label: 'Processing', icon: Clock, note: 'Preparing your vehicle' },
+  { key: 'shipped', label: 'Shipped', icon: Truck, note: 'In transit to your location' },
+  { key: 'delivered', label: 'Delivered', icon: Package, note: 'Delivered to shipping address' },
 ];
 
 const OrderDetail = () => {
