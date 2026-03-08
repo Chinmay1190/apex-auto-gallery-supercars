@@ -367,50 +367,49 @@ const drawItems = (
   return (doc as any).lastAutoTable?.finalY || startY + 30;
 };
 
-const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number) => {
+const FOOTER_HEIGHT = 22;
+
+const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number): number => {
   const pageHeight = doc.internal.pageSize.height;
   const hasDiscount = toNumber(order.discount) > 0;
-  const cardHeight = hasDiscount ? 58 : 50;
+  const cardHeight = hasDiscount ? 42 : 36;
 
-  let y = fromY + 8;
-  if (y + cardHeight + 40 > pageHeight) {
+  let y = fromY + 6;
+  if (y + cardHeight + 80 > pageHeight) {
     doc.addPage();
     addBackground(doc);
-    y = 24;
+    y = 20;
   }
 
   doc.setFont(FONT, 'normal');
-  doc.setFontSize(6.5);
+  doc.setFontSize(6);
   doc.setTextColor(...colors.dim);
-  doc.text('* All prices are shown in Indian Rupees', LEFT, y + 4);
-  doc.text('* GST charged at 28% as applicable', LEFT, y + 9);
+  doc.text('* All prices are shown in Indian Rupees', LEFT, y + 3);
+  doc.text('* GST charged at 28% as applicable', LEFT, y + 7);
 
-  const cardX = 116;
+  const cardX = 120;
   const cardW = RIGHT - cardX;
 
   doc.setFillColor(...colors.panel);
-  doc.roundedRect(cardX, y - 2, cardW, cardHeight, 4, 4, 'F');
+  doc.roundedRect(cardX, y - 1, cardW, cardHeight, 3, 3, 'F');
   doc.setDrawColor(...colors.gold);
-  doc.setLineWidth(0.45);
-  doc.roundedRect(cardX, y - 2, cardW, cardHeight, 4, 4, 'S');
+  doc.setLineWidth(0.4);
+  doc.roundedRect(cardX, y - 1, cardW, cardHeight, 3, 3, 'S');
 
   doc.setFillColor(...colors.gold);
-  doc.rect(cardX + 6, y - 2, cardW - 12, 1.8, 'F');
+  doc.rect(cardX + 6, y - 1, cardW - 12, 1.2, 'F');
 
-  let lineY = y + 8;
+  let lineY = y + 6;
   const row = (label: string, value: string, opts?: { bold?: boolean; accent?: boolean }) => {
     const bold = opts?.bold || false;
     const accent = opts?.accent || false;
-
     doc.setFont(FONT, bold ? 'bold' : 'normal');
-    doc.setFontSize(bold ? 11 : 8);
+    doc.setFontSize(bold ? 9 : 7.5);
     doc.setTextColor(...(bold ? colors.text : accent ? colors.gold : colors.muted));
-    doc.text(label, cardX + 8, lineY);
-
+    doc.text(label, cardX + 6, lineY);
     doc.setTextColor(...(bold ? colors.gold : accent ? colors.goldSoft : colors.text));
-    doc.text(value, cardX + cardW - 8, lineY, { align: 'right' });
-
-    lineY += bold ? 0 : 9;
+    doc.text(value, cardX + cardW - 6, lineY, { align: 'right' });
+    lineY += bold ? 0 : 7.5;
   };
 
   row('Subtotal', formatMoney(order.subtotal));
@@ -419,137 +418,126 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number) => {
 
   lineY += 1;
   doc.setDrawColor(...colors.gold);
-  doc.line(cardX + 8, lineY, cardX + cardW - 8, lineY);
-  lineY += 6;
+  doc.setLineWidth(0.3);
+  doc.line(cardX + 6, lineY, cardX + cardW - 6, lineY);
+  lineY += 5;
 
   row('GRAND TOTAL', formatMoney(order.total), { bold: true });
 
   return y + cardHeight;
 };
 
-const drawSignatory = (doc: jsPDF, afterY: number) => {
+const drawSignatory = (doc: jsPDF, afterY: number): number => {
   const pageHeight = doc.internal.pageSize.height;
-  const sectionHeight = 48;
+  const sectionHeight = 38;
 
-  let y = afterY + 10;
-  if (y + sectionHeight + 50 > pageHeight) {
+  let y = afterY + 8;
+  if (y + sectionHeight + FOOTER_HEIGHT + 6 > pageHeight) {
     doc.addPage();
     addBackground(doc);
-    y = 24;
+    y = 20;
   }
 
-  // Signatory section — right aligned
-  const sigX = 120;
+  // Signatory box — right side
+  const sigX = 126;
   const sigW = RIGHT - sigX;
 
-  // Signature box with border
   doc.setFillColor(...colors.panel);
   doc.roundedRect(sigX, y, sigW, sectionHeight, 3, 3, 'F');
   doc.setDrawColor(...colors.border);
   doc.setLineWidth(0.25);
   doc.roundedRect(sigX, y, sigW, sectionHeight, 3, 3, 'S');
 
-  // Gold accent on top
   doc.setFillColor(...colors.gold);
-  doc.rect(sigX + 8, y, sigW - 16, 1.2, 'F');
+  doc.rect(sigX + 6, y, sigW - 12, 1, 'F');
 
-  // "For VELOCITY SUPERCARS PVT. LTD."
   doc.setFont(FONT, 'normal');
-  doc.setFontSize(6.5);
+  doc.setFontSize(5.5);
   doc.setTextColor(...colors.muted);
-  doc.text('For VELOCITY SUPERCARS PVT. LTD.', sigX + sigW / 2, y + 8, { align: 'center' });
+  doc.text('For VELOCITY SUPERCARS PVT. LTD.', sigX + sigW / 2, y + 6, { align: 'center' });
 
-  // Stylized signature line
-  const lineStartX = sigX + 14;
-  const lineEndX = sigX + sigW - 14;
-  const sigLineY = y + 30;
-
-  // Decorative signature stroke (simulated cursive)
-  doc.setDrawColor(...colors.gold);
-  doc.setLineWidth(0.6);
-  // Main signature curve
+  // Signature strokes
+  const lineStartX = sigX + 10;
+  const lineEndX = sigX + sigW - 10;
+  const sigLineY = y + 22;
   const midX = (lineStartX + lineEndX) / 2;
-  doc.line(lineStartX + 4, sigLineY - 2, midX - 8, sigLineY - 6);
-  doc.line(midX - 8, sigLineY - 6, midX, sigLineY - 1);
-  doc.line(midX, sigLineY - 1, midX + 6, sigLineY - 8);
-  doc.line(midX + 6, sigLineY - 8, midX + 16, sigLineY - 3);
-  doc.line(midX + 16, sigLineY - 3, lineEndX - 8, sigLineY - 5);
 
-  // Signature baseline
-  doc.setDrawColor(...colors.dim);
-  doc.setLineWidth(0.3);
-  doc.line(lineStartX, sigLineY + 2, lineEndX, sigLineY + 2);
-
-  // Name and designation
-  doc.setFont(FONT, 'bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(...colors.goldSoft);
-  doc.text('Rajesh Sharma', sigX + sigW / 2, sigLineY + 9, { align: 'center' });
-
-  doc.setFont(FONT, 'normal');
-  doc.setFontSize(6);
-  doc.setTextColor(...colors.dim);
-  doc.text('Authorized Signatory  |  Managing Director', sigX + sigW / 2, sigLineY + 14, { align: 'center' });
-
-  // Terms note on the left side
-  doc.setFont(FONT, 'normal');
-  doc.setFontSize(6);
-  doc.setTextColor(...colors.dim);
-  doc.text('This is a computer-generated invoice.', LEFT, y + 10);
-  doc.text('No physical signature is required.', LEFT, y + 15);
-  doc.text('E. & O.E.', LEFT, y + 24);
-
-  // Seal circle (decorative)
-  const sealX = LEFT + 30;
-  const sealY = y + 32;
   doc.setDrawColor(...colors.gold);
   doc.setLineWidth(0.5);
-  doc.circle(sealX, sealY, 8, 'S');
-  doc.setLineWidth(0.3);
-  doc.circle(sealX, sealY, 6.5, 'S');
+  doc.line(lineStartX + 2, sigLineY - 1, midX - 6, sigLineY - 4);
+  doc.line(midX - 6, sigLineY - 4, midX, sigLineY);
+  doc.line(midX, sigLineY, midX + 5, sigLineY - 5);
+  doc.line(midX + 5, sigLineY - 5, lineEndX - 6, sigLineY - 2);
+
+  doc.setDrawColor(...colors.dim);
+  doc.setLineWidth(0.2);
+  doc.line(lineStartX, sigLineY + 2, lineEndX, sigLineY + 2);
 
   doc.setFont(FONT, 'bold');
-  doc.setFontSize(4.5);
+  doc.setFontSize(7);
+  doc.setTextColor(...colors.goldSoft);
+  doc.text('Rajesh Sharma', sigX + sigW / 2, sigLineY + 8, { align: 'center' });
+
+  doc.setFont(FONT, 'normal');
+  doc.setFontSize(5.5);
+  doc.setTextColor(...colors.dim);
+  doc.text('Authorized Signatory  |  Managing Director', sigX + sigW / 2, sigLineY + 12, { align: 'center' });
+
+  // Left side — terms + seal
+  doc.setFont(FONT, 'normal');
+  doc.setFontSize(5.5);
+  doc.setTextColor(...colors.dim);
+  doc.text('This is a computer-generated invoice.', LEFT, y + 6);
+  doc.text('No physical signature is required.', LEFT, y + 10);
+  doc.text('E. & O.E.', LEFT, y + 17);
+
+  // Seal
+  const sealX = LEFT + 26;
+  const sealY = y + 28;
+  doc.setDrawColor(...colors.gold);
+  doc.setLineWidth(0.4);
+  doc.circle(sealX, sealY, 6.5, 'S');
+  doc.setLineWidth(0.25);
+  doc.circle(sealX, sealY, 5.2, 'S');
+
+  doc.setFont(FONT, 'bold');
+  doc.setFontSize(4);
   doc.setTextColor(...colors.gold);
-  doc.text('VELOCITY', sealX, sealY - 1.5, { align: 'center' });
-  doc.setFontSize(3.5);
+  doc.text('VELOCITY', sealX, sealY - 1, { align: 'center' });
+  doc.setFontSize(3);
   doc.text('SUPERCARS', sealX, sealY + 1.5, { align: 'center' });
   doc.setFont(FONT, 'normal');
-  doc.setFontSize(3);
+  doc.setFontSize(2.5);
   doc.setTextColor(...colors.dim);
-  doc.text('SEALED', sealX, sealY + 4, { align: 'center' });
+  doc.text('SEALED', sealX, sealY + 3.5, { align: 'center' });
+
+  return y + sectionHeight;
 };
 
 const drawFooter = (doc: jsPDF) => {
   const pageHeight = doc.internal.pageSize.height;
+  const footerY = pageHeight - FOOTER_HEIGHT;
 
   doc.setFillColor(...colors.panel);
-  doc.rect(0, pageHeight - 28, PAGE_WIDTH, 28, 'F');
+  doc.rect(0, footerY, PAGE_WIDTH, FOOTER_HEIGHT, 'F');
 
   doc.setFillColor(...colors.gold);
-  doc.rect(0, pageHeight - 28, PAGE_WIDTH, 1.2, 'F');
-
-  doc.setDrawColor(...colors.gold);
-  doc.setLineWidth(0.7);
-  doc.line(8, pageHeight - 6, 20, pageHeight - 6);
-  doc.line(8, pageHeight - 14, 8, pageHeight - 6);
-  doc.line(PAGE_WIDTH - 20, pageHeight - 6, PAGE_WIDTH - 8, pageHeight - 6);
-  doc.line(PAGE_WIDTH - 8, pageHeight - 14, PAGE_WIDTH - 8, pageHeight - 6);
+  doc.rect(0, footerY, PAGE_WIDTH, 1, 'F');
 
   doc.setFont(FONT, 'bold');
-  doc.setFontSize(7.5);
+  doc.setFontSize(7);
   doc.setTextColor(...colors.gold);
-  doc.text('VELOCITY SUPERCARS PVT. LTD.', PAGE_WIDTH / 2, pageHeight - 19, { align: 'center' });
+  doc.text('VELOCITY SUPERCARS PVT. LTD.', PAGE_WIDTH / 2, footerY + 5.5, { align: 'center' });
 
   doc.setFont(FONT, 'normal');
-  doc.setFontSize(6.2);
+  doc.setFontSize(5.5);
   doc.setTextColor(...colors.dim);
-  doc.text('GSTIN: 27AADCV1234A1ZB  |  CIN: U34100MH2024PTC123456', PAGE_WIDTH / 2, pageHeight - 14, { align: 'center' });
-  doc.text('Dharampeth, Nagpur, Maharashtra 440010  |  +91 98765 43210  |  info@velocity.in', PAGE_WIDTH / 2, pageHeight - 9.5, { align: 'center' });
+  doc.text('GSTIN: 27AADCV1234A1ZB  |  CIN: U34100MH2024PTC123456', PAGE_WIDTH / 2, footerY + 10, { align: 'center' });
+  doc.text('Dharampeth, Nagpur, Maharashtra 440010  |  +91 98765 43210  |  info@velocity.in', PAGE_WIDTH / 2, footerY + 14, { align: 'center' });
 
-  doc.setFont(FONT, 'normal');
   doc.setTextColor(...colors.goldSoft);
-  doc.text('Thank you for choosing Velocity. Drive the extraordinary.', PAGE_WIDTH / 2, pageHeight - 4, { align: 'center' });
+  doc.setFontSize(5.5);
+  doc.text('Thank you for choosing Velocity. Drive the extraordinary.', PAGE_WIDTH / 2, footerY + 19, { align: 'center' });
 };
 
 export const generateInvoicePDF = async (order: InvoiceOrder, items: InvoiceItem[]) => {
