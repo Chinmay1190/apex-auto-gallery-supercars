@@ -160,14 +160,48 @@ const Account = () => {
           </div>
 
           {/* Profile Tab */}
-          {activeTab === 'profile' && (
+          {activeTab === 'profile' && (() => {
+            const fields = [
+              { key: 'full_name', label: 'Full Name', icon: User, placeholder: 'Enter your full name' },
+              { key: 'phone', label: 'Phone Number', icon: Phone, placeholder: '+91 98765 43210' },
+              { key: 'address', label: 'Street Address', icon: MapPin, placeholder: 'House no, Street, Landmark' },
+              { key: 'city', label: 'City', icon: MapPin, placeholder: 'e.g. Mumbai' },
+              { key: 'state', label: 'State', icon: MapPin, placeholder: 'e.g. Maharashtra' },
+              { key: 'pincode', label: 'PIN Code', icon: Mail, placeholder: 'e.g. 400001' },
+            ];
+            const filledCount = fields.filter(f => !!(form as any)[f.key]?.trim()).length;
+            const completionPct = Math.round((filledCount / fields.length) * 100);
+
+            return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+              {/* Profile Completion Banner */}
+              {completionPct < 100 && (
+                <div className="glass-panel p-5 border-primary/20">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-semibold">Profile Completion</span>
+                    </div>
+                    <span className="text-xs font-bold text-primary">{completionPct}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${completionPct}%` }}
+                      transition={{ duration: 0.8, ease: 'easeOut' }}
+                      className="h-full gold-gradient rounded-full" />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">Complete your profile to get a personalized experience. {fields.length - filledCount} field{fields.length - filledCount > 1 ? 's' : ''} remaining.</p>
+                </div>
+              )}
+
               <div className="glass-panel p-6 md:p-8">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-display text-lg font-semibold">Personal Information</h3>
+                  <div>
+                    <h3 className="font-display text-lg font-semibold">Personal Information</h3>
+                    <p className="text-xs text-muted-foreground mt-1">Manage your personal details and shipping address</p>
+                  </div>
                   {editing ? (
                     <div className="flex gap-2">
-                      <button onClick={() => setEditing(false)}
+                      <button onClick={() => { setEditing(false); if (profile) setForm({ full_name: profile.full_name || '', phone: profile.phone || '', address: profile.address || '', city: profile.city || '', state: profile.state || '', pincode: profile.pincode || '' }); }}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-xs text-muted-foreground hover:text-foreground transition-colors">
                         <X className="w-3.5 h-3.5" /> Cancel
                       </button>
@@ -186,56 +220,70 @@ const Account = () => {
 
                 {editing ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {[
-                      { key: 'full_name', label: 'Full Name', icon: User },
-                      { key: 'phone', label: 'Phone Number', icon: Phone },
-                      { key: 'address', label: 'Address', icon: MapPin },
-                      { key: 'city', label: 'City', icon: MapPin },
-                      { key: 'state', label: 'State', icon: MapPin },
-                      { key: 'pincode', label: 'PIN Code', icon: Mail },
-                    ].map(f => (
-                      <div key={f.key}>
-                        <label className="block text-xs text-muted-foreground mb-2 uppercase tracking-wider font-medium">{f.label}</label>
-                        <div className="relative">
-                          <f.icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <input
-                            value={(form as any)[f.key]}
-                            onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                            className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-xl text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all"
-                          />
+                    {fields.map(f => {
+                      const val = (form as any)[f.key];
+                      return (
+                        <div key={f.key}>
+                          <label className="block text-xs text-muted-foreground mb-2 uppercase tracking-wider font-medium">{f.label}</label>
+                          <div className="relative">
+                            <f.icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <input
+                              value={val}
+                              onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                              placeholder={f.placeholder}
+                              className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all"
+                            />
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {[
-                      { label: 'Full Name', value: profile?.full_name, icon: User },
-                      { label: 'Phone', value: profile?.phone, icon: Phone },
-                      { label: 'Address', value: profile?.address, icon: MapPin },
-                      { label: 'City', value: profile?.city, icon: MapPin },
-                      { label: 'State', value: profile?.state, icon: MapPin },
-                      { label: 'PIN Code', value: profile?.pincode, icon: Mail },
-                    ].map((f, i) => (
-                      <div key={i} className="flex items-start gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-secondary/70 flex items-center justify-center flex-shrink-0">
-                          <f.icon className="w-4 h-4 text-muted-foreground" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {fields.map((f, i) => {
+                      const val = (profile as any)?.[f.key];
+                      const isFilled = !!val?.trim();
+                      return (
+                        <div key={i} className={`flex items-start gap-3 p-3.5 rounded-xl transition-colors ${isFilled ? 'bg-secondary/30' : 'bg-destructive/5 border border-dashed border-destructive/20'}`}>
+                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${isFilled ? 'bg-primary/10' : 'bg-destructive/10'}`}>
+                            <f.icon className={`w-4 h-4 ${isFilled ? 'text-primary' : 'text-destructive/50'}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-muted-foreground mb-0.5">{f.label}</p>
+                            {isFilled ? (
+                              <p className="text-sm font-medium text-foreground truncate">{val}</p>
+                            ) : (
+                              <p className="text-sm text-destructive/60 italic">Not provided</p>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-0.5">{f.label}</p>
-                          <p className="text-sm font-medium text-foreground">{f.value || '—'}</p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Full Address Summary */}
+                {!editing && (profile?.address || profile?.city || profile?.state || profile?.pincode) && (
+                  <div className="mt-6 p-4 rounded-xl bg-secondary/20 border border-border/50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MapPin className="w-4 h-4 text-primary" />
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Shipping Address</span>
+                    </div>
+                    <p className="text-sm text-foreground leading-relaxed">
+                      {[profile?.address, profile?.city, profile?.state, profile?.pincode].filter(Boolean).join(', ')}
+                    </p>
                   </div>
                 )}
               </div>
 
               {/* Account Security */}
               <div className="glass-panel p-6 md:p-8">
-                <h3 className="font-display text-lg font-semibold mb-4">Account Security</h3>
+                <h3 className="font-display text-lg font-semibold mb-1">Account Security</h3>
+                <p className="text-xs text-muted-foreground mb-4">Your account credentials and verification status</p>
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-secondary/30">
-                  <Mail className="w-5 h-5 text-primary" />
+                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-4 h-4 text-primary" />
+                  </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">{user?.email}</p>
                     <p className="text-xs text-muted-foreground">Primary email address</p>
@@ -246,7 +294,8 @@ const Account = () => {
                 </div>
               </div>
             </motion.div>
-          )}
+            );
+          })()}
 
           {/* Orders Tab */}
           {activeTab === 'orders' && (
