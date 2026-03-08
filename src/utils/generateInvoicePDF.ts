@@ -328,10 +328,10 @@ const drawTotalsCard = (doc: jsPDF, order: InvoiceOrder, startY: number) => {
     tY += bold ? 0 : 9;
   };
 
-  drawRow('Subtotal', fmtPrice(order.subtotal));
-  drawRow('GST (28%)', fmtPrice(order.gst_amount), { accent: true });
-  if (order.discount > 0) {
-    drawRow('Discount', `- ${fmtPrice(order.discount)}`);
+  drawRow('Subtotal', fmtPrice(toNumber(order.subtotal)));
+  drawRow('GST (28%)', fmtPrice(toNumber(order.gst_amount)), { accent: true });
+  if (toNumber(order.discount) > 0) {
+    drawRow('Discount', `- ${fmtPrice(toNumber(order.discount))}`);
   }
 
   tY += 1;
