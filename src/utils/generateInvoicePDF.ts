@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import velocityLogo from '@/assets/logo-velocity.png';
 
 interface InvoiceOrder {
   order_number: string;
@@ -21,7 +22,8 @@ interface InvoiceOrder {
 interface InvoiceItem {
   car_name?: string;
   car_brand?: string;
-  car?: { name: string; brand: string; price: number };
+  car_image?: string;
+  car?: { name: string; brand: string; price: number; image?: string };
   price?: number;
   quantity: number;
 }
@@ -74,9 +76,31 @@ const formatDate = (value: unknown): string => {
   return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 };
 
+// Load an image URL and return a base64 data URL
+const loadImageAsBase64 = (src: string): Promise<string | null> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(null); return; }
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+};
+
 const addBackground = (doc: jsPDF) => {
   const pageHeight = doc.internal.pageSize.height;
-
   doc.setFillColor(...colors.bg);
   doc.rect(0, 0, PAGE_WIDTH, pageHeight, 'F');
 
@@ -91,42 +115,57 @@ const addBackground = (doc: jsPDF) => {
   doc.line(PAGE_WIDTH - 8, 8, PAGE_WIDTH - 8, 20);
 };
 
-const drawHeader = (doc: jsPDF, order: InvoiceOrder) => {
+const drawHeader = (doc: jsPDF, order: InvoiceOrder, logoData: string | null) => {
   doc.setFillColor(...colors.panel);
-  doc.rect(0, 2.2, PAGE_WIDTH, 40, 'F');
+  doc.rect(0, 2.2, PAGE_WIDTH, 46, 'F');
+
+  // Logo
+  if (logoData) {
+    try {
+      doc.addImage(logoData, 'PNG', LEFT, 6, 18, 18);
+    } catch { /* skip if fails */ }
+  }
+
+  const textStart = logoData ? LEFT + 22 : LEFT;
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(28);
+  doc.setFontSize(26);
   doc.setTextColor(...colors.gold);
-  doc.text('VELOCITY', LEFT, 24);
+  doc.text('VELOCITY', textStart, 20);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7);
+  doc.setFontSize(6.5);
   doc.setTextColor(...colors.dim);
-  doc.text('LUXURY SUPERCARS INDIA', LEFT, 31);
+  doc.text('L U X U R Y   S U P E R C A R S   I N D I A', textStart, 27);
 
+  // Gold accent bar
+  doc.setFillColor(...colors.gold);
+  doc.rect(textStart, 30, 28, 1, 'F');
+
+  // Invoice badge
   doc.setFillColor(...colors.panelSoft);
-  doc.roundedRect(PAGE_WIDTH - 72, 10, 56, 24, 3, 3, 'F');
+  doc.roundedRect(PAGE_WIDTH - 74, 8, 58, 32, 3, 3, 'F');
   doc.setDrawColor(...colors.gold);
   doc.setLineWidth(0.45);
-  doc.roundedRect(PAGE_WIDTH - 72, 10, 56, 24, 3, 3, 'S');
+  doc.roundedRect(PAGE_WIDTH - 74, 8, 58, 32, 3, 3, 'S');
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(...colors.gold);
-  doc.text('TAX INVOICE', PAGE_WIDTH - 44, 18, { align: 'center' });
+  doc.text('TAX INVOICE', PAGE_WIDTH - 45, 18, { align: 'center' });
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(...colors.goldSoft);
-  doc.text(toText(order.order_number, 'N/A'), PAGE_WIDTH - 44, 24, { align: 'center' });
+  doc.text(toText(order.order_number, 'N/A'), PAGE_WIDTH - 45, 24, { align: 'center' });
 
   doc.setTextColor(...colors.muted);
-  doc.text(formatDate(order.created_at), PAGE_WIDTH - 44, 29.5, { align: 'center' });
+  doc.text(formatDate(order.created_at), PAGE_WIDTH - 45, 30, { align: 'center' });
 
+  // Bottom separator
   doc.setDrawColor(...colors.gold);
   doc.setLineWidth(0.4);
-  doc.line(LEFT, 47, RIGHT, 47);
+  doc.line(LEFT, 52, RIGHT, 52);
 };
 
 const drawInfoBox = (
@@ -157,7 +196,6 @@ const drawInfoBox = (
     doc.setFont('helvetica', index === 0 ? 'bold' : 'normal');
     doc.setFontSize(index === 0 ? 8.5 : 7.5);
     doc.setTextColor(...(index === 0 ? colors.text : colors.muted));
-
     wrapped.slice(0, 2).forEach((line: string) => {
       doc.text(line, x + 7, lineY);
       lineY += index === 0 ? 6 : 5.2;
@@ -166,7 +204,7 @@ const drawInfoBox = (
 };
 
 const drawCustomerAndPayment = (doc: jsPDF, order: InvoiceOrder): number => {
-  const sectionTop = 54;
+  const sectionTop = 58;
   const boxGap = 6;
   const boxW = (CONTENT_WIDTH - boxGap) / 2;
 
@@ -200,7 +238,12 @@ const drawCustomerAndPayment = (doc: jsPDF, order: InvoiceOrder): number => {
   return paymentY + 20;
 };
 
-const drawItems = (doc: jsPDF, startY: number, items: InvoiceItem[]): number => {
+const drawItems = (
+  doc: jsPDF,
+  startY: number,
+  items: InvoiceItem[],
+  carImages: Map<number, string>,
+): number => {
   const safeItems = items.length ? items : [{ quantity: 1 } as InvoiceItem];
 
   const rows = safeItems.map((item, idx) => {
@@ -211,6 +254,7 @@ const drawItems = (doc: jsPDF, startY: number, items: InvoiceItem[]): number => 
 
     return [
       String(idx + 1).padStart(2, '0'),
+      '', // image placeholder column
       name,
       brand,
       String(qty),
@@ -221,7 +265,7 @@ const drawItems = (doc: jsPDF, startY: number, items: InvoiceItem[]): number => 
 
   autoTable(doc, {
     startY,
-    head: [['NO.', 'VEHICLE', 'BRAND', 'QTY', 'UNIT PRICE', 'AMOUNT']],
+    head: [['NO.', '', 'VEHICLE', 'BRAND', 'QTY', 'UNIT PRICE', 'AMOUNT']],
     body: rows,
     theme: 'plain',
     margin: { left: LEFT, right: PAGE_WIDTH - RIGHT },
@@ -231,26 +275,46 @@ const drawItems = (doc: jsPDF, startY: number, items: InvoiceItem[]): number => 
       textColor: [...colors.text],
       lineColor: [...colors.border],
       lineWidth: 0.15,
-      cellPadding: { top: 6.5, right: 5, bottom: 6.5, left: 5 },
+      cellPadding: { top: 5, right: 4, bottom: 5, left: 4 },
       overflow: 'linebreak',
+      minCellHeight: 16,
     },
     headStyles: {
       fillColor: [...colors.panelSoft],
       textColor: [...colors.gold],
       fontStyle: 'bold',
       fontSize: 6.5,
-      cellPadding: { top: 7.5, right: 5, bottom: 7.5, left: 5 },
+      cellPadding: { top: 6, right: 4, bottom: 6, left: 4 },
+      minCellHeight: 10,
     },
     alternateRowStyles: {
       fillColor: [...colors.rowAlt],
     },
     columnStyles: {
-      0: { halign: 'center', cellWidth: 14, textColor: [...colors.goldSoft], fontStyle: 'bold' },
-      1: { cellWidth: 52, fontStyle: 'bold' },
-      2: { cellWidth: 30, textColor: [...colors.muted] },
-      3: { halign: 'center', cellWidth: 14 },
-      4: { halign: 'right', cellWidth: 32 },
-      5: { halign: 'right', cellWidth: 32, textColor: [...colors.goldSoft], fontStyle: 'bold' },
+      0: { halign: 'center', cellWidth: 12, textColor: [...colors.goldSoft], fontStyle: 'bold' },
+      1: { cellWidth: 18 }, // image column
+      2: { cellWidth: 40, fontStyle: 'bold' },
+      3: { cellWidth: 24, textColor: [...colors.muted] },
+      4: { halign: 'center', cellWidth: 12 },
+      5: { halign: 'right', cellWidth: 30 },
+      6: { halign: 'right', cellWidth: 30, textColor: [...colors.goldSoft], fontStyle: 'bold' },
+    },
+    didDrawCell: (data) => {
+      // Draw car image in column 1 (body rows only)
+      if (data.section === 'body' && data.column.index === 1) {
+        const imgData = carImages.get(data.row.index);
+        if (imgData) {
+          try {
+            const imgSize = 12;
+            const x = data.cell.x + (data.cell.width - imgSize) / 2;
+            const y = data.cell.y + (data.cell.height - imgSize) / 2;
+            // Dark rounded background for image
+            doc.setFillColor(...colors.panelSoft);
+            doc.roundedRect(x - 0.5, y - 0.5, imgSize + 1, imgSize + 1, 2, 2, 'F');
+            doc.addImage(imgData, 'JPEG', x, y, imgSize, imgSize);
+          } catch { /* skip */ }
+        }
+      }
     },
   });
 
@@ -324,6 +388,13 @@ const drawFooter = (doc: jsPDF) => {
   doc.setFillColor(...colors.gold);
   doc.rect(0, pageHeight - 34, PAGE_WIDTH, 1.2, 'F');
 
+  doc.setDrawColor(...colors.gold);
+  doc.setLineWidth(0.7);
+  doc.line(8, pageHeight - 8, 20, pageHeight - 8);
+  doc.line(8, pageHeight - 16, 8, pageHeight - 8);
+  doc.line(PAGE_WIDTH - 20, pageHeight - 8, PAGE_WIDTH - 8, pageHeight - 8);
+  doc.line(PAGE_WIDTH - 8, pageHeight - 16, PAGE_WIDTH - 8, pageHeight - 8);
+
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(...colors.gold);
@@ -340,13 +411,31 @@ const drawFooter = (doc: jsPDF) => {
   doc.text('Thank you for choosing Velocity. Drive the extraordinary.', PAGE_WIDTH / 2, pageHeight - 6, { align: 'center' });
 };
 
-export const generateInvoicePDF = (order: InvoiceOrder, items: InvoiceItem[]) => {
+export const generateInvoicePDF = async (order: InvoiceOrder, items: InvoiceItem[]) => {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
+  // Load logo and car images in parallel
+  const logoPromise = loadImageAsBase64(velocityLogo);
+
+  const carImagePromises = (items || []).map((item, idx) => {
+    const imgSrc = item.car_image || item.car?.image || '';
+    if (!imgSrc) return Promise.resolve({ idx, data: null });
+    return loadImageAsBase64(imgSrc).then((data) => ({ idx, data }));
+  });
+
+  const [logoData, ...carResults] = await Promise.all([logoPromise, ...carImagePromises]);
+
+  const carImages = new Map<number, string>();
+  carResults.forEach((result) => {
+    if (result && result.data) {
+      carImages.set(result.idx, result.data);
+    }
+  });
+
   addBackground(doc);
-  drawHeader(doc, order);
+  drawHeader(doc, order, logoData);
   const startY = drawCustomerAndPayment(doc, order);
-  const finalTableY = drawItems(doc, startY, items);
+  const finalTableY = drawItems(doc, startY, items, carImages);
   drawTotals(doc, order, finalTableY);
   drawFooter(doc);
 
