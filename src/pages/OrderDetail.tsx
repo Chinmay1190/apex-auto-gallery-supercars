@@ -41,59 +41,7 @@ const OrderDetail = () => {
 
   const handleDownloadInvoice = () => {
     if (!order) return;
-    const invoiceHTML = `<!DOCTYPE html>
-<html><head><title>Invoice - ${order.order_number}</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Segoe UI', sans-serif; padding: 40px; color: #1a1a1a; background: #fff; max-width: 800px; margin: 0 auto; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #c8a45a; padding-bottom: 20px; margin-bottom: 30px; }
-  .logo { font-size: 28px; font-weight: bold; color: #c8a45a; letter-spacing: 4px; }
-  .logo-sub { font-size: 10px; color: #666; letter-spacing: 3px; margin-top: 4px; }
-  .invoice-title { text-align: right; }
-  .invoice-title h2 { font-size: 24px; margin-bottom: 4px; }
-  .invoice-title p { font-size: 12px; color: #666; }
-  .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
-  .detail-block h4 { font-size: 10px; letter-spacing: 2px; color: #999; text-transform: uppercase; margin-bottom: 8px; }
-  .detail-block p { font-size: 13px; color: #333; line-height: 1.6; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-  th { background: #f8f6f0; padding: 12px 16px; text-align: left; font-size: 10px; letter-spacing: 2px; color: #666; text-transform: uppercase; border-bottom: 2px solid #e8e0cc; }
-  td { padding: 14px 16px; border-bottom: 1px solid #f0ece4; font-size: 13px; }
-  .amount { text-align: right; }
-  .totals { margin-left: auto; width: 300px; }
-  .totals .row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; color: #555; }
-  .totals .row.gst { color: #c8a45a; }
-  .totals .row.total { border-top: 2px solid #c8a45a; padding-top: 12px; margin-top: 8px; font-size: 18px; font-weight: bold; color: #1a1a1a; }
-  .payment-badge { display: inline-block; padding: 4px 12px; background: #f8f6f0; border: 1px solid #e8e0cc; border-radius: 4px; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
-  .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e8e0cc; text-align: center; font-size: 11px; color: #999; }
-  @media print { body { padding: 20px; } }
-</style></head><body>
-  <div class="header">
-    <div><div class="logo">VELOCITY</div><div class="logo-sub">LUXURY SUPERCARS</div></div>
-    <div class="invoice-title"><h2>INVOICE</h2><p>${order.order_number}</p><p>${new Date(order.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
-  </div>
-  <div class="details-grid">
-    <div class="detail-block"><h4>Bill To</h4><p><strong>${order.shipping_name}</strong><br>${order.shipping_email}<br>${order.shipping_phone}</p></div>
-    <div class="detail-block"><h4>Ship To</h4><p>${order.shipping_address}<br>${order.shipping_city}, ${order.shipping_state}<br>PIN: ${order.shipping_pincode}</p></div>
-  </div>
-  <div style="margin-bottom: 20px;"><span class="payment-badge">Payment: ${order.payment_method.toUpperCase()}</span></div>
-  <table>
-    <thead><tr><th>Item</th><th>Brand</th><th>Qty</th><th class="amount">Price</th><th class="amount">Total</th></tr></thead>
-    <tbody>${orderItems.map(item => `<tr><td>${item.car_name}</td><td>${item.car_brand}</td><td>${item.quantity}</td><td class="amount">${formatPrice(item.price)}</td><td class="amount">${formatPrice(item.price * item.quantity)}</td></tr>`).join('')}</tbody>
-  </table>
-  <div class="totals">
-    <div class="row"><span>Subtotal</span><span>${formatPrice(order.subtotal)}</span></div>
-    <div class="row gst"><span>GST (28%)</span><span>${formatPrice(order.gst_amount)}</span></div>
-    ${order.discount > 0 ? `<div class="row"><span>Discount</span><span>-${formatPrice(order.discount)}</span></div>` : ''}
-    <div class="row total"><span>Grand Total</span><span>${formatPrice(order.total)}</span></div>
-  </div>
-  <div class="footer">
-    <p>GSTIN: 27AADCV1234A1ZB &nbsp;|&nbsp; Velocity Supercars Pvt. Ltd.</p>
-    <p style="margin-top: 4px;">Worli Sea Face Road, Mumbai, Maharashtra 400018</p>
-    <p style="margin-top: 8px;">Thank you for choosing Velocity. Drive the extraordinary.</p>
-  </div>
-</body></html>`;
-    const w = window.open('', '_blank');
-    if (w) { w.document.write(invoiceHTML); w.document.close(); w.print(); }
+    generateInvoicePDF(order, orderItems);
   };
 
   if (authLoading || loading) return <div className="min-h-screen pt-24 flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>;
