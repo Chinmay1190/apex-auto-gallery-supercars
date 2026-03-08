@@ -352,10 +352,9 @@ const drawItems = (
         const imgData = carImages.get(data.row.index);
         if (imgData) {
           try {
-            const imgSize = 12;
+            const imgSize = 10;
             const x = data.cell.x + (data.cell.width - imgSize) / 2;
             const y = data.cell.y + (data.cell.height - imgSize) / 2;
-            // Dark rounded background for image
             doc.setFillColor(...colors.panelSoft);
             doc.roundedRect(x - 0.5, y - 0.5, imgSize + 1, imgSize + 1, 2, 2, 'F');
             doc.addImage(imgData, 'JPEG', x, y, imgSize, imgSize);
