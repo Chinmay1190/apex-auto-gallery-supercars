@@ -309,10 +309,12 @@ export const generateInvoicePDF = (order: InvoiceOrder, items: InvoiceItem[]) =>
     doc.setFontSize(isBold ? 11 : 8);
     doc.setFont('helvetica', isBold ? 'bold' : 'normal');
 
-    doc.setTextColor(isGold ? ...gold : isBold ? ...textWhite : ...lightGray);
+    const labelColor = isGold ? gold : isBold ? textWhite : lightGray;
+    doc.setTextColor(...labelColor);
     doc.text(label, 122, tY);
 
-    doc.setTextColor(isBold ? ...gold : isGold ? ...goldLight : ...textWhite);
+    const valColor = isBold ? gold : isGold ? goldLight : textWhite;
+    doc.setTextColor(...valColor);
     doc.text(value, 188, tY, { align: 'right' });
     tY += isBold ? 0 : 9;
   };
