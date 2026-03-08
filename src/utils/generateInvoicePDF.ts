@@ -459,52 +459,52 @@ const drawSignatory = (doc: jsPDF, afterY: number): number => {
   // Signature strokes
   const lineStartX = sigX + 10;
   const lineEndX = sigX + sigW - 10;
-  const sigLineY = y + 22;
+  const sigLineY = y + 16;
   const midX = (lineStartX + lineEndX) / 2;
 
   doc.setDrawColor(...colors.gold);
   doc.setLineWidth(0.5);
-  doc.line(lineStartX + 2, sigLineY - 1, midX - 6, sigLineY - 4);
-  doc.line(midX - 6, sigLineY - 4, midX, sigLineY);
-  doc.line(midX, sigLineY, midX + 5, sigLineY - 5);
-  doc.line(midX + 5, sigLineY - 5, lineEndX - 6, sigLineY - 2);
+  doc.line(lineStartX + 2, sigLineY - 1, midX - 6, sigLineY - 3);
+  doc.line(midX - 6, sigLineY - 3, midX, sigLineY);
+  doc.line(midX, sigLineY, midX + 5, sigLineY - 4);
+  doc.line(midX + 5, sigLineY - 4, lineEndX - 6, sigLineY - 2);
 
   doc.setDrawColor(...colors.dim);
   doc.setLineWidth(0.2);
   doc.line(lineStartX, sigLineY + 2, lineEndX, sigLineY + 2);
 
   doc.setFont(FONT, 'bold');
-  doc.setFontSize(7);
+  doc.setFontSize(6.5);
   doc.setTextColor(...colors.goldSoft);
-  doc.text('Rajesh Sharma', sigX + sigW / 2, sigLineY + 8, { align: 'center' });
+  doc.text('Rajesh Sharma', sigX + sigW / 2, sigLineY + 7, { align: 'center' });
 
   doc.setFont(FONT, 'normal');
-  doc.setFontSize(5.5);
+  doc.setFontSize(5);
   doc.setTextColor(...colors.dim);
-  doc.text('Authorized Signatory  |  Managing Director', sigX + sigW / 2, sigLineY + 12, { align: 'center' });
+  doc.text('Authorized Signatory  |  Managing Director', sigX + sigW / 2, sigLineY + 11, { align: 'center' });
 
   // Left side — terms + seal
   doc.setFont(FONT, 'normal');
-  doc.setFontSize(5.5);
+  doc.setFontSize(5);
   doc.setTextColor(...colors.dim);
-  doc.text('This is a computer-generated invoice.', LEFT, y + 6);
-  doc.text('No physical signature is required.', LEFT, y + 10);
-  doc.text('E. & O.E.', LEFT, y + 17);
+  doc.text('This is a computer-generated invoice.', LEFT, y + 5);
+  doc.text('No physical signature is required.', LEFT, y + 9);
+  doc.text('E. & O.E.', LEFT, y + 14);
 
   // Seal
   const sealX = LEFT + 26;
-  const sealY = y + 28;
+  const sealY = y + 23;
   doc.setDrawColor(...colors.gold);
   doc.setLineWidth(0.4);
-  doc.circle(sealX, sealY, 6.5, 'S');
+  doc.circle(sealX, sealY, 5.5, 'S');
   doc.setLineWidth(0.25);
-  doc.circle(sealX, sealY, 5.2, 'S');
+  doc.circle(sealX, sealY, 4.5, 'S');
 
   doc.setFont(FONT, 'bold');
-  doc.setFontSize(4);
+  doc.setFontSize(3.5);
   doc.setTextColor(...colors.gold);
-  doc.text('VELOCITY', sealX, sealY - 1, { align: 'center' });
-  doc.setFontSize(3);
+  doc.text('VELOCITY', sealX, sealY - 0.5, { align: 'center' });
+  doc.setFontSize(2.5);
   doc.text('SUPERCARS', sealX, sealY + 1.5, { align: 'center' });
   doc.setFont(FONT, 'normal');
   doc.setFontSize(2.5);
