@@ -83,6 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { error } = await supabase.from('profiles').update(data).eq('user_id', user.id);
     if (error) throw error;
     setProfile(prev => prev ? { ...prev, ...data } : null);
+    await fetchProfile(user.id);
   };
 
   return (
