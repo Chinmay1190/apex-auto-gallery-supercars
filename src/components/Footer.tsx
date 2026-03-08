@@ -24,9 +24,17 @@ const Footer = () => (
         </div>
       </div>
       <div>
-        <h4 className="font-display text-sm tracking-wider uppercase text-foreground mb-4">Services</h4>
-        <div className="flex flex-col gap-2 text-muted-foreground text-sm">
-          <span>Test Drive Booking</span><span>Custom Orders</span><span>Finance & Leasing</span><span>After-Sales Care</span>
+        <h4 className="font-display text-sm tracking-wider uppercase text-foreground mb-4">More</h4>
+        <div className="flex flex-col gap-2">
+          {[
+            { to: '/compare', label: 'Compare Cars' },
+            { to: '/testimonials', label: 'Reviews' },
+            { to: '/privacy', label: 'Privacy Policy' },
+            { to: '/terms', label: 'Terms of Service' },
+            { to: '/faq', label: 'FAQ' },
+          ].map(l => (
+            <Link key={l.to} to={l.to} className="text-muted-foreground text-sm hover:text-primary transition-colors">{l.label}</Link>
+          ))}
         </div>
       </div>
       <div>
@@ -40,11 +48,6 @@ const Footer = () => (
     </div>
     <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-border/30 flex flex-col md:flex-row justify-between items-center gap-4">
       <p className="text-muted-foreground text-xs">© 2026 Velocity Supercars. All rights reserved.</p>
-      <div className="flex gap-6 text-muted-foreground text-xs">
-        <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
-        <Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
-        <Link to="/faq" className="hover:text-primary transition-colors">FAQ</Link>
-      </div>
     </div>
   </footer>
 );
