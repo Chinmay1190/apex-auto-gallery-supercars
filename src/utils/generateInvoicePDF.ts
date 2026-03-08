@@ -336,7 +336,7 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number) => {
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(6.5);
   doc.setTextColor(...colors.dim);
-  doc.text('* All prices are shown in INR', LEFT, y + 4);
+  doc.text('* All prices are shown in Indian Rupees', LEFT, y + 4);
   doc.text('* GST charged at 28% as applicable', LEFT, y + 9);
 
   const cardX = 116;
