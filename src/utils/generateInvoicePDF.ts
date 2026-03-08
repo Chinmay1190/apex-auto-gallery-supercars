@@ -471,9 +471,9 @@ export const generateInvoicePDF = async (order: InvoiceOrder, items: InvoiceItem
     }),
   ]);
 
-  // Use NotoSans if loaded, otherwise fallback to helvetica
-  const fontFamily = fontLoaded ? 'NotoSans' : 'helvetica';
-  doc.setFont(fontFamily, 'normal');
+  // Set global font variable for all drawing functions
+  FONT = fontLoaded ? 'NotoSans' : 'helvetica';
+  doc.setFont(FONT, 'normal');
 
   const carImages = new Map<number, string>();
   carResults.forEach((result) => {
