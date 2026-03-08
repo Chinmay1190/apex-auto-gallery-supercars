@@ -90,7 +90,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const updateProfile = async (data: Partial<Profile>) => {
     if (!user) return;
-    const { error } = await supabase.from('profiles').update(data).eq('user_id', user.id);
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({ ...data, user_id: user.id }, { onConflict: 'user_id' });
     if (error) throw error;
     setProfile(prev => prev ? { ...prev, ...data } : null);
     await fetchProfile(user.id);
