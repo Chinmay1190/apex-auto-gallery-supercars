@@ -316,7 +316,7 @@ const drawItems = (
     theme: 'plain',
     margin: { left: LEFT, right: PAGE_WIDTH - RIGHT },
     styles: {
-      font: 'helvetica',
+      font: FONT,
       fontSize: 8,
       textColor: [...colors.text],
       lineColor: [...colors.border],
