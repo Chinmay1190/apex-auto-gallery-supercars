@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
-import { Heart, ShoppingCart, Eye } from 'lucide-react';
+import { Heart, ShoppingCart, Eye, Check } from 'lucide-react';
 import { Car, formatPrice } from '@/data/cars';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
 
 interface CarCardProps {
   car: Car;
@@ -14,6 +15,26 @@ const CarCard = ({ car, index = 0 }: CarCardProps) => {
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const wishlisted = isInWishlist(car.id);
+  const [showCartNotif, setShowCartNotif] = useState(false);
+  const [showWishNotif, setShowWishNotif] = useState(false);
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(car);
+    setShowCartNotif(true);
+    setTimeout(() => setShowCartNotif(false), 2000);
+  };
+
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist(car);
+    if (!wishlisted) {
+      setShowWishNotif(true);
+      setTimeout(() => setShowWishNotif(false), 2000);
+    }
+  };
 
   return (
     <motion.div
@@ -21,8 +42,34 @@ const CarCard = ({ car, index = 0 }: CarCardProps) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: index * 0.1, duration: 0.5 }}
-      className="group glass-panel overflow-hidden hover-lift"
+      className="group glass-panel overflow-hidden hover-lift relative"
     >
+      {/* Inline Notifications */}
+      <AnimatePresence>
+        {showCartNotif && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: -20, x: '-50%' }}
+            className="absolute top-4 left-1/2 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl gold-gradient text-primary-foreground text-xs font-semibold shadow-lg"
+          >
+            <Check className="w-3.5 h-3.5" />
+            Added to Cart
+          </motion.div>
+        )}
+        {showWishNotif && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: -20, x: '-50%' }}
+            className="absolute top-4 left-1/2 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-accent text-accent-foreground text-xs font-semibold shadow-lg"
+          >
+            <Heart className="w-3.5 h-3.5 fill-current" />
+            Added to Wishlist
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="relative aspect-[4/3] overflow-hidden">
         <img
           src={car.image}
@@ -35,14 +82,14 @@ const CarCard = ({ car, index = 0 }: CarCardProps) => {
         {/* Actions overlay */}
         <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <button
-            onClick={(e) => { e.preventDefault(); toggleWishlist(car); }}
-            className={`p-2 rounded-full glass-panel-strong transition-all ${wishlisted ? 'text-accent' : 'text-foreground/70 hover:text-accent'}`}
+            onClick={handleToggleWishlist}
+            className={`p-2.5 rounded-full glass-panel-strong transition-all hover:scale-110 ${wishlisted ? 'text-accent' : 'text-foreground/70 hover:text-accent'}`}
           >
             <Heart className={`w-4 h-4 ${wishlisted ? 'fill-current' : ''}`} />
           </button>
           <button
-            onClick={(e) => { e.preventDefault(); addToCart(car); }}
-            className="p-2 rounded-full glass-panel-strong text-foreground/70 hover:text-primary transition-all"
+            onClick={handleAddToCart}
+            className="p-2.5 rounded-full glass-panel-strong text-foreground/70 hover:text-primary hover:scale-110 transition-all"
           >
             <ShoppingCart className="w-4 h-4" />
           </button>
