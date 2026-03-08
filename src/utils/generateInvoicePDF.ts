@@ -267,7 +267,7 @@ const drawCustomerAndPayment = (doc: jsPDF, order: InvoiceOrder): number => {
     `PIN: ${toText(order.shipping_pincode)}`,
   ]);
 
-  const paymentY = sectionTop + 49;
+  const paymentY = sectionTop + 40;
   doc.setFillColor(...colors.panelSoft);
   doc.roundedRect(LEFT, paymentY, 72, 13, 3, 3, 'F');
   doc.setDrawColor(...colors.gold);
