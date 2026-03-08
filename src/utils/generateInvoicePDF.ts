@@ -195,7 +195,7 @@ const drawHeader = (doc: jsPDF, order: InvoiceOrder, logoData: string | null) =>
   doc.setLineWidth(0.45);
   doc.roundedRect(PAGE_WIDTH - 74, 8, 58, 32, 3, 3, 'S');
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(FONT, 'bold');
   doc.setFontSize(8);
   doc.setTextColor(...colors.gold);
   doc.text('TAX INVOICE', PAGE_WIDTH - 45, 18, { align: 'center' });
