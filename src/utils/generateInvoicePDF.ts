@@ -28,412 +28,327 @@ interface InvoiceItem {
 
 type RGB = [number, number, number];
 
-// ─── Premium Color Palette ───────────────────────────────────
-const C = {
-  gold:       [192, 155, 68]  as RGB,
-  goldLight:  [225, 200, 140] as RGB,
-  goldDark:   [140, 110, 45]  as RGB,
-  bg:         [10, 10, 14]    as RGB,
-  card:       [18, 18, 24]    as RGB,
-  cardAlt:    [26, 26, 34]    as RGB,
-  surface:    [34, 34, 44]    as RGB,
-  white:      [250, 250, 252] as RGB,
-  light:      [200, 200, 210] as RGB,
-  muted:      [140, 140, 155] as RGB,
-  dim:        [90, 90, 105]   as RGB,
-  line:       [50, 50, 62]    as RGB,
-  tableHead:  [28, 28, 38]    as RGB,
-  tableAlt:   [16, 16, 22]    as RGB,
+const colors = {
+  bg: [12, 12, 16] as RGB,
+  panel: [22, 22, 28] as RGB,
+  panelSoft: [28, 28, 36] as RGB,
+  gold: [192, 155, 68] as RGB,
+  goldSoft: [220, 192, 132] as RGB,
+  text: [246, 246, 248] as RGB,
+  muted: [170, 170, 180] as RGB,
+  dim: [118, 118, 130] as RGB,
+  border: [44, 44, 56] as RGB,
+  rowAlt: [17, 17, 24] as RGB,
 };
 
-const PW = 210;
-const ML = 18;
-const MR = 192;
+const PAGE_WIDTH = 210;
+const LEFT = 16;
+const RIGHT = 194;
+const CONTENT_WIDTH = RIGHT - LEFT;
 
-// ─── Helpers ─────────────────────────────────────────────────
-const num = (v: unknown): number => {
-  if (typeof v === 'number' && Number.isFinite(v)) return v;
-  if (typeof v === 'string') { const n = Number(v.replace(/[^\d.-]/g, '')); return Number.isFinite(n) ? n : 0; }
+const toNumber = (value: unknown): number => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value.replace(/[^\d.-]/g, ''));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
   return 0;
 };
 
-const txt = (v: unknown, fb = '-'): string => { const s = String(v ?? '').trim(); return s || fb; };
-
-const price = (v: unknown): string => {
-  const a = num(v);
-  return 'INR ' + new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(a);
+const toText = (value: unknown, fallback = '-'): string => {
+  const text = String(value ?? '').trim();
+  return text || fallback;
 };
 
-const fmtDate = (v: unknown): string => {
-  const d = new Date(String(v ?? ''));
-  return Number.isNaN(d.getTime()) ? txt(v, 'N/A') : d.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+const formatMoney = (value: unknown): string => {
+  const amount = toNumber(value);
+  return `INR ${new Intl.NumberFormat('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount)}`;
 };
 
-// ─── Page Background ─────────────────────────────────────────
-const drawBg = (doc: jsPDF) => {
-  const pH = doc.internal.pageSize.height;
-  doc.setFillColor(...C.bg);
-  doc.rect(0, 0, PW, pH, 'F');
-
-  // Subtle geometric corner accents
-  doc.setDrawColor(...C.gold);
-  doc.setLineWidth(0.8);
-  // top-left
-  doc.line(10, 6, 24, 6);
-  doc.line(10, 6, 10, 20);
-  // top-right
-  doc.line(PW - 24, 6, PW - 10, 6);
-  doc.line(PW - 10, 6, PW - 10, 20);
-  // bottom-left
-  doc.line(10, pH - 6, 24, pH - 6);
-  doc.line(10, pH - 20, 10, pH - 6);
-  // bottom-right
-  doc.line(PW - 24, pH - 6, PW - 10, pH - 6);
-  doc.line(PW - 10, pH - 20, PW - 10, pH - 6);
+const formatDate = (value: unknown): string => {
+  const date = new Date(String(value ?? ''));
+  if (Number.isNaN(date.getTime())) return toText(value, 'N/A');
+  return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 };
 
-// ─── Header ──────────────────────────────────────────────────
+const addBackground = (doc: jsPDF) => {
+  const pageHeight = doc.internal.pageSize.height;
+
+  doc.setFillColor(...colors.bg);
+  doc.rect(0, 0, PAGE_WIDTH, pageHeight, 'F');
+
+  doc.setFillColor(...colors.gold);
+  doc.rect(0, 0, PAGE_WIDTH, 2.2, 'F');
+
+  doc.setDrawColor(...colors.gold);
+  doc.setLineWidth(0.7);
+  doc.line(8, 8, 20, 8);
+  doc.line(8, 8, 8, 20);
+  doc.line(PAGE_WIDTH - 20, 8, PAGE_WIDTH - 8, 8);
+  doc.line(PAGE_WIDTH - 8, 8, PAGE_WIDTH - 8, 20);
+};
+
 const drawHeader = (doc: jsPDF, order: InvoiceOrder) => {
-  // Gold top strip
-  doc.setFillColor(...C.gold);
-  doc.rect(0, 0, PW, 3, 'F');
-  doc.setFillColor(...C.goldDark);
-  doc.rect(0, 3, PW, 0.8, 'F');
+  doc.setFillColor(...colors.panel);
+  doc.rect(0, 2.2, PAGE_WIDTH, 40, 'F');
 
-  // Header card
-  doc.setFillColor(...C.card);
-  doc.rect(0, 3.8, PW, 50, 'F');
-
-  // Decorative diagonal lines in header
-  doc.setDrawColor(30, 30, 40);
-  doc.setLineWidth(0.2);
-  for (let i = 0; i < 12; i++) {
-    doc.line(PW - 100 + i * 10, 3.8, PW - 85 + i * 10, 53.8);
-  }
-
-  // Brand name
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(32);
-  doc.setTextColor(...C.gold);
-  doc.text('VELOCITY', ML, 28);
+  doc.setFontSize(28);
+  doc.setTextColor(...colors.gold);
+  doc.text('VELOCITY', LEFT, 24);
 
-  // Subtitle with spaced letters
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
-  doc.setTextColor(...C.dim);
-  doc.text('L U X U R Y   S U P E R C A R S   I N D I A', ML, 36);
+  doc.setTextColor(...colors.dim);
+  doc.text('LUXURY SUPERCARS INDIA', LEFT, 31);
 
-  // Small gold bar under brand
-  doc.setFillColor(...C.gold);
-  doc.rect(ML, 39, 30, 1.2, 'F');
-
-  // Invoice badge - right side
-  doc.setFillColor(...C.surface);
-  doc.roundedRect(MR - 62, 11, 62, 34, 4, 4, 'F');
-  doc.setDrawColor(...C.gold);
-  doc.setLineWidth(0.6);
-  doc.roundedRect(MR - 62, 11, 62, 34, 4, 4, 'S');
-
-  // Small gold diamond inside badge
-  const bx = MR - 31;
-  doc.setFillColor(...C.gold);
-  doc.triangle(bx, 15, bx + 2, 17, bx, 19, 'F');
-  doc.triangle(bx, 15, bx - 2, 17, bx, 19, 'F');
+  doc.setFillColor(...colors.panelSoft);
+  doc.roundedRect(PAGE_WIDTH - 72, 10, 56, 24, 3, 3, 'F');
+  doc.setDrawColor(...colors.gold);
+  doc.setLineWidth(0.45);
+  doc.roundedRect(PAGE_WIDTH - 72, 10, 56, 24, 3, 3, 'S');
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(...C.gold);
-  doc.text('TAX INVOICE', bx, 26, { align: 'center' });
+  doc.setFontSize(8);
+  doc.setTextColor(...colors.gold);
+  doc.text('TAX INVOICE', PAGE_WIDTH - 44, 18, { align: 'center' });
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  doc.setTextColor(...C.goldLight);
-  doc.text(txt(order.order_number, 'N/A'), bx, 32, { align: 'center' });
+  doc.setFontSize(7);
+  doc.setTextColor(...colors.goldSoft);
+  doc.text(toText(order.order_number, 'N/A'), PAGE_WIDTH - 44, 24, { align: 'center' });
 
-  doc.setFontSize(6.5);
-  doc.setTextColor(...C.muted);
-  doc.text(fmtDate(order.created_at), bx, 38, { align: 'center' });
+  doc.setTextColor(...colors.muted);
+  doc.text(formatDate(order.created_at), PAGE_WIDTH - 44, 29.5, { align: 'center' });
 
-  // Divider with centered diamond
-  const dy = 58;
-  doc.setDrawColor(...C.gold);
+  doc.setDrawColor(...colors.gold);
   doc.setLineWidth(0.4);
-  doc.line(ML, dy, PW / 2 - 5, dy);
-  doc.line(PW / 2 + 5, dy, MR, dy);
-  doc.setFillColor(...C.gold);
-  const mx = PW / 2;
-  doc.triangle(mx, dy - 2.5, mx + 2.5, dy, mx, dy + 2.5, 'F');
-  doc.triangle(mx, dy - 2.5, mx - 2.5, dy, mx, dy + 2.5, 'F');
+  doc.line(LEFT, 47, RIGHT, 47);
 };
 
-// ─── Info Card ───────────────────────────────────────────────
-const drawInfoCard = (doc: jsPDF, x: number, y: number, w: number, label: string, lines: { text: string; bold?: boolean }[]) => {
-  const h = 48;
-  // Card bg
-  doc.setFillColor(...C.card);
-  doc.roundedRect(x, y, w, h, 3, 3, 'F');
-  doc.setDrawColor(...C.line);
+const drawInfoBox = (
+  doc: jsPDF,
+  x: number,
+  y: number,
+  w: number,
+  title: string,
+  lines: string[],
+) => {
+  doc.setFillColor(...colors.panel);
+  doc.roundedRect(x, y, w, 44, 3, 3, 'F');
+  doc.setDrawColor(...colors.border);
   doc.setLineWidth(0.25);
-  doc.roundedRect(x, y, w, h, 3, 3, 'S');
+  doc.roundedRect(x, y, w, 44, 3, 3, 'S');
 
-  // Gold left accent
-  doc.setFillColor(...C.gold);
-  doc.roundedRect(x, y + 4, 2.5, h - 8, 1, 1, 'F');
+  doc.setFillColor(...colors.gold);
+  doc.rect(x, y + 3, 2.2, 38, 'F');
 
-  // Label
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(6);
-  doc.setTextColor(...C.gold);
-  doc.text(label, x + 9, y + 8);
+  doc.setFontSize(6.5);
+  doc.setTextColor(...colors.gold);
+  doc.text(title, x + 7, y + 7);
 
-  // Gold underline for label
-  doc.setDrawColor(...C.gold);
-  doc.setLineWidth(0.3);
-  doc.line(x + 9, y + 9.5, x + 9 + doc.getTextWidth(label), y + 9.5);
+  let lineY = y + 13;
+  lines.forEach((raw, index) => {
+    const wrapped = doc.splitTextToSize(toText(raw), w - 12);
+    doc.setFont('helvetica', index === 0 ? 'bold' : 'normal');
+    doc.setFontSize(index === 0 ? 8.5 : 7.5);
+    doc.setTextColor(...(index === 0 ? colors.text : colors.muted));
 
-  // Content lines
-  let ly = y + 16;
-  lines.forEach((line) => {
-    doc.setFont('helvetica', line.bold ? 'bold' : 'normal');
-    doc.setFontSize(line.bold ? 9 : 7.5);
-    doc.setTextColor(...(line.bold ? C.white : C.light));
-    const wrapped = doc.splitTextToSize(txt(line.text), w - 14);
-    wrapped.slice(0, 2).forEach((seg: string) => {
-      doc.text(seg, x + 9, ly);
-      ly += line.bold ? 6.5 : 5.5;
+    wrapped.slice(0, 2).forEach((line: string) => {
+      doc.text(line, x + 7, lineY);
+      lineY += index === 0 ? 6 : 5.2;
     });
   });
 };
 
-// ─── Customer Section ────────────────────────────────────────
-const drawCustomerSection = (doc: jsPDF, order: InvoiceOrder): number => {
-  const y = 64;
-  const halfW = (MR - ML - 6) / 2;
+const drawCustomerAndPayment = (doc: jsPDF, order: InvoiceOrder): number => {
+  const sectionTop = 54;
+  const boxGap = 6;
+  const boxW = (CONTENT_WIDTH - boxGap) / 2;
 
-  drawInfoCard(doc, ML, y, halfW, 'BILL TO', [
-    { text: order.shipping_name, bold: true },
-    { text: order.shipping_email },
-    { text: order.shipping_phone },
+  drawInfoBox(doc, LEFT, sectionTop, boxW, 'BILL TO', [
+    order.shipping_name,
+    order.shipping_email,
+    order.shipping_phone,
   ]);
 
-  drawInfoCard(doc, ML + halfW + 6, y, halfW, 'SHIP TO', [
-    { text: order.shipping_address, bold: true },
-    { text: `${order.shipping_city}, ${order.shipping_state}` },
-    { text: `PIN: ${order.shipping_pincode}` },
+  drawInfoBox(doc, LEFT + boxW + boxGap, sectionTop, boxW, 'SHIP TO', [
+    order.shipping_address,
+    `${toText(order.shipping_city)}, ${toText(order.shipping_state)}`,
+    `PIN: ${toText(order.shipping_pincode)}`,
   ]);
 
-  // Payment method pill
-  const py = y + 54;
-  doc.setFillColor(...C.cardAlt);
-  doc.roundedRect(ML, py, 80, 14, 7, 7, 'F');
-  doc.setDrawColor(...C.gold);
-  doc.setLineWidth(0.35);
-  doc.roundedRect(ML, py, 80, 14, 7, 7, 'S');
-
-  // Gold circle with P
-  doc.setFillColor(...C.gold);
-  doc.circle(ML + 10, py + 7, 3.5, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(6);
-  doc.setTextColor(...C.bg);
-  doc.text('P', ML + 9, py + 8.5);
+  const paymentY = sectionTop + 49;
+  doc.setFillColor(...colors.panelSoft);
+  doc.roundedRect(LEFT, paymentY, 72, 13, 3, 3, 'F');
+  doc.setDrawColor(...colors.gold);
+  doc.roundedRect(LEFT, paymentY, 72, 13, 3, 3, 'S');
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(6);
-  doc.setTextColor(...C.muted);
-  doc.text('PAYMENT', ML + 18, py + 6);
+  doc.setFontSize(6.5);
+  doc.setTextColor(...colors.dim);
+  doc.text('PAYMENT METHOD', LEFT + 6, paymentY + 8);
+
   doc.setFontSize(8);
-  doc.setTextColor(...C.white);
-  doc.text(txt(order.payment_method, 'N/A').toUpperCase(), ML + 18, py + 12);
+  doc.setTextColor(...colors.text);
+  doc.text(toText(order.payment_method, 'N/A').toUpperCase(), LEFT + 38, paymentY + 8);
 
-  return py + 22;
+  return paymentY + 20;
 };
 
-// ─── Items Table ─────────────────────────────────────────────
-const drawItemsTable = (doc: jsPDF, startY: number, items: InvoiceItem[]): number => {
+const drawItems = (doc: jsPDF, startY: number, items: InvoiceItem[]): number => {
   const safeItems = items.length ? items : [{ quantity: 1 } as InvoiceItem];
 
-  const rows = safeItems.map((item, i) => {
-    const rawName = txt(item.car?.name || item.car_name, 'Vehicle');
-    const brand = txt(item.car?.brand || item.car_brand, '-');
-    const displayName = rawName.toLowerCase().startsWith(brand.toLowerCase()) ? rawName : `${brand} ${rawName}`.trim();
-    const unit = num(item.car?.price ?? item.price);
-    const qty = Math.max(1, Math.floor(num(item.quantity)));
+  const rows = safeItems.map((item, idx) => {
+    const name = toText(item.car?.name || item.car_name || 'Vehicle');
+    const brand = toText(item.car?.brand || item.car_brand || '-');
+    const unit = toNumber(item.car?.price ?? item.price);
+    const qty = Math.max(1, Math.floor(toNumber(item.quantity)));
 
     return [
-      String(i + 1).padStart(2, '0'),
-      txt(displayName).toUpperCase(),
+      String(idx + 1).padStart(2, '0'),
+      name,
       brand,
       String(qty),
-      price(unit),
-      price(unit * qty),
+      formatMoney(unit),
+      formatMoney(unit * qty),
     ];
   });
 
   autoTable(doc, {
     startY,
-    head: [['#', 'VEHICLE', 'MAKE', 'QTY', 'UNIT PRICE', 'AMOUNT']],
+    head: [['NO.', 'VEHICLE', 'BRAND', 'QTY', 'UNIT PRICE', 'AMOUNT']],
     body: rows,
     theme: 'plain',
-    margin: { left: ML, right: PW - MR },
+    margin: { left: LEFT, right: PAGE_WIDTH - RIGHT },
     styles: {
       font: 'helvetica',
       fontSize: 8,
-      textColor: [...C.light],
-      cellPadding: { top: 7, right: 6, bottom: 7, left: 6 },
-      lineColor: [...C.line],
+      textColor: [...colors.text],
+      lineColor: [...colors.border],
       lineWidth: 0.15,
+      cellPadding: { top: 6.5, right: 5, bottom: 6.5, left: 5 },
       overflow: 'linebreak',
     },
     headStyles: {
-      fillColor: [...C.tableHead],
-      textColor: [...C.gold],
+      fillColor: [...colors.panelSoft],
+      textColor: [...colors.gold],
       fontStyle: 'bold',
       fontSize: 6.5,
-      cellPadding: { top: 8, right: 6, bottom: 8, left: 6 },
-      lineWidth: 0,
+      cellPadding: { top: 7.5, right: 5, bottom: 7.5, left: 5 },
     },
     alternateRowStyles: {
-      fillColor: [...C.tableAlt],
+      fillColor: [...colors.rowAlt],
     },
     columnStyles: {
-      0: { halign: 'center', cellWidth: 12, textColor: [...C.goldLight], fontStyle: 'bold' },
-      1: { cellWidth: 50, fontStyle: 'bold', textColor: [...C.white] },
-      2: { cellWidth: 28, textColor: [...C.muted], fontStyle: 'italic' },
-      3: { halign: 'center', cellWidth: 14, textColor: [...C.light] },
-      4: { halign: 'right', cellWidth: 34, textColor: [...C.light] },
-      5: { halign: 'right', cellWidth: 36, textColor: [...C.goldLight], fontStyle: 'bold' },
+      0: { halign: 'center', cellWidth: 14, textColor: [...colors.goldSoft], fontStyle: 'bold' },
+      1: { cellWidth: 52, fontStyle: 'bold' },
+      2: { cellWidth: 30, textColor: [...colors.muted] },
+      3: { halign: 'center', cellWidth: 14 },
+      4: { halign: 'right', cellWidth: 32 },
+      5: { halign: 'right', cellWidth: 32, textColor: [...colors.goldSoft], fontStyle: 'bold' },
     },
-    didDrawPage: () => { drawBg(doc); },
   });
 
   return (doc as any).lastAutoTable?.finalY || startY + 30;
 };
 
-// ─── Totals Section ──────────────────────────────────────────
-const drawTotals = (doc: jsPDF, order: InvoiceOrder, startY: number) => {
-  const pH = doc.internal.pageSize.height;
-  const hasDiscount = num(order.discount) > 0;
-  const cardH = hasDiscount ? 64 : 54;
-  const footerH = 38;
+const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number) => {
+  const pageHeight = doc.internal.pageSize.height;
+  const hasDiscount = toNumber(order.discount) > 0;
+  const cardHeight = hasDiscount ? 58 : 50;
 
-  let y = startY + 6;
-  if (y + cardH + footerH > pH - 12) {
+  let y = fromY + 8;
+  if (y + cardHeight + 40 > pageHeight) {
     doc.addPage();
-    drawBg(doc);
-    y = 28;
+    addBackground(doc);
+    y = 24;
   }
 
-  // Notes on left
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(6.5);
-  doc.setTextColor(...C.dim);
-  doc.text('* All prices in Indian Rupees (INR)', ML, y + 6);
-  doc.text('* GST charged at 28% as per govt. norms', ML, y + 12);
-  doc.text('* This is a computer-generated invoice', ML, y + 18);
+  doc.setTextColor(...colors.dim);
+  doc.text('* All prices are shown in INR', LEFT, y + 4);
+  doc.text('* GST charged at 28% as applicable', LEFT, y + 9);
 
-  // Totals card - right side
-  const cx = 116;
-  const cw = MR - cx;
+  const cardX = 116;
+  const cardW = RIGHT - cardX;
 
-  doc.setFillColor(...C.card);
-  doc.roundedRect(cx, y, cw, cardH, 4, 4, 'F');
-  doc.setDrawColor(...C.gold);
-  doc.setLineWidth(0.5);
-  doc.roundedRect(cx, y, cw, cardH, 4, 4, 'S');
+  doc.setFillColor(...colors.panel);
+  doc.roundedRect(cardX, y - 2, cardW, cardHeight, 4, 4, 'F');
+  doc.setDrawColor(...colors.gold);
+  doc.setLineWidth(0.45);
+  doc.roundedRect(cardX, y - 2, cardW, cardHeight, 4, 4, 'S');
 
-  // Gold top accent bar
-  doc.setFillColor(...C.gold);
-  doc.rect(cx + 6, y, cw - 12, 2, 'F');
+  doc.setFillColor(...colors.gold);
+  doc.rect(cardX + 6, y - 2, cardW - 12, 1.8, 'F');
 
-  let ty = y + 12;
-  const row = (label: string, val: string, opts?: { bold?: boolean; accent?: boolean; large?: boolean }) => {
+  let lineY = y + 8;
+  const row = (label: string, value: string, opts?: { bold?: boolean; accent?: boolean }) => {
     const bold = opts?.bold || false;
     const accent = opts?.accent || false;
-    const large = opts?.large || false;
 
     doc.setFont('helvetica', bold ? 'bold' : 'normal');
-    doc.setFontSize(large ? 12 : 8);
+    doc.setFontSize(bold ? 11 : 8);
+    doc.setTextColor(...(bold ? colors.text : accent ? colors.gold : colors.muted));
+    doc.text(label, cardX + 8, lineY);
 
-    doc.setTextColor(...(bold ? C.white : accent ? C.gold : C.muted));
-    doc.text(label, cx + 10, ty);
+    doc.setTextColor(...(bold ? colors.gold : accent ? colors.goldSoft : colors.text));
+    doc.text(value, cardX + cardW - 8, lineY, { align: 'right' });
 
-    doc.setTextColor(...(bold ? C.gold : accent ? C.goldLight : C.white));
-    doc.setFont('helvetica', bold || accent ? 'bold' : 'normal');
-    doc.text(val, cx + cw - 10, ty, { align: 'right' });
-
-    ty += large ? 0 : 10;
+    lineY += bold ? 0 : 9;
   };
 
-  row('Subtotal', price(num(order.subtotal)));
-  row('GST (28%)', price(num(order.gst_amount)), { accent: true });
-  if (hasDiscount) {
-    row('Discount', '- ' + price(num(order.discount)));
-  }
+  row('Subtotal', formatMoney(order.subtotal));
+  row('GST (28%)', formatMoney(order.gst_amount), { accent: true });
+  if (hasDiscount) row('Discount', `- ${formatMoney(order.discount)}`);
 
-  // Separator line
-  ty += 2;
-  doc.setDrawColor(...C.gold);
-  doc.setLineWidth(0.5);
-  doc.line(cx + 10, ty, cx + cw - 10, ty);
-  ty += 8;
+  lineY += 1;
+  doc.setDrawColor(...colors.gold);
+  doc.line(cardX + 8, lineY, cardX + cardW - 8, lineY);
+  lineY += 6;
 
-  row('GRAND TOTAL', price(num(order.total)), { bold: true, large: true });
+  row('GRAND TOTAL', formatMoney(order.total), { bold: true });
 };
 
-// ─── Footer ──────────────────────────────────────────────────
 const drawFooter = (doc: jsPDF) => {
-  const pH = doc.internal.pageSize.height;
+  const pageHeight = doc.internal.pageSize.height;
 
-  // Footer bg
-  doc.setFillColor(...C.card);
-  doc.rect(0, pH - 38, PW, 38, 'F');
+  doc.setFillColor(...colors.panel);
+  doc.rect(0, pageHeight - 34, PAGE_WIDTH, 34, 'F');
 
-  // Gold line on top
-  doc.setFillColor(...C.gold);
-  doc.rect(0, pH - 38, PW, 1.5, 'F');
-  doc.setFillColor(...C.goldDark);
-  doc.rect(0, pH - 36.5, PW, 0.5, 'F');
+  doc.setFillColor(...colors.gold);
+  doc.rect(0, pageHeight - 34, PAGE_WIDTH, 1.2, 'F');
 
-  // Diamond center decoration
-  const fx = PW / 2;
-  const fy = pH - 32;
-  doc.setFillColor(...C.gold);
-  doc.triangle(fx, fy - 2, fx + 2, fy, fx, fy + 2, 'F');
-  doc.triangle(fx, fy - 2, fx - 2, fy, fx, fy + 2, 'F');
-
-  // Company name
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...C.gold);
-  doc.text('VELOCITY SUPERCARS PVT. LTD.', fx, pH - 25, { align: 'center' });
+  doc.setFontSize(7.5);
+  doc.setTextColor(...colors.gold);
+  doc.text('VELOCITY SUPERCARS PVT. LTD.', PAGE_WIDTH / 2, pageHeight - 22, { align: 'center' });
 
-  // Company details
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6);
-  doc.setTextColor(...C.muted);
-  doc.text('GSTIN: 27AADCV1234A1ZB   |   CIN: U34100MH2024PTC123456', fx, pH - 19, { align: 'center' });
-  doc.text('Dharampeth, Nagpur, Maharashtra 440010   |   +91 98765 43210   |   info@velocity.in', fx, pH - 14, { align: 'center' });
+  doc.setFontSize(6.2);
+  doc.setTextColor(...colors.dim);
+  doc.text('GSTIN: 27AADCV1234A1ZB  |  CIN: U34100MH2024PTC123456', PAGE_WIDTH / 2, pageHeight - 16.5, { align: 'center' });
+  doc.text('Dharampeth, Nagpur, Maharashtra 440010  |  +91 98765 43210  |  info@velocity.in', PAGE_WIDTH / 2, pageHeight - 11.5, { align: 'center' });
 
-  // Tagline
   doc.setFont('helvetica', 'italic');
-  doc.setFontSize(6.5);
-  doc.setTextColor(...C.goldLight);
-  doc.text('Thank you for choosing Velocity. Drive the extraordinary.', fx, pH - 8, { align: 'center' });
+  doc.setTextColor(...colors.goldSoft);
+  doc.text('Thank you for choosing Velocity. Drive the extraordinary.', PAGE_WIDTH / 2, pageHeight - 6, { align: 'center' });
 };
 
-// ─── Main Export ─────────────────────────────────────────────
 export const generateInvoicePDF = (order: InvoiceOrder, items: InvoiceItem[]) => {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
-  drawBg(doc);
+  addBackground(doc);
   drawHeader(doc, order);
-
-  const tableStart = drawCustomerSection(doc, order);
-  const tableEnd = drawItemsTable(doc, tableStart, items);
-
-  drawTotals(doc, order, tableEnd);
+  const startY = drawCustomerAndPayment(doc, order);
+  const finalTableY = drawItems(doc, startY, items);
+  drawTotals(doc, order, finalTableY);
   drawFooter(doc);
 
-  doc.save(`Velocity-Invoice-${txt(order.order_number, 'ORDER')}.pdf`);
+  doc.save(`Velocity-Invoice-${toText(order.order_number, 'ORDER')}.pdf`);
 };
