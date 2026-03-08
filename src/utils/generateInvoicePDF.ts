@@ -131,7 +131,7 @@ const drawHeader = (doc: jsPDF, order: InvoiceOrder) => {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(...palette.goldSoft);
-  doc.text(order.order_number, PAGE_W - 45, 24, { align: 'center' });
+  doc.text(cleanText(order.order_number, 'N/A'), PAGE_W - 45, 24, { align: 'center' });
 
   doc.setTextColor(...palette.textSoft);
   doc.text(fmtDate(order.created_at), PAGE_W - 45, 30, { align: 'center' });
