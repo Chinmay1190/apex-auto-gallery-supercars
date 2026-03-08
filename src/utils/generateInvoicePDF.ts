@@ -239,7 +239,7 @@ const drawInfoBox = (
   let lineY = y + 13;
   lines.forEach((raw, index) => {
     const wrapped = doc.splitTextToSize(toText(raw), w - 12);
-    doc.setFont('helvetica', index === 0 ? 'bold' : 'normal');
+    doc.setFont(FONT, index === 0 ? 'bold' : 'normal');
     doc.setFontSize(index === 0 ? 8.5 : 7.5);
     doc.setTextColor(...(index === 0 ? colors.text : colors.muted));
     wrapped.slice(0, 2).forEach((line: string) => {
