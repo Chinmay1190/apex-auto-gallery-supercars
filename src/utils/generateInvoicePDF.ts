@@ -427,36 +427,129 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number) => {
   return y + cardHeight;
 };
 
+const drawSignatory = (doc: jsPDF, afterY: number) => {
+  const pageHeight = doc.internal.pageSize.height;
+  const sectionHeight = 48;
+
+  let y = afterY + 10;
+  if (y + sectionHeight + 50 > pageHeight) {
+    doc.addPage();
+    addBackground(doc);
+    y = 24;
+  }
+
+  // Signatory section — right aligned
+  const sigX = 120;
+  const sigW = RIGHT - sigX;
+
+  // Signature box with border
+  doc.setFillColor(...colors.panel);
+  doc.roundedRect(sigX, y, sigW, sectionHeight, 3, 3, 'F');
+  doc.setDrawColor(...colors.border);
+  doc.setLineWidth(0.25);
+  doc.roundedRect(sigX, y, sigW, sectionHeight, 3, 3, 'S');
+
+  // Gold accent on top
+  doc.setFillColor(...colors.gold);
+  doc.rect(sigX + 8, y, sigW - 16, 1.2, 'F');
+
+  // "For VELOCITY SUPERCARS PVT. LTD."
+  doc.setFont(FONT, 'normal');
+  doc.setFontSize(6.5);
+  doc.setTextColor(...colors.muted);
+  doc.text('For VELOCITY SUPERCARS PVT. LTD.', sigX + sigW / 2, y + 8, { align: 'center' });
+
+  // Stylized signature line
+  const lineStartX = sigX + 14;
+  const lineEndX = sigX + sigW - 14;
+  const sigLineY = y + 30;
+
+  // Decorative signature stroke (simulated cursive)
+  doc.setDrawColor(...colors.gold);
+  doc.setLineWidth(0.6);
+  // Main signature curve
+  const midX = (lineStartX + lineEndX) / 2;
+  doc.line(lineStartX + 4, sigLineY - 2, midX - 8, sigLineY - 6);
+  doc.line(midX - 8, sigLineY - 6, midX, sigLineY - 1);
+  doc.line(midX, sigLineY - 1, midX + 6, sigLineY - 8);
+  doc.line(midX + 6, sigLineY - 8, midX + 16, sigLineY - 3);
+  doc.line(midX + 16, sigLineY - 3, lineEndX - 8, sigLineY - 5);
+
+  // Signature baseline
+  doc.setDrawColor(...colors.dim);
+  doc.setLineWidth(0.3);
+  doc.line(lineStartX, sigLineY + 2, lineEndX, sigLineY + 2);
+
+  // Name and designation
+  doc.setFont(FONT, 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...colors.goldSoft);
+  doc.text('Rajesh Sharma', sigX + sigW / 2, sigLineY + 9, { align: 'center' });
+
+  doc.setFont(FONT, 'normal');
+  doc.setFontSize(6);
+  doc.setTextColor(...colors.dim);
+  doc.text('Authorized Signatory  |  Managing Director', sigX + sigW / 2, sigLineY + 14, { align: 'center' });
+
+  // Terms note on the left side
+  doc.setFont(FONT, 'normal');
+  doc.setFontSize(6);
+  doc.setTextColor(...colors.dim);
+  doc.text('This is a computer-generated invoice.', LEFT, y + 10);
+  doc.text('No physical signature is required.', LEFT, y + 15);
+  doc.text('E. & O.E.', LEFT, y + 24);
+
+  // Seal circle (decorative)
+  const sealX = LEFT + 30;
+  const sealY = y + 32;
+  doc.setDrawColor(...colors.gold);
+  doc.setLineWidth(0.5);
+  doc.circle(sealX, sealY, 8, 'S');
+  doc.setLineWidth(0.3);
+  doc.circle(sealX, sealY, 6.5, 'S');
+
+  doc.setFont(FONT, 'bold');
+  doc.setFontSize(4.5);
+  doc.setTextColor(...colors.gold);
+  doc.text('VELOCITY', sealX, sealY - 1.5, { align: 'center' });
+  doc.setFontSize(3.5);
+  doc.text('SUPERCARS', sealX, sealY + 1.5, { align: 'center' });
+  doc.setFont(FONT, 'normal');
+  doc.setFontSize(3);
+  doc.setTextColor(...colors.dim);
+  doc.text('SEALED', sealX, sealY + 4, { align: 'center' });
+};
+
 const drawFooter = (doc: jsPDF) => {
   const pageHeight = doc.internal.pageSize.height;
 
   doc.setFillColor(...colors.panel);
-  doc.rect(0, pageHeight - 34, PAGE_WIDTH, 34, 'F');
+  doc.rect(0, pageHeight - 28, PAGE_WIDTH, 28, 'F');
 
   doc.setFillColor(...colors.gold);
-  doc.rect(0, pageHeight - 34, PAGE_WIDTH, 1.2, 'F');
+  doc.rect(0, pageHeight - 28, PAGE_WIDTH, 1.2, 'F');
 
   doc.setDrawColor(...colors.gold);
   doc.setLineWidth(0.7);
-  doc.line(8, pageHeight - 8, 20, pageHeight - 8);
-  doc.line(8, pageHeight - 16, 8, pageHeight - 8);
-  doc.line(PAGE_WIDTH - 20, pageHeight - 8, PAGE_WIDTH - 8, pageHeight - 8);
-  doc.line(PAGE_WIDTH - 8, pageHeight - 16, PAGE_WIDTH - 8, pageHeight - 8);
+  doc.line(8, pageHeight - 6, 20, pageHeight - 6);
+  doc.line(8, pageHeight - 14, 8, pageHeight - 6);
+  doc.line(PAGE_WIDTH - 20, pageHeight - 6, PAGE_WIDTH - 8, pageHeight - 6);
+  doc.line(PAGE_WIDTH - 8, pageHeight - 14, PAGE_WIDTH - 8, pageHeight - 6);
 
   doc.setFont(FONT, 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(...colors.gold);
-  doc.text('VELOCITY SUPERCARS PVT. LTD.', PAGE_WIDTH / 2, pageHeight - 22, { align: 'center' });
+  doc.text('VELOCITY SUPERCARS PVT. LTD.', PAGE_WIDTH / 2, pageHeight - 19, { align: 'center' });
 
   doc.setFont(FONT, 'normal');
   doc.setFontSize(6.2);
   doc.setTextColor(...colors.dim);
-  doc.text('GSTIN: 27AADCV1234A1ZB  |  CIN: U34100MH2024PTC123456', PAGE_WIDTH / 2, pageHeight - 16.5, { align: 'center' });
-  doc.text('Dharampeth, Nagpur, Maharashtra 440010  |  +91 98765 43210  |  info@velocity.in', PAGE_WIDTH / 2, pageHeight - 11.5, { align: 'center' });
+  doc.text('GSTIN: 27AADCV1234A1ZB  |  CIN: U34100MH2024PTC123456', PAGE_WIDTH / 2, pageHeight - 14, { align: 'center' });
+  doc.text('Dharampeth, Nagpur, Maharashtra 440010  |  +91 98765 43210  |  info@velocity.in', PAGE_WIDTH / 2, pageHeight - 9.5, { align: 'center' });
 
   doc.setFont(FONT, 'normal');
   doc.setTextColor(...colors.goldSoft);
-  doc.text('Thank you for choosing Velocity. Drive the extraordinary.', PAGE_WIDTH / 2, pageHeight - 6, { align: 'center' });
+  doc.text('Thank you for choosing Velocity. Drive the extraordinary.', PAGE_WIDTH / 2, pageHeight - 4, { align: 'center' });
 };
 
 export const generateInvoicePDF = async (order: InvoiceOrder, items: InvoiceItem[]) => {
