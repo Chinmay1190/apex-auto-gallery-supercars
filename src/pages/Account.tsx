@@ -5,6 +5,7 @@ import { User, LogOut, Heart, ShoppingBag, Package, Edit2, Save, X, MapPin, Phon
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/cars';
+import { toast } from 'sonner';
 
 const Account = () => {
   const { user, profile, logout, isAuthenticated, loading, updateProfile } = useAuth();
@@ -41,9 +42,15 @@ const Account = () => {
 
   const handleSave = async () => {
     setSaving(true);
-    await updateProfile(form);
-    setEditing(false);
-    setSaving(false);
+    try {
+      await updateProfile(form);
+      toast.success('Profile updated successfully!');
+      setEditing(false);
+    } catch (e) {
+      toast.error('Failed to save profile. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleLogout = async () => {
