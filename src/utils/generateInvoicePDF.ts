@@ -174,7 +174,7 @@ const drawHeader = (doc: jsPDF, order: InvoiceOrder, logoData: string | null) =>
 
   const textStart = logoData ? LEFT + 22 : LEFT;
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(FONT, 'bold');
   doc.setFontSize(26);
   doc.setTextColor(...colors.gold);
   doc.text('VELOCITY', textStart, 20);
