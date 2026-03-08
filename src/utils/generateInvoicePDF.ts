@@ -99,6 +99,51 @@ const loadImageAsBase64 = (src: string): Promise<string | null> => {
   });
 };
 
+// Load a font file and return ArrayBuffer
+const loadFontAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    return await response.arrayBuffer();
+  } catch {
+    return null;
+  }
+};
+
+// Convert ArrayBuffer to base64 string
+const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+};
+
+// Register NotoSans font with jsPDF for ₹ symbol support
+const registerNotoSans = async (doc: jsPDF): Promise<boolean> => {
+  try {
+    const [regularBuf, boldBuf] = await Promise.all([
+      loadFontAsArrayBuffer('/fonts/NotoSans-Regular.ttf'),
+      loadFontAsArrayBuffer('/fonts/NotoSans-Bold.ttf'),
+    ]);
+
+    if (regularBuf) {
+      const regularBase64 = arrayBufferToBase64(regularBuf);
+      doc.addFileToVFS('NotoSans-Regular.ttf', regularBase64);
+      doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+    }
+    if (boldBuf) {
+      const boldBase64 = arrayBufferToBase64(boldBuf);
+      doc.addFileToVFS('NotoSans-Bold.ttf', boldBase64);
+      doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold');
+    }
+    return !!(regularBuf && boldBuf);
+  } catch {
+    return false;
+  }
+};
+
 const addBackground = (doc: jsPDF) => {
   const pageHeight = doc.internal.pageSize.height;
   doc.setFillColor(...colors.bg);
