@@ -27,6 +27,8 @@ import FAQ from "./pages/FAQ";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import Categories from "./pages/Categories";
+import Testimonials from "./pages/Testimonials";
+import Compare from "./pages/Compare";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -58,6 +60,8 @@ const App = () => (
                   <Route path="/orders" element={<Orders />} />
                   <Route path="/orders/:id" element={<OrderDetail />} />
                   <Route path="/categories" element={<Categories />} />
+                  <Route path="/testimonials" element={<Testimonials />} />
+                  <Route path="/compare" element={<Compare />} />
                   <Route path="/faq" element={<FAQ />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/terms" element={<Terms />} />
