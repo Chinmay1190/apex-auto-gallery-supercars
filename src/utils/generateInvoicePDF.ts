@@ -338,13 +338,13 @@ const drawItems = (
       fillColor: [...colors.rowAlt],
     },
     columnStyles: {
-      0: { halign: 'center', cellWidth: 12, textColor: [...colors.goldSoft], fontStyle: 'bold' },
-      1: { cellWidth: 18 }, // image column
-      2: { cellWidth: 40, fontStyle: 'bold' },
+      0: { halign: 'center', cellWidth: 10, textColor: [...colors.goldSoft], fontStyle: 'bold' },
+      1: { cellWidth: 16 }, // image column
+      2: { cellWidth: 42, fontStyle: 'bold' },
       3: { cellWidth: 24, textColor: [...colors.muted] },
-      4: { halign: 'center', cellWidth: 12 },
-      5: { halign: 'right', cellWidth: 30 },
-      6: { halign: 'right', cellWidth: 30, textColor: [...colors.goldSoft], fontStyle: 'bold' },
+      4: { halign: 'center', cellWidth: 10 },
+      5: { halign: 'right', cellWidth: 32 },
+      6: { halign: 'right', cellWidth: 32, textColor: [...colors.goldSoft], fontStyle: 'bold' },
     },
     didDrawCell: (data) => {
       // Draw car image in column 1 (body rows only)
