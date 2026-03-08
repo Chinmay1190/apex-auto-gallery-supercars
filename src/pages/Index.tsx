@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowDown, ChevronRight, Zap, Shield, Gauge, Wrench, Car, Headphones, CalendarCheck } from 'lucide-react';
 import heroImg from '@/assets/hero-car.jpg';
 import CarCard from '@/components/CarCard';
-import { cars, marqueBrands, categories, formatPrice } from '@/data/cars';
+import { cars, marqueBrands, categories, formatPrice, getCategoryImage } from '@/data/cars';
 
 const Index = () => {
   const featuredCars = cars.filter(c => c.featured);
