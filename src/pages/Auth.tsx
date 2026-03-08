@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, User as UserIcon, AlertCircle, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, AlertCircle, Eye, EyeOff, ArrowRight, Sparkles, CheckCircle2, MailOpen } from 'lucide-react';
 import { lovable } from '@/integrations/lovable/index';
-import { useToast } from '@/hooks/use-toast';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,23 +13,29 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
   const { login, signup } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const result = isLogin ? await login(email, password) : await signup(name, email, password);
-      if (result.error) {
-        setError(result.error);
-      } else {
-        if (!isLogin) {
-          toast({ title: 'Account Created!', description: 'Please check your email to verify your account.' });
+      if (isLogin) {
+        const result = await login(email, password);
+        if (result.error) {
+          setError(result.error);
+        } else {
+          navigate('/');
         }
-        navigate('/');
+      } else {
+        const result = await signup(name, email, password);
+        if (result.error) {
+          setError(result.error);
+        } else {
+          setShowVerification(true);
+        }
       }
     } catch {
       setError('Something went wrong. Please try again.');
@@ -46,6 +51,65 @@ const Auth = () => {
     });
     if (error) setError(error.message || 'Google sign-in failed');
   };
+
+  if (showVerification) {
+    return (
+      <div className="min-h-screen pt-20 flex items-center justify-center section-padding relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/4 -left-32 w-64 h-64 rounded-full bg-primary/5 blur-3xl" />
+          <div className="absolute bottom-1/4 -right-32 w-64 h-64 rounded-full bg-primary/5 blur-3xl" />
+        </div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6 }}
+          className="w-full max-w-md relative z-10 text-center"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', delay: 0.2 }}
+            className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center mx-auto mb-6"
+          >
+            <MailOpen className="w-10 h-10 text-primary" />
+          </motion.div>
+
+          <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">Check Your Email</h1>
+          <p className="text-muted-foreground text-sm mb-2">We've sent a verification link to</p>
+          <p className="text-primary font-semibold text-lg mb-8">{email}</p>
+
+          <div className="glass-panel-strong p-6 mb-6 text-left space-y-4">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-foreground/80">Open the email and click the verification link</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-foreground/80">You'll be redirected back to sign in</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-foreground/80">Check your spam folder if you don't see it</p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => { setShowVerification(false); setIsLogin(true); setPassword(''); }}
+            className="w-full py-3.5 gold-gradient text-primary-foreground font-semibold text-sm tracking-wider uppercase rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+          >
+            Go to Sign In <ArrowRight className="w-4 h-4" />
+          </button>
+
+          <p className="text-muted-foreground/60 text-xs mt-6">
+            Didn't receive the email?{' '}
+            <button onClick={() => setShowVerification(false)} className="text-primary hover:underline">
+              Try again
+            </button>
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-20 flex items-center justify-center section-padding relative overflow-hidden">
