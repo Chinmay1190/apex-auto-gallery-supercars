@@ -60,6 +60,8 @@ const App = () => (
                   <Route path="/orders" element={<Orders />} />
                   <Route path="/orders/:id" element={<OrderDetail />} />
                   <Route path="/categories" element={<Categories />} />
+                  <Route path="/testimonials" element={<Testimonials />} />
+                  <Route path="/compare" element={<Compare />} />
                   <Route path="/faq" element={<FAQ />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/terms" element={<Terms />} />
