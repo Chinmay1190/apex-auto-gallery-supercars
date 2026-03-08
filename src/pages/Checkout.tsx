@@ -91,9 +91,9 @@ const Checkout = () => {
     }
   };
 
-  const handleDownloadInvoice = () => {
+  const handleDownloadInvoice = async () => {
     if (!placedOrder) return;
-    generateInvoicePDF(placedOrder, placedOrder.items || items);
+    await generateInvoicePDF(placedOrder, placedOrder.items || items);
   };
 
   // Success page
