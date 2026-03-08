@@ -446,7 +446,7 @@ const drawFooter = (doc: jsPDF) => {
   doc.setTextColor(...colors.gold);
   doc.text('VELOCITY SUPERCARS PVT. LTD.', PAGE_WIDTH / 2, pageHeight - 22, { align: 'center' });
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(FONT, 'normal');
   doc.setFontSize(6.2);
   doc.setTextColor(...colors.dim);
   doc.text('GSTIN: 27AADCV1234A1ZB  |  CIN: U34100MH2024PTC123456', PAGE_WIDTH / 2, pageHeight - 16.5, { align: 'center' });
