@@ -39,9 +39,9 @@ const OrderDetail = () => {
     }
   }, [user, id]);
 
-  const handleDownloadInvoice = () => {
+  const handleDownloadInvoice = async () => {
     if (!order) return;
-    generateInvoicePDF(order, orderItems);
+    await generateInvoicePDF(order, orderItems);
   };
 
   if (authLoading || loading) return <div className="min-h-screen pt-24 flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>;
