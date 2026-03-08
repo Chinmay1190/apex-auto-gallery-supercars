@@ -5,6 +5,7 @@ import { ArrowLeft, Download, Package, Truck, CheckCircle2, Clock, MapPin } from
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/cars';
+import { generateInvoicePDF } from '@/utils/generateInvoicePDF';
 
 const statusSteps = [
   { key: 'confirmed', label: 'Confirmed', icon: CheckCircle2 },
