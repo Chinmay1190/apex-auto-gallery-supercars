@@ -1,128 +1,327 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { cars, brandLogos } from '@/data/cars';
-import { MapPin, Calendar, ChevronRight } from 'lucide-react';
+import { MapPin, Calendar, ChevronRight, ArrowRight, Sparkles } from 'lucide-react';
+import { useState } from 'react';
 
 const brandData = [
-  { name: 'Lamborghini', country: 'Italy', founded: '1963', description: 'Bold, angular supercars with naturally aspirated V10 and V12 engines.', color: '#FFD700' },
-  { name: 'Ferrari', country: 'Italy', founded: '1947', description: 'The prancing horse — synonymous with speed, passion, and racing heritage.', color: '#FF2800' },
-  { name: 'McLaren', country: 'United Kingdom', founded: '1963', description: 'Formula 1 DNA meets road car technology for ultimate driver engagement.', color: '#FF6600' },
-  { name: 'Porsche', country: 'Germany', founded: '1931', description: 'Precision engineering and iconic design from Stuttgart, Germany.', color: '#C0C0C0' },
-  { name: 'Bugatti', country: 'France', founded: '1909', description: 'The absolute pinnacle of automotive luxury and speed.', color: '#003399' },
-  { name: 'Aston Martin', country: 'United Kingdom', founded: '1913', description: 'British elegance meets grand touring excellence. The gentleman\'s supercar.', color: '#006633' },
-  { name: 'Rolls-Royce', country: 'United Kingdom', founded: '1904', description: 'The spirit of ecstasy. Unparalleled luxury, craftsmanship, and prestige.', color: '#1a1a2e' },
+  { name: 'Lamborghini', country: 'Italy', founded: '1963', tagline: 'Expect the unexpected', description: 'Bold, angular supercars with naturally aspirated V10 and V12 engines.', color: '#FFD700', gradient: 'from-yellow-500/20 via-amber-500/5 to-transparent' },
+  { name: 'Ferrari', country: 'Italy', founded: '1947', tagline: 'We are the competition', description: 'The prancing horse — synonymous with speed, passion, and racing heritage.', color: '#FF2800', gradient: 'from-red-500/20 via-red-500/5 to-transparent' },
+  { name: 'McLaren', country: 'United Kingdom', founded: '1963', tagline: 'Fearlessly forward', description: 'Formula 1 DNA meets road car technology for ultimate driver engagement.', color: '#FF6600', gradient: 'from-orange-500/20 via-orange-500/5 to-transparent' },
+  { name: 'Porsche', country: 'Germany', founded: '1931', tagline: 'There is no substitute', description: 'Precision engineering and iconic design from Stuttgart, Germany.', color: '#C0C0C0', gradient: 'from-zinc-400/20 via-zinc-400/5 to-transparent' },
+  { name: 'Bugatti', country: 'France', founded: '1909', tagline: 'Art, Forme, Technique', description: 'The absolute pinnacle of automotive luxury and speed.', color: '#003399', gradient: 'from-blue-600/20 via-blue-600/5 to-transparent' },
+  { name: 'Aston Martin', country: 'United Kingdom', founded: '1913', tagline: 'Power, Beauty and Soul', description: 'British elegance meets grand touring excellence. The gentleman\'s supercar.', color: '#006633', gradient: 'from-emerald-600/20 via-emerald-600/5 to-transparent' },
+  { name: 'Rolls-Royce', country: 'United Kingdom', founded: '1904', tagline: 'Strive for perfection', description: 'The spirit of ecstasy. Unparalleled luxury, craftsmanship, and prestige.', color: '#1a1a2e', gradient: 'from-purple-900/20 via-purple-900/5 to-transparent' },
 ];
 
 const Brands = () => {
+  const [hoveredBrand, setHoveredBrand] = useState<string | null>(null);
+
   return (
     <div className="min-h-screen pt-20 md:pt-24">
       {/* Hero Header */}
-      <section className="section-padding py-16 md:py-24 relative overflow-hidden">
+      <section className="section-padding py-20 md:py-32 relative overflow-hidden">
+        {/* Decorative elements */}
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
-        <div className="max-w-4xl mx-auto text-center relative z-10">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-[100px]" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-primary/3 rounded-full blur-[120px]" />
+
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: 'linear-gradient(hsl(var(--primary)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)',
+          backgroundSize: '60px 60px',
+        }} />
+
+        <div className="max-w-5xl mx-auto text-center relative z-10">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-            <p className="text-primary text-sm tracking-[0.3em] uppercase mb-4">Our Partners</p>
-            <h1 className="font-display text-4xl md:text-6xl font-bold mb-5">
-              Legendary <span className="gold-text">Marques</span>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: 'spring' }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-6"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <span className="text-primary text-xs tracking-[0.2em] uppercase font-medium">World's Finest Marques</span>
+            </motion.div>
+
+            <h1 className="font-display text-5xl md:text-7xl font-bold mb-6 leading-tight">
+              The Art of
+              <br />
+              <span className="gold-text">Automotive Excellence</span>
             </h1>
-            <p className="text-muted-foreground text-lg max-w-xl mx-auto leading-relaxed">
-              Curating the world's most prestigious automotive brands, each representing decades of engineering excellence.
+            <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+              Seven legendary manufacturers. Centuries of combined heritage. 
+              Each marque a masterpiece of engineering and design.
             </p>
+
+            {/* Scrolling brand marquee */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="mt-12 flex items-center justify-center gap-8 md:gap-12 flex-wrap"
+            >
+              {brandData.map((brand, i) => {
+                const logo = brandLogos[brand.name];
+                return (
+                  <motion.div
+                    key={brand.name}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 0.5, y: 0 }}
+                    whileHover={{ opacity: 1, scale: 1.1 }}
+                    transition={{ delay: 0.7 + i * 0.08 }}
+                    className="transition-all duration-300"
+                  >
+                    {logo && (
+                      <img src={logo} alt={brand.name} className="h-8 md:h-10 w-auto object-contain grayscale hover:grayscale-0 transition-all duration-500" />
+                    )}
+                  </motion.div>
+                );
+              })}
+            </motion.div>
           </motion.div>
         </div>
       </section>
 
-      {/* Brand Grid */}
-      <section className="section-padding py-12 md:py-16">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {brandData.map((brand, i) => {
-            const brandCars = cars.filter(c => c.brand === brand.name);
-            const startingPrice = brandCars.length > 0 ? Math.min(...brandCars.map(c => c.price)) : 0;
-            const logo = brandLogos[brand.name];
+      {/* Featured Brand (first brand, large card) */}
+      <section className="section-padding pb-8">
+        <div className="max-w-7xl mx-auto">
+          {(() => {
+            const featured = brandData[0];
+            const logo = brandLogos[featured.name];
+            const brandCars = cars.filter(c => c.brand === featured.name);
+            const heroCarImage = brandCars[0]?.image;
+
             return (
               <motion.div
-                key={brand.name}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
               >
                 <Link
-                  to={`/shop?brand=${encodeURIComponent(brand.name)}`}
-                  className="glass-panel p-0 hover-lift block group h-full overflow-hidden relative"
+                  to={`/shop?brand=${encodeURIComponent(featured.name)}`}
+                  className="block group relative overflow-hidden rounded-2xl border border-border/30 bg-card/50 backdrop-blur-sm"
                 >
-                  <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${brand.color}, ${brand.color}80, transparent)` }} />
-                  
-                  <div className="p-7">
-                    <div className="flex items-start justify-between mb-5">
-                      <div className="flex items-center gap-4">
-                        {logo ? (
-                          <div className="w-16 h-16 rounded-2xl flex items-center justify-center p-2 bg-secondary/50 border border-border/50">
-                            <img src={logo} alt={brand.name} className="w-full h-full object-contain" />
-                          </div>
-                        ) : (
-                          <div
-                            className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-display font-bold"
-                            style={{ backgroundColor: brand.color + '15', border: `1px solid ${brand.color}30` }}
-                          >
-                            {brand.name.charAt(0)}
-                          </div>
-                        )}
-                        <div>
-                          <h3 className="font-display text-xl font-semibold group-hover:text-primary transition-colors">{brand.name}</h3>
-                          <div className="flex items-center gap-3 mt-1">
-                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <MapPin className="w-3 h-3" />{brand.country}
-                            </span>
-                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Calendar className="w-3 h-3" />Est. {brand.founded}
-                            </span>
-                          </div>
-                        </div>
+                  <div className="grid md:grid-cols-2">
+                    {/* Image side */}
+                    <div className="relative h-64 md:h-[400px] overflow-hidden">
+                      {heroCarImage && (
+                        <img
+                          src={heroCarImage}
+                          alt={featured.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-background/90 hidden md:block" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent md:hidden" />
+
+                      {/* Badge */}
+                      <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-primary/90 text-primary-foreground text-xs font-semibold tracking-wider uppercase">
+                        Featured
                       </div>
                     </div>
 
-                    <p className="text-muted-foreground text-sm leading-relaxed mb-5">{brand.description}</p>
-
-                    <div className="flex items-center gap-4 py-4 border-t border-border/30">
-                      <div className="flex-1">
-                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Models</p>
-                        <p className="font-display text-lg text-foreground">{brandCars.length}</p>
-                      </div>
-                      {startingPrice > 0 && (
-                        <div className="flex-1">
-                          <p className="text-xs text-muted-foreground uppercase tracking-wider">Starting</p>
-                          <p className="font-display text-lg gold-text">₹{(startingPrice / 10000000).toFixed(1)}Cr</p>
+                    {/* Content side */}
+                    <div className="p-8 md:p-12 flex flex-col justify-center relative">
+                      <div className={`absolute inset-0 bg-gradient-to-br ${featured.gradient} opacity-50`} />
+                      <div className="relative z-10">
+                        <div className="flex items-center gap-4 mb-6">
+                          {logo && (
+                            <div className="w-16 h-16 rounded-2xl bg-secondary/50 border border-border/50 flex items-center justify-center p-2">
+                              <img src={logo} alt={featured.name} className="w-full h-full object-contain" />
+                            </div>
+                          )}
+                          <div>
+                            <h2 className="font-display text-3xl md:text-4xl font-bold group-hover:text-primary transition-colors">
+                              {featured.name}
+                            </h2>
+                            <p className="text-primary/80 text-sm italic mt-0.5">"{featured.tagline}"</p>
+                          </div>
                         </div>
-                      )}
-                      <div className="flex items-center gap-1 text-primary text-sm font-medium group-hover:gap-2 transition-all">
-                        Explore <ChevronRight className="w-4 h-4" />
+
+                        <p className="text-muted-foreground text-base leading-relaxed mb-6">{featured.description}</p>
+
+                        <div className="flex items-center gap-6 mb-8">
+                          <div>
+                            <p className="text-2xl font-display gold-text">{brandCars.length}</p>
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider">Models</p>
+                          </div>
+                          <div className="w-px h-10 bg-border/50" />
+                          <div>
+                            <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" />{featured.country}</p>
+                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><Calendar className="w-3 h-3" />Since {featured.founded}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-primary font-medium group-hover:gap-3 transition-all">
+                          Explore Collection <ArrowRight className="w-4 h-4" />
+                        </div>
                       </div>
                     </div>
                   </div>
                 </Link>
               </motion.div>
             );
-          })}
+          })()}
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="section-padding py-16 border-t border-border/30 bg-card/20">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      {/* Brand Grid */}
+      <section className="section-padding py-8 md:py-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-1 h-8 rounded-full gold-gradient" />
+            <h2 className="font-display text-2xl font-bold">All Brands</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {brandData.slice(1).map((brand, i) => {
+              const brandCars = cars.filter(c => c.brand === brand.name);
+              const startingPrice = brandCars.length > 0 ? Math.min(...brandCars.map(c => c.price)) : 0;
+              const logo = brandLogos[brand.name];
+              const isHovered = hoveredBrand === brand.name;
+              const heroCarImage = brandCars[0]?.image;
+
+              return (
+                <motion.div
+                  key={brand.name}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08 }}
+                >
+                  <Link
+                    to={`/shop?brand=${encodeURIComponent(brand.name)}`}
+                    className="block group h-full relative overflow-hidden rounded-xl border border-border/30 bg-card/30 backdrop-blur-sm hover:border-primary/30 transition-all duration-500"
+                    onMouseEnter={() => setHoveredBrand(brand.name)}
+                    onMouseLeave={() => setHoveredBrand(null)}
+                  >
+                    {/* Car image background with overlay */}
+                    <div className="relative h-44 overflow-hidden">
+                      {heroCarImage && (
+                        <img
+                          src={heroCarImage}
+                          alt={brand.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+
+                      {/* Brand color accent */}
+                      <div
+                        className="absolute top-0 left-0 right-0 h-1 transition-all duration-500"
+                        style={{
+                          background: `linear-gradient(90deg, ${brand.color}, ${brand.color}60, transparent)`,
+                          opacity: isHovered ? 1 : 0.6,
+                        }}
+                      />
+
+                      {/* Logo floating on image */}
+                      {logo && (
+                        <div className="absolute bottom-3 left-4">
+                          <div className="w-12 h-12 rounded-xl bg-background/80 backdrop-blur-md border border-border/50 flex items-center justify-center p-1.5 group-hover:scale-110 transition-transform duration-300">
+                            <img src={logo} alt={brand.name} className="w-full h-full object-contain" />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Model count badge */}
+                      <div className="absolute bottom-3 right-4 px-2.5 py-1 rounded-lg bg-background/80 backdrop-blur-md border border-border/50 text-xs font-medium">
+                        {brandCars.length} {brandCars.length === 1 ? 'Model' : 'Models'}
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-5">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h3 className="font-display text-xl font-bold group-hover:text-primary transition-colors duration-300">
+                            {brand.name}
+                          </h3>
+                          <p className="text-primary/60 text-[11px] italic">"{brand.tagline}"</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                          <MapPin className="w-3 h-3" />{brand.country}
+                        </span>
+                        <span className="text-border">•</span>
+                        <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                          <Calendar className="w-3 h-3" />{brand.founded}
+                        </span>
+                      </div>
+
+                      <p className="text-muted-foreground text-sm leading-relaxed mb-4 line-clamp-2">{brand.description}</p>
+
+                      <div className="flex items-center justify-between pt-3 border-t border-border/30">
+                        {startingPrice > 0 && (
+                          <div>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Starting at</p>
+                            <p className="font-display text-sm gold-text font-semibold">₹{(startingPrice / 10000000).toFixed(1)} Cr</p>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1 text-primary text-xs font-medium group-hover:gap-2 transition-all">
+                          Explore <ChevronRight className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Bar */}
+      <section className="section-padding py-16 mt-8 border-t border-border/20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/3 via-transparent to-primary/3" />
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
           {[
-            { value: '7', label: 'Premium Brands' },
-            { value: '40+', label: 'Exclusive Models' },
-            { value: '5', label: 'Countries' },
-            { value: '100+', label: 'Years of Legacy' },
+            { value: '7', label: 'Premium Brands', icon: '🏎️' },
+            { value: '40+', label: 'Exclusive Models', icon: '⚡' },
+            { value: '5', label: 'Countries', icon: '🌍' },
+            { value: '100+', label: 'Years of Legacy', icon: '👑' },
           ].map((stat, i) => (
-            <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-              className="glass-panel p-6">
-              <p className="font-display text-3xl md:text-4xl gold-text mb-2">{stat.value}</p>
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="glass-panel p-6 text-center group hover:border-primary/20 transition-colors duration-300"
+            >
+              <span className="text-2xl mb-2 block">{stat.icon}</span>
+              <p className="font-display text-3xl md:text-4xl gold-text mb-1 group-hover:scale-110 transition-transform">{stat.value}</p>
               <p className="text-muted-foreground text-xs tracking-wider uppercase">{stat.label}</p>
             </motion.div>
           ))}
         </div>
+      </section>
+
+      {/* CTA */}
+      <section className="section-padding py-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-t from-primary/5 via-transparent to-transparent" />
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-2xl mx-auto text-center relative z-10"
+        >
+          <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
+            Ready to Find Your <span className="gold-text">Dream Car</span>?
+          </h2>
+          <p className="text-muted-foreground mb-8">
+            Browse our complete collection of luxury supercars and find the perfect machine that matches your style.
+          </p>
+          <Link
+            to="/shop"
+            className="inline-flex items-center gap-2 px-8 py-3.5 gold-gradient text-primary-foreground rounded-xl font-semibold text-sm hover:shadow-xl hover:shadow-primary/20 transition-all"
+          >
+            Browse All Cars <ArrowRight className="w-4 h-4" />
+          </Link>
+        </motion.div>
       </section>
     </div>
   );
