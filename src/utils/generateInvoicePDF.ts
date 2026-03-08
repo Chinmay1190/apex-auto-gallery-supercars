@@ -581,7 +581,8 @@ export const generateInvoicePDF = async (order: InvoiceOrder, items: InvoiceItem
   drawHeader(doc, order, logoData);
   const startY = drawCustomerAndPayment(doc, order);
   const finalTableY = drawItems(doc, startY, items, carImages);
-  drawTotals(doc, order, finalTableY);
+  const totalsEndY = drawTotals(doc, order, finalTableY);
+  drawSignatory(doc, totalsEndY);
   drawFooter(doc);
 
   doc.save(`Velocity-Invoice-${toText(order.order_number, 'ORDER')}.pdf`);
