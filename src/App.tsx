@@ -26,6 +26,7 @@ import OrderDetail from "./pages/OrderDetail";
 import FAQ from "./pages/FAQ";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
+import Categories from "./pages/Categories";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -56,6 +57,7 @@ const App = () => (
                   <Route path="/brands" element={<Brands />} />
                   <Route path="/orders" element={<Orders />} />
                   <Route path="/orders/:id" element={<OrderDetail />} />
+                  <Route path="/categories" element={<Categories />} />
                   <Route path="/faq" element={<FAQ />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/terms" element={<Terms />} />

@@ -1,15 +1,9 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowDown, ChevronRight, Zap, Shield, Gauge, Star, Quote } from 'lucide-react';
+import { ArrowDown, ChevronRight, Zap, Shield, Gauge, Wrench, Car, Headphones, CalendarCheck } from 'lucide-react';
 import heroImg from '@/assets/hero-car.jpg';
 import CarCard from '@/components/CarCard';
 import { cars, marqueBrands, categories, formatPrice } from '@/data/cars';
-
-const testimonials = [
-  { name: 'Rajesh Khanna', role: 'CEO, TechVision', text: 'Velocity made buying my Aventador an unforgettable experience. Their concierge service is truly world-class.', rating: 5 },
-  { name: 'Priya Sharma', role: 'Entrepreneur', text: 'From selection to delivery, every step was seamless. My Ferrari SF90 arrived in perfect condition.', rating: 5 },
-  { name: 'Vikram Singh', role: 'Film Producer', text: 'The attention to detail at Velocity is unmatched. They found me a limited edition Bugatti within weeks.', rating: 5 },
-];
 
 const Index = () => {
   const featuredCars = cars.filter(c => c.featured);
@@ -135,52 +129,28 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Services Section */}
       <section className="section-padding py-16 md:py-24 bg-card/20">
         <div className="max-w-7xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
-            <p className="text-primary text-sm tracking-[0.3em] uppercase mb-3">Testimonials</p>
-            <h2 className="font-display text-3xl md:text-5xl font-bold">What Our Clients Say</h2>
+            <p className="text-primary text-sm tracking-[0.3em] uppercase mb-3">Our Services</p>
+            <h2 className="font-display text-3xl md:text-5xl font-bold">Premium Automotive Services</h2>
           </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.15 }}
-                className="glass-panel p-8 hover-lift relative">
-                <Quote className="w-8 h-8 text-primary/20 absolute top-4 right-4" />
-                <div className="flex gap-1 mb-4">
-                  {Array.from({ length: t.rating }).map((_, j) => (
-                    <Star key={j} className="w-4 h-4 text-primary fill-primary" />
-                  ))}
-                </div>
-                <p className="text-muted-foreground text-sm leading-relaxed mb-6">"{t.text}"</p>
-                <div>
-                  <p className="font-display text-sm text-foreground">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">{t.role}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Why Choose Us */}
-      <section className="section-padding py-16 md:py-24">
-        <div className="max-w-7xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
-            <p className="text-primary text-sm tracking-[0.3em] uppercase mb-3">Why Velocity</p>
-            <h2 className="font-display text-3xl md:text-5xl font-bold">The Velocity Promise</h2>
-          </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: Shield, title: 'Certified Authentic', desc: 'Every vehicle undergoes 200-point inspection and comes with full provenance documentation.' },
-              { icon: Zap, title: 'Bespoke Experience', desc: 'Personalized concierge service from selection to delivery at your doorstep.' },
-              { icon: Gauge, title: 'Performance Guaranteed', desc: 'Factory-spec performance with comprehensive warranty and after-sales support.' },
-            ].map((item, i) => (
-              <motion.div key={item.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.15 }}
-                className="glass-panel p-8 text-center hover-lift">
-                <item.icon className="w-8 h-8 text-primary mx-auto mb-4" />
-                <h3 className="font-display text-lg mb-3">{item.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{item.desc}</p>
+              { icon: CalendarCheck, title: 'Test Drive Booking', desc: 'Schedule a private test drive experience at our luxury showroom or at your preferred location.', color: 'text-primary' },
+              { icon: Car, title: 'Custom Orders', desc: 'Configure your dream car with bespoke specifications, colors, and exclusive factory options.', color: 'text-primary' },
+              { icon: Wrench, title: 'After-Sales Care', desc: 'Comprehensive maintenance, detailing, and performance upgrades by certified technicians.', color: 'text-primary' },
+              { icon: Headphones, title: 'Concierge Service', desc: '24/7 dedicated support for all your luxury automotive needs, from purchase to ownership.', color: 'text-primary' },
+            ].map((service, i) => (
+              <motion.div key={service.title} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                className="glass-panel p-8 hover-lift group relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 gold-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                  <service.icon className={`w-7 h-7 ${service.color}`} />
+                </div>
+                <h3 className="font-display text-lg mb-3 group-hover:text-primary transition-colors">{service.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{service.desc}</p>
               </motion.div>
             ))}
           </div>

@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { formatPrice } from '@/data/cars';
-import { Check, CreditCard, Smartphone, Building2, Wallet, ChevronRight, Download, Package, FileText } from 'lucide-react';
+import { Check, CreditCard, Smartphone, Building2, Wallet, ChevronRight, Download, Package, FileText, ShieldCheck, Truck, ArrowRight, PartyPopper } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { generateInvoicePDF } from '@/utils/generateInvoicePDF';
 
 const steps = ['Details', 'Delivery', 'Payment', 'Review'];
 
@@ -92,102 +93,75 @@ const Checkout = () => {
 
   const handleDownloadInvoice = () => {
     if (!placedOrder) return;
-    const invoiceHTML = generateInvoiceHTML();
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(invoiceHTML);
-      printWindow.document.close();
-      printWindow.print();
-    }
+    generateInvoicePDF(placedOrder, placedOrder.items || items);
   };
 
-  const generateInvoiceHTML = () => {
-    const orderItems = placedOrder.items || items;
-    return `<!DOCTYPE html>
-<html><head><title>Invoice - ${placedOrder.order_number}</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Segoe UI', sans-serif; padding: 40px; color: #1a1a1a; background: #fff; max-width: 800px; margin: 0 auto; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #c8a45a; padding-bottom: 20px; margin-bottom: 30px; }
-  .logo { font-size: 28px; font-weight: bold; color: #c8a45a; letter-spacing: 4px; }
-  .logo-sub { font-size: 10px; color: #666; letter-spacing: 3px; margin-top: 4px; }
-  .invoice-title { font-size: 12px; color: #666; text-align: right; }
-  .invoice-title h2 { font-size: 24px; color: #1a1a1a; margin-bottom: 4px; }
-  .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
-  .detail-block h4 { font-size: 10px; letter-spacing: 2px; color: #999; text-transform: uppercase; margin-bottom: 8px; }
-  .detail-block p { font-size: 13px; color: #333; line-height: 1.6; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-  th { background: #f8f6f0; padding: 12px 16px; text-align: left; font-size: 10px; letter-spacing: 2px; color: #666; text-transform: uppercase; border-bottom: 2px solid #e8e0cc; }
-  td { padding: 14px 16px; border-bottom: 1px solid #f0ece4; font-size: 13px; }
-  .amount { text-align: right; }
-  .totals { margin-left: auto; width: 300px; }
-  .totals .row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; color: #555; }
-  .totals .row.gst { color: #c8a45a; }
-  .totals .row.total { border-top: 2px solid #c8a45a; padding-top: 12px; margin-top: 8px; font-size: 18px; font-weight: bold; color: #1a1a1a; }
-  .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e8e0cc; text-align: center; font-size: 11px; color: #999; }
-  .payment-badge { display: inline-block; padding: 4px 12px; background: #f8f6f0; border: 1px solid #e8e0cc; border-radius: 4px; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
-  @media print { body { padding: 20px; } }
-</style></head><body>
-  <div class="header">
-    <div><div class="logo">VELOCITY</div><div class="logo-sub">LUXURY SUPERCARS</div></div>
-    <div class="invoice-title"><h2>INVOICE</h2><p>${placedOrder.order_number}</p><p>${new Date(placedOrder.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
-  </div>
-  <div class="details-grid">
-    <div class="detail-block"><h4>Bill To</h4><p><strong>${placedOrder.shipping_name}</strong><br>${placedOrder.shipping_email}<br>${placedOrder.shipping_phone}</p></div>
-    <div class="detail-block"><h4>Ship To</h4><p>${placedOrder.shipping_address}<br>${placedOrder.shipping_city}, ${placedOrder.shipping_state}<br>PIN: ${placedOrder.shipping_pincode}</p></div>
-  </div>
-  <div style="margin-bottom: 20px;"><span class="payment-badge">Payment: ${placedOrder.payment_method.toUpperCase()}</span></div>
-  <table>
-    <thead><tr><th>Item</th><th>Brand</th><th>Qty</th><th class="amount">Price</th><th class="amount">Total</th></tr></thead>
-    <tbody>${orderItems.map((item: any) => `<tr><td>${item.car?.name || item.car_name}</td><td>${item.car?.brand || item.car_brand}</td><td>${item.quantity}</td><td class="amount">${formatPrice(item.car?.price || item.price)}</td><td class="amount">${formatPrice((item.car?.price || item.price) * item.quantity)}</td></tr>`).join('')}</tbody>
-  </table>
-  <div class="totals">
-    <div class="row"><span>Subtotal</span><span>${formatPrice(placedOrder.subtotal)}</span></div>
-    <div class="row gst"><span>GST (28%)</span><span>${formatPrice(placedOrder.gst_amount)}</span></div>
-    ${placedOrder.discount > 0 ? `<div class="row"><span>Discount</span><span>-${formatPrice(placedOrder.discount)}</span></div>` : ''}
-    <div class="row total"><span>Grand Total</span><span>${formatPrice(placedOrder.total)}</span></div>
-  </div>
-  <div class="footer">
-    <p>GSTIN: 27AADCV1234A1ZB &nbsp;|&nbsp; Velocity Supercars Pvt. Ltd.</p>
-    <p style="margin-top: 4px;">Worli Sea Face Road, Mumbai, Maharashtra 400018</p>
-    <p style="margin-top: 8px;">Thank you for choosing Velocity. Drive the extraordinary.</p>
-  </div>
-</body></html>`;
-  };
-
+  // Success page
   if (orderPlaced && placedOrder) return (
     <div className="min-h-screen pt-24 flex items-center justify-center section-padding">
-      <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-lg w-full">
-        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.2 }}
-          className="w-20 h-20 rounded-full gold-gradient flex items-center justify-center mx-auto mb-6">
-          <Check className="w-10 h-10 text-primary-foreground" />
+      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className="text-center max-w-lg w-full">
+        {/* Animated success icon */}
+        <motion.div 
+          initial={{ scale: 0 }} 
+          animate={{ scale: 1 }} 
+          transition={{ type: 'spring', delay: 0.2, stiffness: 200 }}
+          className="relative mx-auto mb-8 w-24 h-24"
+        >
+          <motion.div 
+            animate={{ scale: [1, 1.2, 1] }} 
+            transition={{ duration: 2, repeat: Infinity }}
+            className="absolute inset-0 rounded-full bg-primary/20 blur-xl"
+          />
+          <div className="relative w-24 h-24 rounded-full gold-gradient flex items-center justify-center gold-glow">
+            <Check className="w-12 h-12 text-primary-foreground" />
+          </div>
         </motion.div>
-        <h1 className="font-display text-3xl mb-3">Order Confirmed!</h1>
-        <p className="text-muted-foreground mb-1">Your supercar order has been placed successfully.</p>
-        <p className="text-primary font-display text-lg mb-2">#{placedOrder.order_number}</p>
-        <p className="text-muted-foreground text-sm mb-8">Total: <span className="gold-text font-display">{formatPrice(placedOrder.total)}</span> (incl. 28% GST)</p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <PartyPopper className="w-5 h-5 text-primary" />
+            <h1 className="font-display text-3xl md:text-4xl font-bold">Order Confirmed!</h1>
+            <PartyPopper className="w-5 h-5 text-primary" />
+          </div>
+          <p className="text-muted-foreground mb-2">Your supercar order has been placed successfully.</p>
+          <div className="glass-panel inline-block px-4 py-2 mb-2">
+            <p className="text-primary font-display text-lg">#{placedOrder.order_number}</p>
+          </div>
+          <p className="text-muted-foreground text-sm mb-8">
+            Total: <span className="gold-text font-display text-lg">{formatPrice(placedOrder.total)}</span> (incl. 28% GST)
+          </p>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}
+          className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
           <Link to={`/orders/${placedOrder.id}`}
-            className="glass-panel p-4 hover-lift flex flex-col items-center gap-2 text-sm">
-            <Package className="w-5 h-5 text-primary" />
-            <span>Track Order</span>
+            className="glass-panel p-5 hover-lift flex flex-col items-center gap-3 text-sm group">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+              <Package className="w-6 h-6 text-primary" />
+            </div>
+            <span className="font-medium">Track Order</span>
           </Link>
           <button onClick={handleDownloadInvoice}
-            className="glass-panel p-4 hover-lift flex flex-col items-center gap-2 text-sm">
-            <Download className="w-5 h-5 text-primary" />
-            <span>Download Invoice</span>
+            className="glass-panel p-5 hover-lift flex flex-col items-center gap-3 text-sm group">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+              <Download className="w-6 h-6 text-primary" />
+            </div>
+            <span className="font-medium">Download PDF</span>
           </button>
           <Link to="/orders"
-            className="glass-panel p-4 hover-lift flex flex-col items-center gap-2 text-sm">
-            <FileText className="w-5 h-5 text-primary" />
-            <span>All Orders</span>
+            className="glass-panel p-5 hover-lift flex flex-col items-center gap-3 text-sm group">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+              <FileText className="w-6 h-6 text-primary" />
+            </div>
+            <span className="font-medium">All Orders</span>
           </Link>
-        </div>
+        </motion.div>
 
-        <Link to="/" className="inline-flex items-center gap-2 px-6 py-3 gold-gradient text-primary-foreground font-semibold text-sm rounded-lg uppercase tracking-wider">
-          Back to Home
-        </Link>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}>
+          <Link to="/" className="inline-flex items-center gap-2 px-8 py-3.5 gold-gradient text-primary-foreground font-semibold text-sm rounded-lg uppercase tracking-wider hover:opacity-90 transition-opacity">
+            Continue Shopping <ArrowRight className="w-4 h-4" />
+          </Link>
+        </motion.div>
       </motion.div>
     </div>
   );
@@ -203,20 +177,22 @@ const Checkout = () => {
 
   const InputField = ({ label, value, onChange, type = 'text', placeholder = '', required = false }: any) => (
     <div>
-      <label className="block text-xs text-muted-foreground mb-1.5 uppercase tracking-wider">{label}</label>
+      <label className="block text-xs text-muted-foreground mb-2 uppercase tracking-wider font-medium">{label}</label>
       <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} required={required}
-        className="w-full px-4 py-3 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none transition-colors" />
+        className="w-full px-4 py-3.5 bg-background border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none transition-all" />
     </div>
   );
 
   return (
     <div className="min-h-screen pt-20 md:pt-24">
       <div className="section-padding py-8 md:py-12">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="font-display text-3xl font-bold mb-8">Checkout</h1>
+        <div className="max-w-4xl mx-auto">
+          <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Checkout</h1>
+          <p className="text-muted-foreground text-sm mb-8">Complete your order in a few simple steps</p>
 
           {!isAuthenticated && (
-            <div className="glass-panel p-4 mb-6 border-primary/30">
+            <div className="glass-panel p-4 mb-6 border-primary/30 flex items-center gap-3">
+              <ShieldCheck className="w-5 h-5 text-primary flex-shrink-0" />
               <p className="text-sm text-muted-foreground">
                 <Link to="/auth" className="text-primary font-semibold hover:underline">Sign in</Link> to save your order and track it later.
               </p>
@@ -224,16 +200,20 @@ const Checkout = () => {
           )}
 
           {/* Steps */}
-          <div className="flex items-center gap-2 mb-10">
+          <div className="flex items-center gap-1 mb-10">
             {steps.map((s, i) => (
-              <div key={s} className="flex items-center gap-2">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                  i <= step ? 'gold-gradient text-primary-foreground' : 'bg-secondary text-muted-foreground'
-                }`}>
-                  {i < step ? <Check className="w-4 h-4" /> : i + 1}
+              <div key={s} className="flex items-center gap-1 flex-1">
+                <div className="flex items-center gap-2 flex-1">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all flex-shrink-0 ${
+                    i < step ? 'gold-gradient text-primary-foreground' : i === step ? 'border-2 border-primary text-primary' : 'bg-secondary text-muted-foreground'
+                  }`}>
+                    {i < step ? <Check className="w-4 h-4" /> : i + 1}
+                  </div>
+                  <span className={`text-xs tracking-wider uppercase hidden md:block ${i <= step ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>{s}</span>
                 </div>
-                <span className={`text-xs tracking-wider uppercase hidden md:block ${i <= step ? 'text-foreground' : 'text-muted-foreground'}`}>{s}</span>
-                {i < steps.length - 1 && <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                {i < steps.length - 1 && (
+                  <div className={`h-[2px] flex-1 mx-2 rounded-full transition-colors ${i < step ? 'bg-primary' : 'bg-border'}`} />
+                )}
               </div>
             ))}
           </div>
@@ -242,16 +222,26 @@ const Checkout = () => {
             <div className="lg:col-span-2">
               <AnimatePresence mode="wait">
                 {step === 0 && (
-                  <motion.div key="details" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="glass-panel p-6 space-y-4">
-                    <h3 className="font-display text-lg mb-4">Personal Details</h3>
+                  <motion.div key="details" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="glass-panel p-7 space-y-5">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <span className="text-primary font-bold text-sm">1</span>
+                      </div>
+                      <h3 className="font-display text-lg">Personal Details</h3>
+                    </div>
                     <InputField label="Full Name" value={form.name} onChange={(v: string) => updateForm('name', v)} placeholder="John Doe" required />
                     <InputField label="Email" value={form.email} onChange={(v: string) => updateForm('email', v)} type="email" placeholder="john@example.com" required />
                     <InputField label="Phone" value={form.phone} onChange={(v: string) => updateForm('phone', v)} placeholder="+91 98765 43210" required />
                   </motion.div>
                 )}
                 {step === 1 && (
-                  <motion.div key="delivery" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="glass-panel p-6 space-y-4">
-                    <h3 className="font-display text-lg mb-4">Delivery Address</h3>
+                  <motion.div key="delivery" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="glass-panel p-7 space-y-5">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Truck className="w-4 h-4 text-primary" />
+                      </div>
+                      <h3 className="font-display text-lg">Delivery Address</h3>
+                    </div>
                     <InputField label="Address" value={form.address} onChange={(v: string) => updateForm('address', v)} placeholder="123 Luxury Lane" required />
                     <div className="grid grid-cols-2 gap-4">
                       <InputField label="City" value={form.city} onChange={(v: string) => updateForm('city', v)} placeholder="Mumbai" required />
@@ -261,8 +251,13 @@ const Checkout = () => {
                   </motion.div>
                 )}
                 {step === 2 && (
-                  <motion.div key="payment" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="glass-panel p-6">
-                    <h3 className="font-display text-lg mb-6">Payment Method</h3>
+                  <motion.div key="payment" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="glass-panel p-7">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <CreditCard className="w-4 h-4 text-primary" />
+                      </div>
+                      <h3 className="font-display text-lg">Payment Method</h3>
+                    </div>
                     <div className="space-y-3">
                       {[
                         { id: 'upi', label: 'UPI', icon: Smartphone, desc: 'Google Pay, PhonePe, Paytm' },
@@ -271,40 +266,54 @@ const Checkout = () => {
                         { id: 'wallet', label: 'Wallet', icon: Wallet, desc: 'Amazon Pay, Mobikwik' },
                       ].map(method => (
                         <button key={method.id} onClick={() => updateForm('paymentMethod', method.id)}
-                          className={`w-full flex items-center gap-4 p-4 rounded-lg border transition-all ${
-                            form.paymentMethod === method.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'
+                          className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all ${
+                            form.paymentMethod === method.id ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border hover:border-primary/30'
                           }`}>
-                          <method.icon className={`w-5 h-5 ${form.paymentMethod === method.id ? 'text-primary' : 'text-muted-foreground'}`} />
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                            form.paymentMethod === method.id ? 'bg-primary/15' : 'bg-secondary'
+                          }`}>
+                            <method.icon className={`w-5 h-5 ${form.paymentMethod === method.id ? 'text-primary' : 'text-muted-foreground'}`} />
+                          </div>
                           <div className="text-left">
                             <p className="text-sm font-medium">{method.label}</p>
                             <p className="text-xs text-muted-foreground">{method.desc}</p>
                           </div>
+                          {form.paymentMethod === method.id && (
+                            <div className="ml-auto w-5 h-5 rounded-full gold-gradient flex items-center justify-center">
+                              <Check className="w-3 h-3 text-primary-foreground" />
+                            </div>
+                          )}
                         </button>
                       ))}
                     </div>
                   </motion.div>
                 )}
                 {step === 3 && (
-                  <motion.div key="review" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="glass-panel p-6">
-                    <h3 className="font-display text-lg mb-6">Review Order</h3>
+                  <motion.div key="review" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="glass-panel p-7">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <ShieldCheck className="w-4 h-4 text-primary" />
+                      </div>
+                      <h3 className="font-display text-lg">Review Order</h3>
+                    </div>
                     <div className="space-y-3 mb-6">
                       {items.map(({ car, quantity }) => (
-                        <div key={car.id} className="flex items-center gap-3 py-2">
-                          <img src={car.image} alt={car.name} className="w-16 h-12 object-cover rounded" />
+                        <div key={car.id} className="flex items-center gap-4 p-3 rounded-xl bg-secondary/30">
+                          <img src={car.image} alt={car.name} className="w-20 h-14 object-cover rounded-lg" />
                           <div className="flex-1">
                             <p className="text-sm font-medium">{car.brand} {car.name}</p>
                             <p className="text-xs text-muted-foreground">Qty: {quantity}</p>
                           </div>
-                          <p className="text-sm gold-text">{formatPrice(car.price * quantity)}</p>
+                          <p className="text-sm gold-text font-display">{formatPrice(car.price * quantity)}</p>
                         </div>
                       ))}
                     </div>
-                    <div className="border-t border-border pt-4 space-y-2 text-sm">
-                      <div className="flex justify-between"><span className="text-muted-foreground">Delivering to</span><span>{form.name}, {form.city}</span></div>
-                      <div className="flex justify-between"><span className="text-muted-foreground">Payment</span><span className="capitalize">{form.paymentMethod}</span></div>
+                    <div className="border-t border-border pt-4 space-y-3 text-sm">
+                      <div className="flex justify-between"><span className="text-muted-foreground">Delivering to</span><span className="font-medium">{form.name}, {form.city}</span></div>
+                      <div className="flex justify-between"><span className="text-muted-foreground">Payment</span><span className="capitalize font-medium">{form.paymentMethod}</span></div>
                       <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatPrice(subtotal)}</span></div>
                       <div className="flex justify-between text-primary"><span>GST (28%)</span><span>{formatPrice(gstAmount)}</span></div>
-                      <div className="flex justify-between font-display text-lg border-t border-border pt-2 mt-2">
+                      <div className="flex justify-between font-display text-lg border-t border-border pt-3 mt-3">
                         <span>Grand Total</span><span className="gold-text">{formatPrice(grandTotal)}</span>
                       </div>
                     </div>
@@ -314,31 +323,48 @@ const Checkout = () => {
 
               <div className="flex justify-between mt-6">
                 <button onClick={() => setStep(Math.max(0, step - 1))}
-                  className={`px-6 py-2.5 text-sm border border-border rounded-lg hover:border-primary/50 transition-colors ${step === 0 ? 'invisible' : ''}`}>
+                  className={`px-6 py-2.5 text-sm border border-border rounded-xl hover:border-primary/50 transition-colors ${step === 0 ? 'invisible' : ''}`}>
                   Back
                 </button>
                 {step < 3 ? (
-                  <button onClick={() => setStep(step + 1)} className="px-6 py-2.5 text-sm gold-gradient text-primary-foreground rounded-lg font-semibold uppercase tracking-wider">
-                    Continue
+                  <button onClick={() => setStep(step + 1)} className="px-6 py-2.5 text-sm gold-gradient text-primary-foreground rounded-xl font-semibold uppercase tracking-wider flex items-center gap-2 hover:opacity-90 transition-opacity">
+                    Continue <ChevronRight className="w-4 h-4" />
                   </button>
                 ) : (
                   <button onClick={handlePlaceOrder} disabled={loading}
-                    className="px-8 py-2.5 text-sm gold-gradient text-primary-foreground rounded-lg font-semibold uppercase tracking-wider animate-pulse-gold disabled:opacity-50">
+                    className="px-8 py-2.5 text-sm gold-gradient text-primary-foreground rounded-xl font-semibold uppercase tracking-wider animate-pulse-gold disabled:opacity-50 flex items-center gap-2">
                     {loading ? 'Processing...' : 'Place Order'}
+                    {!loading && <ArrowRight className="w-4 h-4" />}
                   </button>
                 )}
               </div>
             </div>
 
             {/* Summary */}
-            <div className="glass-panel p-6 h-fit">
-              <h3 className="font-display text-sm tracking-wider uppercase mb-4">Summary</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Items ({items.length})</span><span>{formatPrice(subtotal)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">GST (28%)</span><span>{formatPrice(gstAmount)}</span></div>
+            <div className="glass-panel p-6 h-fit sticky top-28">
+              <h3 className="font-display text-sm tracking-wider uppercase mb-4">Order Summary</h3>
+              <div className="space-y-3 mb-4">
+                {items.map(({ car, quantity }) => (
+                  <div key={car.id} className="flex items-center gap-3">
+                    <img src={car.image} alt={car.name} className="w-12 h-9 object-cover rounded" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium truncate">{car.brand} {car.name}</p>
+                      <p className="text-xs text-muted-foreground">×{quantity}</p>
+                    </div>
+                    <p className="text-xs gold-text">{formatPrice(car.price * quantity)}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="border-t border-border pt-3 space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatPrice(subtotal)}</span></div>
+                <div className="flex justify-between text-primary"><span>GST (28%)</span><span>{formatPrice(gstAmount)}</span></div>
                 <div className="border-t border-border pt-2 flex justify-between font-display text-base">
                   <span>Total</span><span className="gold-text">{formatPrice(grandTotal)}</span>
                 </div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-border/50 flex items-center gap-2 text-xs text-muted-foreground">
+                <ShieldCheck className="w-4 h-4 text-primary" />
+                <span>Secure checkout with 256-bit encryption</span>
               </div>
             </div>
           </div>
