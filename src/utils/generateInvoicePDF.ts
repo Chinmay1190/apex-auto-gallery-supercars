@@ -476,7 +476,7 @@ const drawSignatory = (doc: jsPDF, afterY: number): number => {
   doc.setFont(FONT, 'bold');
   doc.setFontSize(6.5);
   doc.setTextColor(...colors.goldSoft);
-  doc.text('Rajesh Sharma', sigX + sigW / 2, sigLineY + 7, { align: 'center' });
+  doc.text('Chinmay Pingle', sigX + sigW / 2, sigLineY + 7, { align: 'center' });
 
   doc.setFont(FONT, 'normal');
   doc.setFontSize(5);
