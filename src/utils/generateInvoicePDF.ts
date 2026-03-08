@@ -222,29 +222,30 @@ const drawInfoBox = (
   title: string,
   lines: string[],
 ) => {
+  const boxH = 36;
   doc.setFillColor(...colors.panel);
-  doc.roundedRect(x, y, w, 44, 3, 3, 'F');
+  doc.roundedRect(x, y, w, boxH, 3, 3, 'F');
   doc.setDrawColor(...colors.border);
   doc.setLineWidth(0.25);
-  doc.roundedRect(x, y, w, 44, 3, 3, 'S');
+  doc.roundedRect(x, y, w, boxH, 3, 3, 'S');
 
   doc.setFillColor(...colors.gold);
-  doc.rect(x, y + 3, 2.2, 38, 'F');
+  doc.rect(x, y + 3, 2.2, boxH - 6, 'F');
 
   doc.setFont(FONT, 'bold');
-  doc.setFontSize(6.5);
+  doc.setFontSize(6);
   doc.setTextColor(...colors.gold);
-  doc.text(title, x + 7, y + 7);
+  doc.text(title, x + 7, y + 6);
 
-  let lineY = y + 13;
+  let lineY = y + 11;
   lines.forEach((raw, index) => {
     const wrapped = doc.splitTextToSize(toText(raw), w - 12);
     doc.setFont(FONT, index === 0 ? 'bold' : 'normal');
-    doc.setFontSize(index === 0 ? 8.5 : 7.5);
+    doc.setFontSize(index === 0 ? 7.5 : 7);
     doc.setTextColor(...(index === 0 ? colors.text : colors.muted));
     wrapped.slice(0, 2).forEach((line: string) => {
       doc.text(line, x + 7, lineY);
-      lineY += index === 0 ? 6 : 5.2;
+      lineY += index === 0 ? 5 : 4.5;
     });
   });
 };
