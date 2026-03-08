@@ -231,7 +231,7 @@ const drawInfoBox = (
   doc.setFillColor(...colors.gold);
   doc.rect(x, y + 3, 2.2, 38, 'F');
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(FONT, 'bold');
   doc.setFontSize(6.5);
   doc.setTextColor(...colors.gold);
   doc.text(title, x + 7, y + 7);
