@@ -441,7 +441,7 @@ const drawFooter = (doc: jsPDF) => {
   doc.line(PAGE_WIDTH - 20, pageHeight - 8, PAGE_WIDTH - 8, pageHeight - 8);
   doc.line(PAGE_WIDTH - 8, pageHeight - 16, PAGE_WIDTH - 8, pageHeight - 8);
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(FONT, 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(...colors.gold);
   doc.text('VELOCITY SUPERCARS PVT. LTD.', PAGE_WIDTH / 2, pageHeight - 22, { align: 'center' });
