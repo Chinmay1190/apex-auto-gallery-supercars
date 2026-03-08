@@ -222,29 +222,30 @@ const drawInfoBox = (
   title: string,
   lines: string[],
 ) => {
+  const boxH = 36;
   doc.setFillColor(...colors.panel);
-  doc.roundedRect(x, y, w, 44, 3, 3, 'F');
+  doc.roundedRect(x, y, w, boxH, 3, 3, 'F');
   doc.setDrawColor(...colors.border);
   doc.setLineWidth(0.25);
-  doc.roundedRect(x, y, w, 44, 3, 3, 'S');
+  doc.roundedRect(x, y, w, boxH, 3, 3, 'S');
 
   doc.setFillColor(...colors.gold);
-  doc.rect(x, y + 3, 2.2, 38, 'F');
+  doc.rect(x, y + 3, 2.2, boxH - 6, 'F');
 
   doc.setFont(FONT, 'bold');
-  doc.setFontSize(6.5);
+  doc.setFontSize(6);
   doc.setTextColor(...colors.gold);
-  doc.text(title, x + 7, y + 7);
+  doc.text(title, x + 7, y + 6);
 
-  let lineY = y + 13;
+  let lineY = y + 11;
   lines.forEach((raw, index) => {
     const wrapped = doc.splitTextToSize(toText(raw), w - 12);
     doc.setFont(FONT, index === 0 ? 'bold' : 'normal');
-    doc.setFontSize(index === 0 ? 8.5 : 7.5);
+    doc.setFontSize(index === 0 ? 7.5 : 7);
     doc.setTextColor(...(index === 0 ? colors.text : colors.muted));
     wrapped.slice(0, 2).forEach((line: string) => {
       doc.text(line, x + 7, lineY);
-      lineY += index === 0 ? 6 : 5.2;
+      lineY += index === 0 ? 5 : 4.5;
     });
   });
 };
@@ -266,7 +267,7 @@ const drawCustomerAndPayment = (doc: jsPDF, order: InvoiceOrder): number => {
     `PIN: ${toText(order.shipping_pincode)}`,
   ]);
 
-  const paymentY = sectionTop + 49;
+  const paymentY = sectionTop + 40;
   doc.setFillColor(...colors.panelSoft);
   doc.roundedRect(LEFT, paymentY, 72, 13, 3, 3, 'F');
   doc.setDrawColor(...colors.gold);
@@ -317,33 +318,33 @@ const drawItems = (
     margin: { left: LEFT, right: PAGE_WIDTH - RIGHT },
     styles: {
       font: FONT,
-      fontSize: 8,
+      fontSize: 7.5,
       textColor: [...colors.text],
       lineColor: [...colors.border],
       lineWidth: 0.15,
-      cellPadding: { top: 5, right: 4, bottom: 5, left: 4 },
+      cellPadding: { top: 3.5, right: 3, bottom: 3.5, left: 3 },
       overflow: 'linebreak',
-      minCellHeight: 16,
+      minCellHeight: 13,
     },
     headStyles: {
       fillColor: [...colors.panelSoft],
       textColor: [...colors.gold],
       fontStyle: 'bold',
-      fontSize: 6.5,
-      cellPadding: { top: 6, right: 4, bottom: 6, left: 4 },
-      minCellHeight: 10,
+      fontSize: 6,
+      cellPadding: { top: 4, right: 3, bottom: 4, left: 3 },
+      minCellHeight: 8,
     },
     alternateRowStyles: {
       fillColor: [...colors.rowAlt],
     },
     columnStyles: {
-      0: { halign: 'center', cellWidth: 12, textColor: [...colors.goldSoft], fontStyle: 'bold' },
-      1: { cellWidth: 18 }, // image column
-      2: { cellWidth: 40, fontStyle: 'bold' },
+      0: { halign: 'center', cellWidth: 10, textColor: [...colors.goldSoft], fontStyle: 'bold' },
+      1: { cellWidth: 16 }, // image column
+      2: { cellWidth: 42, fontStyle: 'bold' },
       3: { cellWidth: 24, textColor: [...colors.muted] },
-      4: { halign: 'center', cellWidth: 12 },
-      5: { halign: 'right', cellWidth: 30 },
-      6: { halign: 'right', cellWidth: 30, textColor: [...colors.goldSoft], fontStyle: 'bold' },
+      4: { halign: 'center', cellWidth: 10 },
+      5: { halign: 'right', cellWidth: 32 },
+      6: { halign: 'right', cellWidth: 32, textColor: [...colors.goldSoft], fontStyle: 'bold' },
     },
     didDrawCell: (data) => {
       // Draw car image in column 1 (body rows only)
@@ -351,10 +352,9 @@ const drawItems = (
         const imgData = carImages.get(data.row.index);
         if (imgData) {
           try {
-            const imgSize = 12;
+            const imgSize = 10;
             const x = data.cell.x + (data.cell.width - imgSize) / 2;
             const y = data.cell.y + (data.cell.height - imgSize) / 2;
-            // Dark rounded background for image
             doc.setFillColor(...colors.panelSoft);
             doc.roundedRect(x - 0.5, y - 0.5, imgSize + 1, imgSize + 1, 2, 2, 'F');
             doc.addImage(imgData, 'JPEG', x, y, imgSize, imgSize);
@@ -374,8 +374,8 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number): number => {
   const hasDiscount = toNumber(order.discount) > 0;
   const cardHeight = hasDiscount ? 42 : 36;
 
-  let y = fromY + 6;
-  if (y + cardHeight + 80 > pageHeight) {
+  let y = fromY + 4;
+  if (y + cardHeight + 65 > pageHeight) {
     doc.addPage();
     addBackground(doc);
     y = 20;
@@ -429,9 +429,9 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number): number => {
 
 const drawSignatory = (doc: jsPDF, afterY: number): number => {
   const pageHeight = doc.internal.pageSize.height;
-  const sectionHeight = 38;
+  const sectionHeight = 32;
 
-  let y = afterY + 8;
+  let y = afterY + 5;
   if (y + sectionHeight + FOOTER_HEIGHT + 6 > pageHeight) {
     doc.addPage();
     addBackground(doc);
@@ -459,52 +459,52 @@ const drawSignatory = (doc: jsPDF, afterY: number): number => {
   // Signature strokes
   const lineStartX = sigX + 10;
   const lineEndX = sigX + sigW - 10;
-  const sigLineY = y + 22;
+  const sigLineY = y + 16;
   const midX = (lineStartX + lineEndX) / 2;
 
   doc.setDrawColor(...colors.gold);
   doc.setLineWidth(0.5);
-  doc.line(lineStartX + 2, sigLineY - 1, midX - 6, sigLineY - 4);
-  doc.line(midX - 6, sigLineY - 4, midX, sigLineY);
-  doc.line(midX, sigLineY, midX + 5, sigLineY - 5);
-  doc.line(midX + 5, sigLineY - 5, lineEndX - 6, sigLineY - 2);
+  doc.line(lineStartX + 2, sigLineY - 1, midX - 6, sigLineY - 3);
+  doc.line(midX - 6, sigLineY - 3, midX, sigLineY);
+  doc.line(midX, sigLineY, midX + 5, sigLineY - 4);
+  doc.line(midX + 5, sigLineY - 4, lineEndX - 6, sigLineY - 2);
 
   doc.setDrawColor(...colors.dim);
   doc.setLineWidth(0.2);
   doc.line(lineStartX, sigLineY + 2, lineEndX, sigLineY + 2);
 
   doc.setFont(FONT, 'bold');
-  doc.setFontSize(7);
+  doc.setFontSize(6.5);
   doc.setTextColor(...colors.goldSoft);
-  doc.text('Rajesh Sharma', sigX + sigW / 2, sigLineY + 8, { align: 'center' });
+  doc.text('Rajesh Sharma', sigX + sigW / 2, sigLineY + 7, { align: 'center' });
 
   doc.setFont(FONT, 'normal');
-  doc.setFontSize(5.5);
+  doc.setFontSize(5);
   doc.setTextColor(...colors.dim);
-  doc.text('Authorized Signatory  |  Managing Director', sigX + sigW / 2, sigLineY + 12, { align: 'center' });
+  doc.text('Authorized Signatory  |  Managing Director', sigX + sigW / 2, sigLineY + 11, { align: 'center' });
 
   // Left side — terms + seal
   doc.setFont(FONT, 'normal');
-  doc.setFontSize(5.5);
+  doc.setFontSize(5);
   doc.setTextColor(...colors.dim);
-  doc.text('This is a computer-generated invoice.', LEFT, y + 6);
-  doc.text('No physical signature is required.', LEFT, y + 10);
-  doc.text('E. & O.E.', LEFT, y + 17);
+  doc.text('This is a computer-generated invoice.', LEFT, y + 5);
+  doc.text('No physical signature is required.', LEFT, y + 9);
+  doc.text('E. & O.E.', LEFT, y + 14);
 
   // Seal
   const sealX = LEFT + 26;
-  const sealY = y + 28;
+  const sealY = y + 23;
   doc.setDrawColor(...colors.gold);
   doc.setLineWidth(0.4);
-  doc.circle(sealX, sealY, 6.5, 'S');
+  doc.circle(sealX, sealY, 5.5, 'S');
   doc.setLineWidth(0.25);
-  doc.circle(sealX, sealY, 5.2, 'S');
+  doc.circle(sealX, sealY, 4.5, 'S');
 
   doc.setFont(FONT, 'bold');
-  doc.setFontSize(4);
+  doc.setFontSize(3.5);
   doc.setTextColor(...colors.gold);
-  doc.text('VELOCITY', sealX, sealY - 1, { align: 'center' });
-  doc.setFontSize(3);
+  doc.text('VELOCITY', sealX, sealY - 0.5, { align: 'center' });
+  doc.setFontSize(2.5);
   doc.text('SUPERCARS', sealX, sealY + 1.5, { align: 'center' });
   doc.setFont(FONT, 'normal');
   doc.setFontSize(2.5);
