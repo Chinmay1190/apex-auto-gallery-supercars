@@ -379,7 +379,7 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number) => {
     y = 24;
   }
 
-  doc.setFont('helvetica', 'italic');
+  doc.setFont(FONT, 'normal');
   doc.setFontSize(6.5);
   doc.setTextColor(...colors.dim);
   doc.text('* All prices are shown in Indian Rupees', LEFT, y + 4);
