@@ -300,7 +300,7 @@ const drawTotalsCard = (doc: jsPDF, order: InvoiceOrder, startY: number) => {
 
   const cardX = 114;
   const cardW = 80;
-  const cardH = order.discount > 0 ? 58 : 50;
+  const cardH = toNumber(order.discount) > 0 ? 58 : 50;
 
   doc.setFillColor(...palette.darkCard);
   doc.roundedRect(cardX, y - 2, cardW, cardH, 4, 4, 'F');
