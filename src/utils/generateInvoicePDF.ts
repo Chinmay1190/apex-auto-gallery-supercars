@@ -272,7 +272,7 @@ const drawCustomerAndPayment = (doc: jsPDF, order: InvoiceOrder): number => {
   doc.setDrawColor(...colors.gold);
   doc.roundedRect(LEFT, paymentY, 72, 13, 3, 3, 'S');
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(FONT, 'bold');
   doc.setFontSize(6.5);
   doc.setTextColor(...colors.dim);
   doc.text('PAYMENT METHOD', LEFT + 6, paymentY + 8);
