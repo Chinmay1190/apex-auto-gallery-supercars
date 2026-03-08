@@ -340,7 +340,7 @@ const drawTotalsCard = (doc: jsPDF, order: InvoiceOrder, startY: number) => {
   doc.line(cardX + 8, tY, cardX + cardW - 8, tY);
   tY += 6;
 
-  drawRow('GRAND TOTAL', fmtPrice(order.total), { bold: true });
+  drawRow('GRAND TOTAL', fmtPrice(toNumber(order.total)), { bold: true });
 };
 
 const drawFooter = (doc: jsPDF) => {

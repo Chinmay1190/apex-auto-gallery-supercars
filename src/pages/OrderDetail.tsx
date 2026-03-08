@@ -82,18 +82,28 @@ const OrderDetail = () => {
 
           {/* Order Tracking */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 mb-6">
-            <h3 className="font-display text-lg mb-6">Order Tracking</h3>
-            <div className="flex items-center justify-between relative">
-              <div className="absolute top-5 left-0 right-0 h-0.5 bg-border" />
-              <div className="absolute top-5 left-0 h-0.5 bg-primary transition-all" style={{ width: `${(currentStepIndex / (statusSteps.length - 1)) * 100}%` }} />
+            <div className="flex items-start justify-between gap-4 mb-6">
+              <div>
+                <h3 className="font-display text-lg">Order Tracking</h3>
+                <p className="text-xs text-muted-foreground mt-1">Current status: <span className="text-primary font-semibold">{currentStep.label}</span></p>
+              </div>
+              <span className="text-xs px-2 py-1 rounded-full bg-primary/15 text-primary capitalize">{normalizedStatus}</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 relative">
+              <div className="hidden sm:block absolute top-5 left-0 right-0 h-0.5 bg-border" />
+              <div className="hidden sm:block absolute top-5 left-0 h-0.5 bg-primary transition-all" style={{ width: `${progressPercent}%` }} />
               {statusSteps.map((s, i) => (
-                <div key={s.key} className="relative flex flex-col items-center z-10">
+                <div key={s.key} className="relative flex items-center sm:flex-col sm:items-center gap-3 sm:gap-0 z-10">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
                     i <= currentStepIndex ? 'gold-gradient text-primary-foreground' : 'bg-secondary text-muted-foreground'
                   }`}>
                     <s.icon className="w-5 h-5" />
                   </div>
-                  <span className={`text-xs mt-2 ${i <= currentStepIndex ? 'text-foreground' : 'text-muted-foreground'}`}>{s.label}</span>
+                  <div className="sm:text-center">
+                    <span className={`text-xs sm:mt-2 block ${i <= currentStepIndex ? 'text-foreground' : 'text-muted-foreground'}`}>{s.label}</span>
+                    <span className="text-[11px] text-muted-foreground/80 hidden sm:block mt-1">{s.note}</span>
+                  </div>
                 </div>
               ))}
             </div>
