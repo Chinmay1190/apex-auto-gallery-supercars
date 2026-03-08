@@ -179,7 +179,7 @@ const drawHeader = (doc: jsPDF, order: InvoiceOrder, logoData: string | null) =>
   doc.setTextColor(...colors.gold);
   doc.text('VELOCITY', textStart, 20);
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(FONT, 'normal');
   doc.setFontSize(6.5);
   doc.setTextColor(...colors.dim);
   doc.text('L U X U R Y   S U P E R C A R S   I N D I A', textStart, 27);
