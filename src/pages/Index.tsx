@@ -141,27 +141,56 @@ const Index = () => {
       </section>
 
       {/* Services Section */}
-      <section className="section-padding py-16 md:py-24 bg-card/20">
-        <div className="max-w-7xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
-            <p className="text-primary text-sm tracking-[0.3em] uppercase mb-3">Our Services</p>
-            <h2 className="font-display text-3xl md:text-5xl font-bold">Premium Automotive Services</h2>
+      <section className="section-padding py-20 md:py-28 relative overflow-hidden">
+        {/* Background decorations */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-card/30 to-background" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary/3 rounded-full blur-3xl" />
+        
+        <div className="max-w-7xl mx-auto relative z-10">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
+            <motion.div initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }} className="w-16 h-0.5 gold-gradient mx-auto mb-6" />
+            <p className="text-primary text-sm tracking-[0.3em] uppercase mb-3 font-semibold">What We Offer</p>
+            <h2 className="font-display text-3xl md:text-5xl font-bold mb-4">
+              Premium <span className="gold-text">Services</span>
+            </h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Beyond selling supercars, we deliver an unmatched luxury ownership experience.
+            </p>
           </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {[
-              { icon: CalendarCheck, title: 'Test Drive Booking', desc: 'Schedule a private test drive experience at our luxury showroom or at your preferred location.', color: 'text-primary' },
-              { icon: Car, title: 'Custom Orders', desc: 'Configure your dream car with bespoke specifications, colors, and exclusive factory options.', color: 'text-primary' },
-              { icon: Wrench, title: 'After-Sales Care', desc: 'Comprehensive maintenance, detailing, and performance upgrades by certified technicians.', color: 'text-primary' },
-              { icon: Headphones, title: 'Concierge Service', desc: '24/7 dedicated support for all your luxury automotive needs, from purchase to ownership.', color: 'text-primary' },
+              { icon: CalendarCheck, title: 'Test Drive', subtitle: 'Booking', desc: 'Schedule a private test drive at our showroom or your preferred location.', num: '01' },
+              { icon: Car, title: 'Custom', subtitle: 'Orders', desc: 'Configure your dream car with bespoke specs, colors & factory options.', num: '02' },
+              { icon: Wrench, title: 'After-Sales', subtitle: 'Care', desc: 'Maintenance, detailing & performance upgrades by certified technicians.', num: '03' },
+              { icon: Headphones, title: 'Concierge', subtitle: 'Service', desc: '24/7 dedicated support for all your luxury automotive needs.', num: '04' },
             ].map((service, i) => (
-              <motion.div key={service.title} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                className="glass-panel p-8 hover-lift group relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 gold-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
-                  <service.icon className={`w-7 h-7 ${service.color}`} />
+              <motion.div key={service.title} initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.12, duration: 0.6 }}
+                className="glass-panel-strong p-8 group relative overflow-hidden rounded-2xl hover-lift cursor-pointer">
+                {/* Top gold accent */}
+                <div className="absolute top-0 left-0 right-0 h-1 gold-gradient transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+                
+                {/* Number watermark */}
+                <span className="absolute top-4 right-5 font-display text-5xl font-bold text-foreground/[0.03] group-hover:text-primary/10 transition-colors duration-500">{service.num}</span>
+
+                {/* Icon */}
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-6 group-hover:bg-primary/20 group-hover:scale-110 group-hover:shadow-[0_0_20px_hsl(var(--gold)/0.2)] transition-all duration-500">
+                  <service.icon className="w-6 h-6 text-primary" />
                 </div>
-                <h3 className="font-display text-lg mb-3 group-hover:text-primary transition-colors">{service.title}</h3>
+
+                {/* Title */}
+                <h3 className="font-display text-xl leading-tight mb-1 group-hover:text-primary transition-colors duration-300">{service.title}</h3>
+                <h3 className="font-display text-xl leading-tight mb-4 gold-text">{service.subtitle}</h3>
+
+                {/* Description */}
                 <p className="text-muted-foreground text-sm leading-relaxed">{service.desc}</p>
+
+                {/* Bottom accent line */}
+                <div className="mt-6 flex items-center gap-2 text-primary text-xs font-semibold tracking-wider uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                  <span>Learn More</span>
+                  <ChevronRight className="w-3 h-3" />
+                </div>
               </motion.div>
             ))}
           </div>
