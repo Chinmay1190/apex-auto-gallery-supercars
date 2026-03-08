@@ -34,7 +34,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle();
-    if (data) setProfile(data);
+    if (data) {
+      setProfile(data);
+    } else {
+      // Auto-create profile row if it doesn't exist
+      const { data: newProfile } = await supabase
+        .from('profiles')
+        .insert({ user_id: userId })
+        .select()
+        .single();
+      if (newProfile) setProfile(newProfile);
+    }
   };
 
   useEffect(() => {
@@ -80,7 +90,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const updateProfile = async (data: Partial<Profile>) => {
     if (!user) return;
-    const { error } = await supabase.from('profiles').update(data).eq('user_id', user.id);
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({ ...data, user_id: user.id }, { onConflict: 'user_id' });
     if (error) throw error;
     setProfile(prev => prev ? { ...prev, ...data } : null);
     await fetchProfile(user.id);
