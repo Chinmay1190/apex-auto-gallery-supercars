@@ -452,7 +452,7 @@ const drawFooter = (doc: jsPDF) => {
   doc.text('GSTIN: 27AADCV1234A1ZB  |  CIN: U34100MH2024PTC123456', PAGE_WIDTH / 2, pageHeight - 16.5, { align: 'center' });
   doc.text('Dharampeth, Nagpur, Maharashtra 440010  |  +91 98765 43210  |  info@velocity.in', PAGE_WIDTH / 2, pageHeight - 11.5, { align: 'center' });
 
-  doc.setFont('helvetica', 'italic');
+  doc.setFont(FONT, 'normal');
   doc.setTextColor(...colors.goldSoft);
   doc.text('Thank you for choosing Velocity. Drive the extraordinary.', PAGE_WIDTH / 2, pageHeight - 6, { align: 'center' });
 };
