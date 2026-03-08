@@ -43,6 +43,7 @@ const colors = {
   rowAlt: [17, 17, 24] as RGB,
 };
 
+let FONT = 'helvetica'; // Will be updated to NotoSans if custom font loads
 const PAGE_WIDTH = 210;
 const LEFT = 16;
 const RIGHT = 194;
@@ -64,7 +65,7 @@ const toText = (value: unknown, fallback = '-'): string => {
 
 const formatMoney = (value: unknown): string => {
   const amount = toNumber(value);
-  return `Rs. ${new Intl.NumberFormat('en-IN', {
+  return `\u20B9 ${new Intl.NumberFormat('en-IN', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount)}`;
@@ -99,6 +100,51 @@ const loadImageAsBase64 = (src: string): Promise<string | null> => {
   });
 };
 
+// Load a font file and return ArrayBuffer
+const loadFontAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    return await response.arrayBuffer();
+  } catch {
+    return null;
+  }
+};
+
+// Convert ArrayBuffer to base64 string
+const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+};
+
+// Register NotoSans font with jsPDF for ₹ symbol support
+const registerNotoSans = async (doc: jsPDF): Promise<boolean> => {
+  try {
+    const [regularBuf, boldBuf] = await Promise.all([
+      loadFontAsArrayBuffer('/fonts/NotoSans-Regular.ttf'),
+      loadFontAsArrayBuffer('/fonts/NotoSans-Bold.ttf'),
+    ]);
+
+    if (regularBuf) {
+      const regularBase64 = arrayBufferToBase64(regularBuf);
+      doc.addFileToVFS('NotoSans-Regular.ttf', regularBase64);
+      doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+    }
+    if (boldBuf) {
+      const boldBase64 = arrayBufferToBase64(boldBuf);
+      doc.addFileToVFS('NotoSans-Bold.ttf', boldBase64);
+      doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold');
+    }
+    return !!(regularBuf && boldBuf);
+  } catch {
+    return false;
+  }
+};
+
 const addBackground = (doc: jsPDF) => {
   const pageHeight = doc.internal.pageSize.height;
   doc.setFillColor(...colors.bg);
@@ -128,12 +174,12 @@ const drawHeader = (doc: jsPDF, order: InvoiceOrder, logoData: string | null) =>
 
   const textStart = logoData ? LEFT + 22 : LEFT;
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(FONT, 'bold');
   doc.setFontSize(26);
   doc.setTextColor(...colors.gold);
   doc.text('VELOCITY', textStart, 20);
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(FONT, 'normal');
   doc.setFontSize(6.5);
   doc.setTextColor(...colors.dim);
   doc.text('L U X U R Y   S U P E R C A R S   I N D I A', textStart, 27);
@@ -149,12 +195,12 @@ const drawHeader = (doc: jsPDF, order: InvoiceOrder, logoData: string | null) =>
   doc.setLineWidth(0.45);
   doc.roundedRect(PAGE_WIDTH - 74, 8, 58, 32, 3, 3, 'S');
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(FONT, 'bold');
   doc.setFontSize(8);
   doc.setTextColor(...colors.gold);
   doc.text('TAX INVOICE', PAGE_WIDTH - 45, 18, { align: 'center' });
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(FONT, 'normal');
   doc.setFontSize(7);
   doc.setTextColor(...colors.goldSoft);
   doc.text(toText(order.order_number, 'N/A'), PAGE_WIDTH - 45, 24, { align: 'center' });
@@ -185,7 +231,7 @@ const drawInfoBox = (
   doc.setFillColor(...colors.gold);
   doc.rect(x, y + 3, 2.2, 38, 'F');
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(FONT, 'bold');
   doc.setFontSize(6.5);
   doc.setTextColor(...colors.gold);
   doc.text(title, x + 7, y + 7);
@@ -193,7 +239,7 @@ const drawInfoBox = (
   let lineY = y + 13;
   lines.forEach((raw, index) => {
     const wrapped = doc.splitTextToSize(toText(raw), w - 12);
-    doc.setFont('helvetica', index === 0 ? 'bold' : 'normal');
+    doc.setFont(FONT, index === 0 ? 'bold' : 'normal');
     doc.setFontSize(index === 0 ? 8.5 : 7.5);
     doc.setTextColor(...(index === 0 ? colors.text : colors.muted));
     wrapped.slice(0, 2).forEach((line: string) => {
@@ -226,7 +272,7 @@ const drawCustomerAndPayment = (doc: jsPDF, order: InvoiceOrder): number => {
   doc.setDrawColor(...colors.gold);
   doc.roundedRect(LEFT, paymentY, 72, 13, 3, 3, 'S');
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(FONT, 'bold');
   doc.setFontSize(6.5);
   doc.setTextColor(...colors.dim);
   doc.text('PAYMENT METHOD', LEFT + 6, paymentY + 8);
@@ -270,7 +316,7 @@ const drawItems = (
     theme: 'plain',
     margin: { left: LEFT, right: PAGE_WIDTH - RIGHT },
     styles: {
-      font: 'helvetica',
+      font: FONT,
       fontSize: 8,
       textColor: [...colors.text],
       lineColor: [...colors.border],
@@ -333,7 +379,7 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number) => {
     y = 24;
   }
 
-  doc.setFont('helvetica', 'italic');
+  doc.setFont(FONT, 'normal');
   doc.setFontSize(6.5);
   doc.setTextColor(...colors.dim);
   doc.text('* All prices are shown in Indian Rupees', LEFT, y + 4);
@@ -356,7 +402,7 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number) => {
     const bold = opts?.bold || false;
     const accent = opts?.accent || false;
 
-    doc.setFont('helvetica', bold ? 'bold' : 'normal');
+    doc.setFont(FONT, bold ? 'bold' : 'normal');
     doc.setFontSize(bold ? 11 : 8);
     doc.setTextColor(...(bold ? colors.text : accent ? colors.gold : colors.muted));
     doc.text(label, cardX + 8, lineY);
@@ -395,18 +441,18 @@ const drawFooter = (doc: jsPDF) => {
   doc.line(PAGE_WIDTH - 20, pageHeight - 8, PAGE_WIDTH - 8, pageHeight - 8);
   doc.line(PAGE_WIDTH - 8, pageHeight - 16, PAGE_WIDTH - 8, pageHeight - 8);
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(FONT, 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(...colors.gold);
   doc.text('VELOCITY SUPERCARS PVT. LTD.', PAGE_WIDTH / 2, pageHeight - 22, { align: 'center' });
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(FONT, 'normal');
   doc.setFontSize(6.2);
   doc.setTextColor(...colors.dim);
   doc.text('GSTIN: 27AADCV1234A1ZB  |  CIN: U34100MH2024PTC123456', PAGE_WIDTH / 2, pageHeight - 16.5, { align: 'center' });
   doc.text('Dharampeth, Nagpur, Maharashtra 440010  |  +91 98765 43210  |  info@velocity.in', PAGE_WIDTH / 2, pageHeight - 11.5, { align: 'center' });
 
-  doc.setFont('helvetica', 'italic');
+  doc.setFont(FONT, 'normal');
   doc.setTextColor(...colors.goldSoft);
   doc.text('Thank you for choosing Velocity. Drive the extraordinary.', PAGE_WIDTH / 2, pageHeight - 6, { align: 'center' });
 };
@@ -414,16 +460,20 @@ const drawFooter = (doc: jsPDF) => {
 export const generateInvoicePDF = async (order: InvoiceOrder, items: InvoiceItem[]) => {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
-  // Load logo and car images in parallel
-  const logoPromise = loadImageAsBase64(velocityLogo);
+  // Register custom font for ₹ symbol support + load images in parallel
+  const [fontLoaded, logoData, ...carResults] = await Promise.all([
+    registerNotoSans(doc),
+    loadImageAsBase64(velocityLogo),
+    ...(items || []).map((item, idx) => {
+      const imgSrc = item.car_image || item.car?.image || '';
+      if (!imgSrc) return Promise.resolve({ idx, data: null });
+      return loadImageAsBase64(imgSrc).then((data) => ({ idx, data }));
+    }),
+  ]);
 
-  const carImagePromises = (items || []).map((item, idx) => {
-    const imgSrc = item.car_image || item.car?.image || '';
-    if (!imgSrc) return Promise.resolve({ idx, data: null });
-    return loadImageAsBase64(imgSrc).then((data) => ({ idx, data }));
-  });
-
-  const [logoData, ...carResults] = await Promise.all([logoPromise, ...carImagePromises]);
+  // Set global font variable for all drawing functions
+  FONT = fontLoaded ? 'NotoSans' : 'helvetica';
+  doc.setFont(FONT, 'normal');
 
   const carImages = new Map<number, string>();
   carResults.forEach((result) => {
