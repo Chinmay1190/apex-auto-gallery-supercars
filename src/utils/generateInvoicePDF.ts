@@ -429,9 +429,9 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number): number => {
 
 const drawSignatory = (doc: jsPDF, afterY: number): number => {
   const pageHeight = doc.internal.pageSize.height;
-  const sectionHeight = 38;
+  const sectionHeight = 32;
 
-  let y = afterY + 8;
+  let y = afterY + 5;
   if (y + sectionHeight + FOOTER_HEIGHT + 6 > pageHeight) {
     doc.addPage();
     addBackground(doc);
