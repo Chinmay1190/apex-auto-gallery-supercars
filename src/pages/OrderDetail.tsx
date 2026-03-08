@@ -54,7 +54,10 @@ const OrderDetail = () => {
     </div>
   );
 
-  const currentStepIndex = statusSteps.findIndex(s => s.key === order.status);
+  const normalizedStatus = statusSteps.some((s) => s.key === order.status) ? order.status : 'confirmed';
+  const currentStepIndex = statusSteps.findIndex((s) => s.key === normalizedStatus);
+  const currentStep = statusSteps[currentStepIndex] || statusSteps[0];
+  const progressPercent = Math.max(0, Math.min(100, (currentStepIndex / (statusSteps.length - 1)) * 100));
 
   return (
     <div className="min-h-screen pt-20 md:pt-24">
