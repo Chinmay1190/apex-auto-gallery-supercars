@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowDown, ChevronRight, Zap, Shield, Gauge, Wrench, Car, Headphones, CalendarCheck } from 'lucide-react';
 import heroImg from '@/assets/hero-car.jpg';
 import CarCard from '@/components/CarCard';
-import { cars, marqueBrands, categories, formatPrice } from '@/data/cars';
+import { cars, marqueBrands, categories, formatPrice, getCategoryImage } from '@/data/cars';
 
 const Index = () => {
   const featuredCars = cars.filter(c => c.featured);
@@ -73,14 +73,25 @@ const Index = () => {
             <h2 className="font-display text-3xl md:text-5xl font-bold">Find Your Class</h2>
           </motion.div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-            {categories.map((cat, i) => (
-              <motion.div key={cat} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}>
-                <Link to={`/shop?category=${encodeURIComponent(cat)}`} className="block glass-panel p-6 md:p-8 text-center hover-lift group cursor-pointer">
-                  <Zap className="w-6 h-6 text-primary mx-auto mb-3 group-hover:scale-110 transition-transform" />
-                  <h3 className="font-display text-sm md:text-base text-foreground tracking-wider">{cat}</h3>
-                </Link>
-              </motion.div>
-            ))}
+            {categories.map((cat, i) => {
+              const catImage = getCategoryImage(cat);
+              return (
+                <motion.div key={cat} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}>
+                  <Link to={`/shop?category=${encodeURIComponent(cat)}`} className="block relative rounded-xl overflow-hidden h-40 md:h-48 hover-lift group cursor-pointer">
+                    {catImage ? (
+                      <img src={catImage} alt={cat} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
+                    ) : (
+                      <div className="absolute inset-0 bg-card" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+                    <div className="absolute inset-0 flex flex-col justify-end p-5">
+                      <h3 className="font-display text-base md:text-lg text-foreground tracking-wider group-hover:text-primary transition-colors">{cat}</h3>
+                      <p className="text-xs text-muted-foreground mt-1">{cars.filter(c => c.category === cat).length} models</p>
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
