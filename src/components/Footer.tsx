@@ -34,7 +34,7 @@ const Footer = () => (
         <div className="flex flex-col gap-2 text-muted-foreground text-sm">
           <span>+91 98765 43210</span>
           <span>concierge@velocity.in</span>
-          <span>Mumbai, Maharashtra, India</span>
+          <span>Nagpur, Maharashtra, India</span>
         </div>
       </div>
     </div>
