@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase.from('profiles').select('*').eq('user_id', userId).single();
+    const { data } = await supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle();
     if (data) setProfile(data);
   };
 
@@ -83,6 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { error } = await supabase.from('profiles').update(data).eq('user_id', user.id);
     if (error) throw error;
     setProfile(prev => prev ? { ...prev, ...data } : null);
+    await fetchProfile(user.id);
   };
 
   return (
