@@ -1,7 +1,7 @@
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, LogOut, Heart, ShoppingBag, Clock, Package, Settings, Edit2, Save } from 'lucide-react';
+import { User, LogOut, Heart, ShoppingBag, Package, Edit2, Save, X, MapPin, Phone, Mail, Calendar, Shield, Crown, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/cars';
@@ -10,8 +10,10 @@ const Account = () => {
   const { user, profile, logout, isAuthenticated, loading, updateProfile } = useAuth();
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ full_name: '', phone: '', address: '', city: '', state: '', pincode: '' });
   const [orders, setOrders] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'profile' | 'orders'>('profile');
 
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate('/auth');
@@ -32,14 +34,16 @@ const Account = () => {
 
   useEffect(() => {
     if (user) {
-      supabase.from('orders').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5)
+      supabase.from('orders').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10)
         .then(({ data }) => { if (data) setOrders(data); });
     }
   }, [user]);
 
   const handleSave = async () => {
+    setSaving(true);
     await updateProfile(form);
     setEditing(false);
+    setSaving(false);
   };
 
   const handleLogout = async () => {
@@ -47,112 +51,249 @@ const Account = () => {
     navigate('/');
   };
 
-  if (loading) return <div className="min-h-screen pt-24 flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>;
+  if (loading) return (
+    <div className="min-h-screen pt-24 flex items-center justify-center">
+      <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+        className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full" />
+    </div>
+  );
   if (!isAuthenticated) return null;
 
+  const initials = (profile?.full_name || user?.email || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  const memberSince = user?.created_at ? new Date(user.created_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) : '';
+
   return (
-    <div className="min-h-screen pt-20 md:pt-24">
-      <div className="section-padding py-8 md:py-12">
-        <div className="max-w-4xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            {/* Profile Card */}
-            <div className="glass-panel p-8 mb-6">
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center">
-                    <User className="w-8 h-8 text-primary-foreground" />
-                  </div>
-                  <div>
-                    <h1 className="font-display text-2xl">{profile?.full_name || user?.email?.split('@')[0]}</h1>
-                    <p className="text-muted-foreground text-sm">{user?.email}</p>
-                  </div>
+    <div className="min-h-screen bg-background pt-20 md:pt-24">
+      {/* Hero Banner */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-primary/5" />
+        <div className="absolute top-10 right-20 w-72 h-72 bg-primary/5 rounded-full blur-[100px]" />
+
+        <div className="section-padding py-10 md:py-14 relative z-10">
+          <div className="max-w-5xl mx-auto">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col md:flex-row items-start md:items-center gap-6">
+              {/* Avatar */}
+              <div className="relative">
+                <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl gold-gradient flex items-center justify-center gold-glow">
+                  <span className="font-display text-3xl md:text-4xl text-primary-foreground font-bold">{initials}</span>
                 </div>
-                <div className="flex gap-2">
-                  {editing ? (
-                    <button onClick={handleSave} className="inline-flex items-center gap-2 px-4 py-2 gold-gradient text-primary-foreground rounded-lg text-sm font-semibold">
-                      <Save className="w-4 h-4" /> Save
-                    </button>
-                  ) : (
-                    <button onClick={() => setEditing(true)} className="inline-flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors">
-                      <Edit2 className="w-4 h-4" /> Edit
-                    </button>
+                <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-green-500 border-3 border-background flex items-center justify-center">
+                  <Shield className="w-3.5 h-3.5 text-white" />
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-1">
+                  <h1 className="font-display text-2xl md:text-3xl font-bold">{profile?.full_name || user?.email?.split('@')[0]}</h1>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] tracking-wider uppercase font-semibold gold-gradient text-primary-foreground flex items-center gap-1">
+                    <Crown className="w-3 h-3" /> Member
+                  </span>
+                </div>
+                <p className="text-muted-foreground text-sm mb-3">{user?.email}</p>
+                <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
+                  {memberSince && (
+                    <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> Joined {memberSince}</span>
+                  )}
+                  {profile?.city && profile?.state && (
+                    <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {profile.city}, {profile.state}</span>
+                  )}
+                  {profile?.phone && (
+                    <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" /> {profile.phone}</span>
                   )}
                 </div>
               </div>
 
-              {editing && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  {[
-                    { key: 'full_name', label: 'Full Name' },
-                    { key: 'phone', label: 'Phone' },
-                    { key: 'address', label: 'Address' },
-                    { key: 'city', label: 'City' },
-                    { key: 'state', label: 'State' },
-                    { key: 'pincode', label: 'PIN Code' },
-                  ].map(f => (
-                    <div key={f.key}>
-                      <label className="block text-xs text-muted-foreground mb-1.5 uppercase tracking-wider">{f.label}</label>
-                      <input
-                        value={(form as any)[f.key]}
-                        onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
-                        className="w-full px-4 py-2.5 bg-background border border-border rounded-lg text-sm text-foreground focus:border-primary focus:outline-none"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <button onClick={handleLogout} className="inline-flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm text-muted-foreground hover:text-accent hover:border-accent/50 transition-colors">
-                <LogOut className="w-4 h-4" /> Sign Out
-              </button>
-            </div>
-
-            {/* Quick links */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              {[
-                { to: '/wishlist', icon: Heart, label: 'Wishlist', desc: 'Saved cars' },
-                { to: '/cart', icon: ShoppingBag, label: 'Cart', desc: 'Current items' },
-                { to: '/orders', icon: Package, label: 'Orders', desc: 'Track orders' },
-                { to: '/shop', icon: Clock, label: 'Browse', desc: 'Explore collection' },
-              ].map(item => (
-                <Link key={item.to} to={item.to} className="glass-panel p-6 hover-lift text-center">
-                  <item.icon className="w-6 h-6 text-primary mx-auto mb-3" />
-                  <h3 className="font-display text-sm mb-1">{item.label}</h3>
-                  <p className="text-xs text-muted-foreground">{item.desc}</p>
-                </Link>
-              ))}
-            </div>
-
-            {/* Recent Orders */}
-            {orders.length > 0 && (
-              <div className="glass-panel p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-display text-lg">Recent Orders</h3>
-                  <Link to="/orders" className="text-primary text-sm hover:underline">View All</Link>
-                </div>
-                <div className="space-y-3">
-                  {orders.map(order => (
-                    <Link key={order.id} to={`/orders/${order.id}`} className="flex items-center justify-between p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors">
-                      <div>
-                        <p className="text-sm font-medium">#{order.order_number}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString('en-IN')}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm gold-text font-display">{formatPrice(order.total)}</p>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          order.status === 'delivered' ? 'bg-green-500/20 text-green-400' :
-                          order.status === 'shipped' ? 'bg-blue-500/20 text-blue-400' :
-                          'bg-primary/20 text-primary'
-                        }`}>{order.status}</span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+              {/* Actions */}
+              <div className="flex gap-2">
+                <button onClick={handleLogout}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 border border-border rounded-xl text-sm text-muted-foreground hover:text-destructive hover:border-destructive/50 transition-colors">
+                  <LogOut className="w-4 h-4" /> Sign Out
+                </button>
               </div>
-            )}
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
       </div>
+
+      {/* Quick Stats */}
+      <div className="section-padding -mt-2">
+        <div className="max-w-5xl mx-auto grid grid-cols-3 gap-4">
+          {[
+            { to: '/orders', icon: Package, value: orders.length, label: 'Orders', color: 'text-primary' },
+            { to: '/wishlist', icon: Heart, value: '—', label: 'Wishlist', color: 'text-accent' },
+            { to: '/cart', icon: ShoppingBag, value: '—', label: 'Cart', color: 'text-primary' },
+          ].map((s, i) => (
+            <Link key={i} to={s.to}>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="glass-panel p-5 hover:border-primary/30 transition-all group cursor-pointer text-center">
+                <s.icon className={`w-5 h-5 ${s.color} mx-auto mb-2 group-hover:scale-110 transition-transform`} />
+                <div className="font-display text-xl font-bold">{s.value}</div>
+                <div className="text-xs text-muted-foreground">{s.label}</div>
+              </motion.div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="section-padding mt-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex gap-1 p-1 rounded-xl bg-secondary/50 w-fit mb-8">
+            {(['profile', 'orders'] as const).map(tab => (
+              <button key={tab} onClick={() => setActiveTab(tab)}
+                className={`px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  activeTab === tab ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                }`}>
+                {tab === 'profile' ? 'Profile' : `Orders (${orders.length})`}
+              </button>
+            ))}
+          </div>
+
+          {/* Profile Tab */}
+          {activeTab === 'profile' && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+              <div className="glass-panel p-6 md:p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="font-display text-lg font-semibold">Personal Information</h3>
+                  {editing ? (
+                    <div className="flex gap-2">
+                      <button onClick={() => setEditing(false)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-xs text-muted-foreground hover:text-foreground transition-colors">
+                        <X className="w-3.5 h-3.5" /> Cancel
+                      </button>
+                      <button onClick={handleSave} disabled={saving}
+                        className="inline-flex items-center gap-1.5 px-4 py-1.5 gold-gradient text-primary-foreground rounded-lg text-xs font-semibold disabled:opacity-50">
+                        <Save className="w-3.5 h-3.5" /> {saving ? 'Saving...' : 'Save Changes'}
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setEditing(true)}
+                      className="inline-flex items-center gap-1.5 px-4 py-1.5 border border-border rounded-lg text-xs text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors">
+                      <Edit2 className="w-3.5 h-3.5" /> Edit Profile
+                    </button>
+                  )}
+                </div>
+
+                {editing ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {[
+                      { key: 'full_name', label: 'Full Name', icon: User },
+                      { key: 'phone', label: 'Phone Number', icon: Phone },
+                      { key: 'address', label: 'Address', icon: MapPin },
+                      { key: 'city', label: 'City', icon: MapPin },
+                      { key: 'state', label: 'State', icon: MapPin },
+                      { key: 'pincode', label: 'PIN Code', icon: Mail },
+                    ].map(f => (
+                      <div key={f.key}>
+                        <label className="block text-xs text-muted-foreground mb-2 uppercase tracking-wider font-medium">{f.label}</label>
+                        <div className="relative">
+                          <f.icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <input
+                            value={(form as any)[f.key]}
+                            onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                            className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-xl text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {[
+                      { label: 'Full Name', value: profile?.full_name, icon: User },
+                      { label: 'Phone', value: profile?.phone, icon: Phone },
+                      { label: 'Address', value: profile?.address, icon: MapPin },
+                      { label: 'City', value: profile?.city, icon: MapPin },
+                      { label: 'State', value: profile?.state, icon: MapPin },
+                      { label: 'PIN Code', value: profile?.pincode, icon: Mail },
+                    ].map((f, i) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-secondary/70 flex items-center justify-center flex-shrink-0">
+                          <f.icon className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-0.5">{f.label}</p>
+                          <p className="text-sm font-medium text-foreground">{f.value || '—'}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Account Security */}
+              <div className="glass-panel p-6 md:p-8">
+                <h3 className="font-display text-lg font-semibold mb-4">Account Security</h3>
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-secondary/30">
+                  <Mail className="w-5 h-5 text-primary" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{user?.email}</p>
+                    <p className="text-xs text-muted-foreground">Primary email address</p>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-semibold bg-green-500/15 text-green-500">
+                    Verified
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Orders Tab */}
+          {activeTab === 'orders' && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              {orders.length > 0 ? (
+                <div className="space-y-3">
+                  {orders.map((order, i) => (
+                    <motion.div key={order.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}>
+                      <Link to={`/orders/${order.id}`}
+                        className="flex items-center justify-between p-5 glass-panel hover:border-primary/30 transition-all group">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                            <Package className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold">Order #{order.order_number}</p>
+                            <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <p className="text-sm font-display gold-text font-semibold">{formatPrice(order.total)}</p>
+                            <span className={`text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full ${
+                              order.status === 'delivered' ? 'bg-green-500/15 text-green-500' :
+                              order.status === 'shipped' ? 'bg-blue-500/15 text-blue-400' :
+                              'bg-primary/15 text-primary'
+                            }`}>{order.status}</span>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
+                      </Link>
+                    </motion.div>
+                  ))}
+                  <div className="text-center pt-4">
+                    <Link to="/orders" className="text-primary text-sm hover:underline">View All Orders →</Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="glass-panel p-12 text-center">
+                  <Package className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                  <h3 className="font-display text-lg mb-2">No Orders Yet</h3>
+                  <p className="text-muted-foreground text-sm mb-6">Start exploring our exclusive collection.</p>
+                  <Link to="/shop" className="inline-flex px-6 py-2.5 gold-gradient text-primary-foreground rounded-xl text-sm font-semibold">
+                    Browse Collection
+                  </Link>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </div>
+      </div>
+
+      <div className="h-16" />
     </div>
   );
 };
