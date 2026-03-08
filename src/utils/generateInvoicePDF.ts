@@ -402,7 +402,7 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number) => {
     const bold = opts?.bold || false;
     const accent = opts?.accent || false;
 
-    doc.setFont('helvetica', bold ? 'bold' : 'normal');
+    doc.setFont(FONT, bold ? 'bold' : 'normal');
     doc.setFontSize(bold ? 11 : 8);
     doc.setTextColor(...(bold ? colors.text : accent ? colors.gold : colors.muted));
     doc.text(label, cardX + 8, lineY);
