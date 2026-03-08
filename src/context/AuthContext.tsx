@@ -34,7 +34,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle();
-    if (data) setProfile(data);
+    if (data) {
+      setProfile(data);
+    } else {
+      // Auto-create profile row if it doesn't exist
+      const { data: newProfile } = await supabase
+        .from('profiles')
+        .insert({ user_id: userId })
+        .select()
+        .single();
+      if (newProfile) setProfile(newProfile);
+    }
   };
 
   useEffect(() => {
