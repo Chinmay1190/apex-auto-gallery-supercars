@@ -220,16 +220,18 @@ const drawCustomerSection = (doc: jsPDF, order: InvoiceOrder) => {
 };
 
 const drawItemsTable = (doc: jsPDF, startY: number, items: InvoiceItem[]) => {
-  const rows = items.map((item, index) => {
-    const name = item.car?.name || item.car_name || 'Vehicle';
-    const brand = item.car?.brand || item.car_brand || '-';
-    const unit = item.car?.price ?? item.price ?? 0;
-    const qty = item.quantity || 1;
+  const rows = (items.length ? items : [{ quantity: 1 } as InvoiceItem]).map((item, index) => {
+    const rawName = cleanText(item.car?.name || item.car_name || 'Vehicle');
+    const brand = cleanText(item.car?.brand || item.car_brand || '-');
+    const name = rawName.toLowerCase().startsWith(brand.toLowerCase()) ? rawName : `${brand} ${rawName}`.trim();
+
+    const unit = toNumber(item.car?.price ?? item.price);
+    const qty = Math.max(1, Math.floor(toNumber(item.quantity)));
     const amount = unit * qty;
 
     return [
       String(index + 1).padStart(2, '0'),
-      name.toUpperCase(),
+      cleanText(name).toUpperCase(),
       brand,
       String(qty),
       fmtPrice(unit),
