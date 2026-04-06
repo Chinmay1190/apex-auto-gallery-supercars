@@ -96,6 +96,25 @@ const OrderDetail = () => {
     await generateInvoicePDF(order, orderItems);
   };
 
+  const statusOrder = ['confirmed', 'processing', 'shipped', 'delivered'];
+
+  const handleSimulateDelivery = async () => {
+    if (!order) return;
+    const currentIdx = statusOrder.indexOf(order.status || 'confirmed');
+    if (currentIdx >= statusOrder.length - 1) {
+      toast.info('Order is already delivered!');
+      return;
+    }
+    const nextStatus = statusOrder[currentIdx + 1];
+    const { error } = await supabase.from('orders').update({ status: nextStatus }).eq('id', order.id);
+    if (error) {
+      toast.error('Failed to update status');
+    } else {
+      setOrder((prev: any) => prev ? { ...prev, status: nextStatus } : prev);
+      toast.success(`Order status updated to "${nextStatus}"`);
+    }
+  };
+
   const normalizedStatus = useMemo(() => {
     if (!order) return 'confirmed';
     return statusSteps.some((s) => s.key === order.status) ? order.status : 'confirmed';
