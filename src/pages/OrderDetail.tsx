@@ -240,10 +240,18 @@ const OrderDetail = () => {
                 Last synced: {lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </p>
             </div>
-            <button onClick={handleDownloadInvoice}
-              className="inline-flex items-center gap-2 px-5 py-2.5 gold-gradient text-primary-foreground rounded-lg text-sm font-semibold shadow-lg hover:shadow-xl transition-shadow">
-              <Download className="w-4 h-4" /> Download Invoice
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              {normalizedStatus !== 'delivered' && (
+                <button onClick={handleSimulateDelivery}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-semibold shadow-lg hover:shadow-xl transition-shadow">
+                  <Play className="w-4 h-4" /> Simulate Next Step
+                </button>
+              )}
+              <button onClick={handleDownloadInvoice}
+                className="inline-flex items-center gap-2 px-5 py-2.5 gold-gradient text-primary-foreground rounded-lg text-sm font-semibold shadow-lg hover:shadow-xl transition-shadow">
+                <Download className="w-4 h-4" /> Download Invoice
+              </button>
+            </div>
           </div>
 
           {/* Estimated Delivery Banner */}
