@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Download, Package, Truck, CheckCircle2, Clock,
   MapPin, RefreshCw, Calendar, Activity, Shield, CreditCard,
-  Mail, Phone, Hash
+  Mail, Phone, Hash, Play
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/cars';
@@ -93,6 +94,25 @@ const OrderDetail = () => {
   const handleDownloadInvoice = async () => {
     if (!order) return;
     await generateInvoicePDF(order, orderItems);
+  };
+
+  const statusOrder = ['confirmed', 'processing', 'shipped', 'delivered'];
+
+  const handleSimulateDelivery = async () => {
+    if (!order) return;
+    const currentIdx = statusOrder.indexOf(order.status || 'confirmed');
+    if (currentIdx >= statusOrder.length - 1) {
+      toast.info('Order is already delivered!');
+      return;
+    }
+    const nextStatus = statusOrder[currentIdx + 1];
+    const { error } = await supabase.from('orders').update({ status: nextStatus }).eq('id', order.id);
+    if (error) {
+      toast.error('Failed to update status');
+    } else {
+      setOrder((prev: any) => prev ? { ...prev, status: nextStatus } : prev);
+      toast.success(`Order status updated to "${nextStatus}"`);
+    }
   };
 
   const normalizedStatus = useMemo(() => {
@@ -220,10 +240,18 @@ const OrderDetail = () => {
                 Last synced: {lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </p>
             </div>
-            <button onClick={handleDownloadInvoice}
-              className="inline-flex items-center gap-2 px-5 py-2.5 gold-gradient text-primary-foreground rounded-lg text-sm font-semibold shadow-lg hover:shadow-xl transition-shadow">
-              <Download className="w-4 h-4" /> Download Invoice
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              {normalizedStatus !== 'delivered' && (
+                <button onClick={handleSimulateDelivery}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-semibold shadow-lg hover:shadow-xl transition-shadow">
+                  <Play className="w-4 h-4" /> Simulate Next Step
+                </button>
+              )}
+              <button onClick={handleDownloadInvoice}
+                className="inline-flex items-center gap-2 px-5 py-2.5 gold-gradient text-primary-foreground rounded-lg text-sm font-semibold shadow-lg hover:shadow-xl transition-shadow">
+                <Download className="w-4 h-4" /> Download Invoice
+              </button>
+            </div>
           </div>
 
           {/* Estimated Delivery Banner */}
