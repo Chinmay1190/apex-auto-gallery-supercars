@@ -6,6 +6,25 @@ import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useState } from 'react';
 
+const COLOR_NAMES: Record<string, string> = {
+  '#FFD700': 'Gold',
+  '#FF0000': 'Rosso Red',
+  '#000000': 'Jet Black',
+  '#FFFFFF': 'Pearl White',
+  '#00FF00': 'Verde Green',
+  '#0000FF': 'Royal Blue',
+  '#0066FF': 'Azure Blue',
+  '#FF6600': 'Papaya Orange',
+  '#C0C0C0': 'Silver',
+  '#006633': 'Racing Green',
+  '#1a1a2e': 'Midnight Navy',
+  '#8B0000': 'Maroon',
+};
+
+const colorName = (hex: string): string => {
+  return COLOR_NAMES[hex.toUpperCase()] || COLOR_NAMES[hex] || hex.toUpperCase();
+};
+
 const CarDetail = () => {
   const { id } = useParams();
   const car = cars.find(c => c.id === id);
