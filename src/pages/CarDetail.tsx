@@ -54,13 +54,25 @@ const CarDetail = () => {
               transition={{ duration: 0.6 }}
               className="relative"
             >
-              <div className="aspect-[4/3] rounded-xl overflow-hidden glass-panel">
+              <div className="aspect-[4/3] rounded-xl overflow-hidden glass-panel relative">
                 <img
                   src={car.image}
                   alt={`${car.brand} ${car.name}`}
                   className="w-full h-full object-cover"
-                  style={{ filter: `hue-rotate(${selectedColor * 60}deg)` }}
                 />
+                {/* Color tint overlay — paints the car body with the selected exterior color */}
+                <div
+                  key={selectedColor}
+                  className="absolute inset-0 pointer-events-none transition-opacity duration-500"
+                  style={{
+                    backgroundColor: car.colors[selectedColor],
+                    mixBlendMode: 'color',
+                    opacity: 0.65,
+                  }}
+                  aria-hidden
+                />
+                {/* Subtle vignette for depth */}
+                <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent pointer-events-none" />
               </div>
               {car.trending && (
                 <span className="absolute top-4 left-4 px-4 py-1.5 text-xs tracking-wider uppercase font-bold gold-gradient text-primary-foreground rounded-full">
@@ -83,14 +95,25 @@ const CarDetail = () => {
 
               {/* Color Selector */}
               <div className="mb-8">
-                <h3 className="font-display text-sm tracking-wider uppercase mb-3">Exterior Color</h3>
-                <div className="flex gap-3">
+                <h3 className="font-display text-sm tracking-wider uppercase mb-3">
+                  Exterior Color
+                  <span className="ml-2 text-xs text-muted-foreground normal-case tracking-normal">
+                    — {colorName(car.colors[selectedColor])}
+                  </span>
+                </h3>
+                <div className="flex flex-wrap gap-3">
                   {car.colors.map((color, i) => (
                     <button
                       key={i}
                       onClick={() => setSelectedColor(i)}
-                      className={`w-8 h-8 rounded-full border-2 transition-all ${selectedColor === i ? 'border-primary scale-110' : 'border-border'}`}
+                      title={colorName(color)}
+                      className={`w-10 h-10 rounded-full border-2 transition-all shadow-md hover:scale-110 ${
+                        selectedColor === i
+                          ? 'border-primary scale-110 ring-2 ring-primary/30 ring-offset-2 ring-offset-background'
+                          : 'border-border'
+                      }`}
                       style={{ backgroundColor: color }}
+                      aria-label={`Select ${colorName(color)}`}
                     />
                   ))}
                 </div>
