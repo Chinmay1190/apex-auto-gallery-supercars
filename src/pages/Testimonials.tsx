@@ -245,6 +245,129 @@ const Testimonials = () => {
         </div>
       </section>
 
+      {/* Community Reviews + Feedback Form */}
+      <section className="max-w-5xl mx-auto px-4 mb-20">
+        <div className="flex items-center justify-between flex-wrap gap-4 mb-8">
+          <div>
+            <h2 className="font-display text-2xl md:text-3xl font-bold">Community <span className="text-primary">Reviews</span></h2>
+            <p className="text-sm text-muted-foreground">Real reviews from verified Velocity clients</p>
+          </div>
+          <button
+            onClick={() => {
+              if (!isAuthenticated) { toast.error('Please sign in to share your review'); return; }
+              setShowForm((v) => !v);
+            }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 gold-gradient text-primary-foreground rounded-xl text-sm font-semibold shadow-lg hover:shadow-xl transition-shadow"
+          >
+            {showForm ? <><X className="w-4 h-4" /> Close Form</> : <><MessageSquarePlus className="w-4 h-4" /> Write a Review</>}
+          </button>
+        </div>
+
+        <AnimatePresence>
+          {showForm && (
+            <motion.form
+              onSubmit={handleSubmit}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden mb-8"
+            >
+              <div className="glass-panel p-6 md:p-8 space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2 font-medium">Your Name *</label>
+                    <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+                      placeholder="e.g. Chinmay Pingle" maxLength={100}
+                      className="w-full px-4 py-3 bg-background border border-border rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2 font-medium">Location</label>
+                    <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })}
+                      placeholder="e.g. Mumbai, India" maxLength={80}
+                      className="w-full px-4 py-3 bg-background border border-border rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2 font-medium">Your Role</label>
+                    <input value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}
+                      placeholder="e.g. Tech Entrepreneur" maxLength={80}
+                      className="w-full px-4 py-3 bg-background border border-border rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2 font-medium">Brand Owned</label>
+                    <select value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })}
+                      className="w-full px-4 py-3 bg-background border border-border rounded-xl text-sm focus:border-primary focus:outline-none">
+                      <option value="">Select brand</option>
+                      {brands.map((b) => <option key={b} value={b}>{b}</option>)}
+                    </select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2 font-medium">Car Model</label>
+                    <input value={form.car} onChange={(e) => setForm({ ...form, car: e.target.value })}
+                      placeholder="e.g. Lamborghini Aventador SVJ" maxLength={120}
+                      className="w-full px-4 py-3 bg-background border border-border rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2 font-medium">Your Rating *</label>
+                  <div className="flex gap-1.5">
+                    {[1, 2, 3, 4, 5].map((r) => (
+                      <button key={r} type="button" onClick={() => setForm({ ...form, rating: r })}
+                        className="p-1 transition-transform hover:scale-110">
+                        <Star className={`w-7 h-7 transition-colors ${r <= form.rating ? 'fill-primary text-primary' : 'text-muted-foreground/40'}`} />
+                      </button>
+                    ))}
+                    <span className="ml-3 self-center text-sm text-muted-foreground">{form.rating} of 5</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2 font-medium">
+                    Your Review * <span className="normal-case tracking-normal text-[10px]">({form.text.length}/1000)</span>
+                  </label>
+                  <textarea value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })}
+                    placeholder="Tell us about your experience with Velocity..." rows={5} maxLength={1000}
+                    className="w-full px-4 py-3 bg-background border border-border rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none resize-none" />
+                </div>
+
+                <div className="flex justify-end">
+                  <button type="submit" disabled={submitting}
+                    className="inline-flex items-center gap-2 px-6 py-3 gold-gradient text-primary-foreground rounded-xl text-sm font-semibold shadow-lg hover:shadow-xl transition-shadow disabled:opacity-50">
+                    <Send className="w-4 h-4" /> {submitting ? 'Submitting...' : 'Submit Review'}
+                  </button>
+                </div>
+              </div>
+            </motion.form>
+          )}
+        </AnimatePresence>
+
+        {userReviews.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground py-8">Be the first to share your experience.</p>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {userReviews.map((r) => (
+              <motion.div key={r.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                className="glass-panel p-5 hover:border-primary/30 transition-colors">
+                <div className="flex items-center gap-1 mb-3">
+                  {[...Array(r.rating)].map((_, j) => <Star key={j} className="w-3.5 h-3.5 fill-primary text-primary" />)}
+                </div>
+                <p className="text-foreground/80 text-sm leading-relaxed mb-4 line-clamp-5">"{r.text}"</p>
+                <div className="flex items-center gap-3 pt-3 border-t border-border/30">
+                  <div className="w-9 h-9 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center text-primary text-xs font-bold">
+                    {r.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm truncate">{r.name}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">{r.location || r.role || '—'}</div>
+                  </div>
+                  {r.car && <span className="text-[10px] text-primary/80 border border-primary/20 rounded-full px-2 py-0.5 truncate max-w-[120px]">{r.car}</span>}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </section>
+
       {/* CTA */}
       <section className="max-w-3xl mx-auto px-4 text-center">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
