@@ -13,8 +13,39 @@ const Account = () => {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ full_name: '', phone: '', address: '', city: '', state: '', pincode: '' });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [orders, setOrders] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'profile' | 'orders'>('profile');
+
+  const validateField = (key: string, value: string): string => {
+    const v = value.trim();
+    if (key === 'full_name') {
+      if (!v) return 'Full name is required';
+      if (!/^[A-Za-z][A-Za-z\s.'-]{1,99}$/.test(v)) return 'Letters only (no numbers or symbols)';
+    }
+    if (key === 'phone') {
+      if (!v) return 'Phone number is required';
+      if (!/^(\+91[\s-]?)?[6-9]\d{9}$/.test(v.replace(/\s/g, ''))) return 'Enter a valid 10-digit Indian phone number';
+    }
+    if (key === 'address') {
+      if (!v) return 'Address is required';
+      if (v.length < 5) return 'Address must be at least 5 characters';
+    }
+    if (key === 'city' && v && !/^[A-Za-z\s.-]{2,50}$/.test(v)) return 'Letters only';
+    if (key === 'state' && v && !/^[A-Za-z\s.-]{2,50}$/.test(v)) return 'Letters only';
+    if (key === 'pincode' && v && !/^\d{6}$/.test(v)) return 'PIN code must be 6 digits';
+    return '';
+  };
+
+  const validateAll = (): boolean => {
+    const next: Record<string, string> = {};
+    (['full_name', 'phone', 'address', 'city', 'state', 'pincode'] as const).forEach((k) => {
+      const err = validateField(k, (form as any)[k] || '');
+      if (err) next[k] = err;
+    });
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
 
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate('/auth');
@@ -41,11 +72,16 @@ const Account = () => {
   }, [user]);
 
   const handleSave = async () => {
+    if (!validateAll()) {
+      toast.error('Please fix the highlighted errors before saving');
+      return;
+    }
     setSaving(true);
     try {
       await updateProfile(form);
       toast.success('Profile updated successfully!');
       setEditing(false);
+      setErrors({});
     } catch (e) {
       toast.error('Failed to save profile. Please try again.');
     } finally {
