@@ -198,12 +198,12 @@ const Account = () => {
           {/* Profile Tab */}
           {activeTab === 'profile' && (() => {
             const fields = [
-              { key: 'full_name', label: 'Full Name', icon: User, placeholder: 'Enter your full name' },
-              { key: 'phone', label: 'Phone Number', icon: Phone, placeholder: '+91 98765 43210' },
-              { key: 'address', label: 'Street Address', icon: MapPin, placeholder: 'House no, Street, Landmark' },
-              { key: 'city', label: 'City', icon: MapPin, placeholder: 'e.g. Mumbai' },
-              { key: 'state', label: 'State', icon: MapPin, placeholder: 'e.g. Maharashtra' },
-              { key: 'pincode', label: 'PIN Code', icon: Mail, placeholder: 'e.g. 400001' },
+              { key: 'full_name', label: 'Full Name', icon: User, placeholder: 'e.g. Chinmay Pingle', required: true, hint: 'Letters only — no numbers or symbols' },
+              { key: 'phone', label: 'Phone Number', icon: Phone, placeholder: '+91 98765 43210', required: true, hint: '10-digit Indian mobile starting with 6-9', inputMode: 'tel' as const, maxLength: 14 },
+              { key: 'address', label: 'Street Address', icon: MapPin, placeholder: 'House no, Street, Landmark', required: true, hint: 'Required — minimum 5 characters' },
+              { key: 'city', label: 'City', icon: MapPin, placeholder: 'e.g. Mumbai', hint: 'Letters only' },
+              { key: 'state', label: 'State', icon: MapPin, placeholder: 'e.g. Maharashtra', hint: 'Letters only' },
+              { key: 'pincode', label: 'PIN Code', icon: Mail, placeholder: 'e.g. 400001', hint: '6-digit PIN', inputMode: 'numeric' as const, maxLength: 6 },
             ];
             const filledCount = fields.filter(f => !!(form as any)[f.key]?.trim()).length;
             const completionPct = Math.round((filledCount / fields.length) * 100);
@@ -258,18 +258,40 @@ const Account = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {fields.map(f => {
                       const val = (form as any)[f.key];
+                      const err = errors[f.key];
                       return (
                         <div key={f.key}>
-                          <label className="block text-xs text-muted-foreground mb-2 uppercase tracking-wider font-medium">{f.label}</label>
+                          <label className="block text-xs text-muted-foreground mb-2 uppercase tracking-wider font-medium">
+                            {f.label}{f.required && <span className="text-destructive ml-0.5">*</span>}
+                          </label>
                           <div className="relative">
-                            <f.icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <f.icon className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 ${err ? 'text-destructive' : 'text-muted-foreground'}`} />
                             <input
                               value={val}
-                              onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                              onChange={e => {
+                                const v = e.target.value;
+                                setForm(prev => ({ ...prev, [f.key]: v }));
+                                if (errors[f.key]) {
+                                  const newErr = validateField(f.key, v);
+                                  setErrors(prev => ({ ...prev, [f.key]: newErr }));
+                                }
+                              }}
+                              onBlur={e => setErrors(prev => ({ ...prev, [f.key]: validateField(f.key, e.target.value) }))}
                               placeholder={f.placeholder}
-                              className="w-full pl-10 pr-4 py-3 bg-background border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all"
+                              inputMode={(f as any).inputMode}
+                              maxLength={(f as any).maxLength}
+                              className={`w-full pl-10 pr-4 py-3 bg-background border rounded-xl text-sm text-foreground placeholder:text-muted-foreground/50 focus:ring-2 focus:outline-none transition-all ${
+                                err
+                                  ? 'border-destructive focus:border-destructive focus:ring-destructive/20'
+                                  : 'border-border focus:border-primary focus:ring-primary/10'
+                              }`}
                             />
                           </div>
+                          {err ? (
+                            <p className="text-xs text-destructive mt-1.5">{err}</p>
+                          ) : (
+                            <p className="text-[11px] text-muted-foreground/70 mt-1.5">{f.hint}</p>
+                          )}
                         </div>
                       );
                     })}
