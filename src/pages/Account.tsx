@@ -237,7 +237,7 @@ const Account = () => {
                   </div>
                   {editing ? (
                     <div className="flex gap-2">
-                      <button onClick={() => { setEditing(false); if (profile) setForm({ full_name: profile.full_name || '', phone: profile.phone || '', address: profile.address || '', city: profile.city || '', state: profile.state || '', pincode: profile.pincode || '' }); }}
+                      <button onClick={() => { setEditing(false); setErrors({}); if (profile) setForm({ full_name: profile.full_name || '', phone: profile.phone || '', address: profile.address || '', city: profile.city || '', state: profile.state || '', pincode: profile.pincode || '' }); }}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-xs text-muted-foreground hover:text-foreground transition-colors">
                         <X className="w-3.5 h-3.5" /> Cancel
                       </button>
