@@ -1,6 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Quote, ChevronLeft, ChevronRight, Award, Users, ThumbsUp, Shield } from 'lucide-react';
+import { Star, Quote, ChevronLeft, ChevronRight, Award, Users, ThumbsUp, Shield, MessageSquarePlus, Send, X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
+import { brands } from '@/data/cars';
 
 const testimonials = [
   {
