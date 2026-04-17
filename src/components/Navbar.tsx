@@ -11,6 +11,7 @@ const navLinks = [
   { to: '/', label: 'Home' },
   { to: '/shop', label: 'Collection' },
   { to: '/brands', label: 'Brands' },
+  { to: '/reports', label: 'Reports' },
   { to: '/contact', label: 'Contact' },
 ];
 

@@ -29,6 +29,7 @@ import Terms from "./pages/Terms";
 import Categories from "./pages/Categories";
 import Testimonials from "./pages/Testimonials";
 import Compare from "./pages/Compare";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +63,7 @@ const App = () => (
                   <Route path="/categories" element={<Categories />} />
                   <Route path="/testimonials" element={<Testimonials />} />
                   <Route path="/compare" element={<Compare />} />
+                  <Route path="/reports" element={<Reports />} />
                   <Route path="/faq" element={<FAQ />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/terms" element={<Terms />} />
