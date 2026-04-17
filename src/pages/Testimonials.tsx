@@ -53,8 +53,61 @@ const stats = [
 ];
 
 const Testimonials = () => {
+  const { user, isAuthenticated, profile } = useAuth();
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [userReviews, setUserReviews] = useState<any[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState({
+    name: '', location: '', role: '', car: '', brand: '', rating: 5, text: '',
+  });
+
+  useEffect(() => {
+    supabase.from('feedback').select('*').eq('approved', true).order('created_at', { ascending: false }).limit(20)
+      .then(({ data }) => { if (data) setUserReviews(data); });
+  }, [submitting]);
+
+  useEffect(() => {
+    if (profile && !form.name) {
+      setForm((p) => ({ ...p, name: profile.full_name || '', location: profile.city && profile.state ? `${profile.city}, ${profile.state}` : '' }));
+    }
+  }, [profile]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isAuthenticated || !user) {
+      toast.error('Please sign in to submit a review');
+      return;
+    }
+    const name = form.name.trim();
+    const text = form.text.trim();
+    if (!name || name.length < 2) return toast.error('Please enter your name');
+    if (!/^[A-Za-z][A-Za-z\s.'-]{1,99}$/.test(name)) return toast.error('Name should contain letters only');
+    if (!text || text.length < 20) return toast.error('Review must be at least 20 characters');
+    if (text.length > 1000) return toast.error('Review must be under 1000 characters');
+    if (form.rating < 1 || form.rating > 5) return toast.error('Please choose a rating');
+
+    setSubmitting(true);
+    const { error } = await supabase.from('feedback').insert({
+      user_id: user.id,
+      name,
+      location: form.location.trim() || null,
+      role: form.role.trim() || null,
+      car: form.car.trim() || null,
+      brand: form.brand || null,
+      rating: form.rating,
+      text,
+    });
+    setSubmitting(false);
+    if (error) {
+      toast.error('Failed to submit review');
+    } else {
+      toast.success('Thank you! Your review has been published.');
+      setForm({ name: profile?.full_name || '', location: profile?.city && profile?.state ? `${profile.city}, ${profile.state}` : '', role: '', car: '', brand: '', rating: 5, text: '' });
+      setShowForm(false);
+    }
+  };
 
   const next = () => { setDirection(1); setActiveIndex((i) => (i + 1) % testimonials.length); };
   const prev = () => { setDirection(-1); setActiveIndex((i) => (i - 1 + testimonials.length) % testimonials.length); };
