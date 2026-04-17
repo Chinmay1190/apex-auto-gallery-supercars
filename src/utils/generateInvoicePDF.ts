@@ -65,7 +65,7 @@ const toText = (value: unknown, fallback = '-'): string => {
 
 const formatMoney = (value: unknown): string => {
   const amount = toNumber(value);
-  return `\u20B9 ${new Intl.NumberFormat('en-IN', {
+  return `INR ${new Intl.NumberFormat('en-IN', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount)}`;
@@ -384,7 +384,7 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number): number => {
   doc.setFont(FONT, 'normal');
   doc.setFontSize(6);
   doc.setTextColor(...colors.dim);
-  doc.text('* All prices are shown in Indian Rupees', LEFT, y + 3);
+  doc.text('* All prices are shown in Indian Rupees (INR)', LEFT, y + 3);
   doc.text('* GST charged at 28% as applicable', LEFT, y + 7);
 
   const cardX = 120;
@@ -481,7 +481,7 @@ const drawSignatory = (doc: jsPDF, afterY: number): number => {
   doc.setFont(FONT, 'normal');
   doc.setFontSize(5);
   doc.setTextColor(...colors.dim);
-  doc.text('Authorized Signatory  | CEOr', sigX + sigW / 2, sigLineY + 11, { align: 'center' });
+  doc.text('Authorized Signatory  |  CEO', sigX + sigW / 2, sigLineY + 11, { align: 'center' });
 
   // Left side — terms + seal
   doc.setFont(FONT, 'normal');

@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      feedback: {
+        Row: {
+          approved: boolean
+          brand: string | null
+          car: string | null
+          created_at: string
+          id: string
+          location: string | null
+          name: string
+          rating: number
+          role: string | null
+          text: string
+          user_id: string
+        }
+        Insert: {
+          approved?: boolean
+          brand?: string | null
+          car?: string | null
+          created_at?: string
+          id?: string
+          location?: string | null
+          name: string
+          rating: number
+          role?: string | null
+          text: string
+          user_id: string
+        }
+        Update: {
+          approved?: boolean
+          brand?: string | null
+          car?: string | null
+          created_at?: string
+          id?: string
+          location?: string | null
+          name?: string
+          rating?: number
+          role?: string | null
+          text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           car_brand: string
