@@ -317,6 +317,41 @@ export const generateReportPDF = async (data: ReportData) => {
     y = (doc as any).lastAutoTable.finalY + 6;
   }
 
+  // Cars Purchased section
+  if (data.carsPurchased && data.carsPurchased.length > 0) {
+    y = drawSectionTitle(doc, y + 2, 'Cars Purchased');
+    autoTable(doc, {
+      startY: y,
+      head: [['BRAND', 'MODEL', 'UNITS', 'REVENUE']],
+      body: data.carsPurchased.map(c => [
+        c.brand,
+        c.name,
+        String(c.units),
+        formatMoney(c.revenue),
+      ]),
+      theme: 'plain',
+      margin: { left: LEFT, right: PAGE_WIDTH - RIGHT, bottom: 22 },
+      styles: {
+        font: FONT, fontSize: 8, textColor: [...colors.text],
+        lineColor: [...colors.border], lineWidth: 0.15,
+        cellPadding: { top: 3.5, right: 4, bottom: 3.5, left: 4 },
+      },
+      headStyles: {
+        fillColor: [...colors.panelSoft], textColor: [...colors.gold],
+        fontStyle: 'bold', fontSize: 6.5,
+      },
+      alternateRowStyles: { fillColor: [...colors.rowAlt] },
+      columnStyles: {
+        0: { fontStyle: 'bold', textColor: [...colors.goldSoft], cellWidth: 40 },
+        1: { fontStyle: 'bold' },
+        2: { halign: 'center', cellWidth: 22 },
+        3: { halign: 'right', textColor: [...colors.goldSoft], cellWidth: 42 },
+      },
+      willDrawPage: (d) => stylePage(d.pageNumber),
+    });
+    y = (doc as any).lastAutoTable.finalY + 6;
+  }
+
   y = drawSectionTitle(doc, y + 2, 'Orders in Period');
   if (data.orders.length === 0) {
     doc.setFont(FONT, 'normal');

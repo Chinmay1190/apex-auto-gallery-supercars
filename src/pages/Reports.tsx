@@ -337,6 +337,55 @@ const Reports = () => {
             )}
           </motion.div>
 
+          {/* Cars Purchased */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 mb-8">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="font-display text-lg font-semibold">Cars Purchased</h2>
+                <p className="text-xs text-muted-foreground">Unique vehicles in this period</p>
+              </div>
+              <CarIcon className="w-5 h-5 text-primary" />
+            </div>
+            {carsPurchased.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">No cars purchased in this period.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {carsPurchased.map((c, i) => (
+                  <motion.div
+                    key={`${c.name}-${i}`}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.04 }}
+                    className="group relative overflow-hidden rounded-xl border border-border/40 bg-secondary/20 hover:border-primary/50 transition-all"
+                  >
+                    <div className="aspect-[16/10] overflow-hidden bg-secondary/40 relative">
+                      {c.image ? (
+                        <img
+                          src={c.image}
+                          alt={`${c.brand} ${c.name}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                          <CarIcon className="w-8 h-8" />
+                        </div>
+                      )}
+                      <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-background/80 backdrop-blur text-[10px] font-bold text-primary border border-primary/30">
+                        {c.units} unit{c.units !== 1 ? 's' : ''}
+                      </div>
+                    </div>
+                    <div className="p-3">
+                      <p className="text-[10px] uppercase tracking-wider text-primary mb-0.5">{c.brand}</p>
+                      <p className="font-display text-sm font-semibold truncate">{c.name}</p>
+                      <p className="font-display gold-text text-sm font-bold mt-1">{formatINR(c.revenue)}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+
           {/* Orders list in period */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6">
             <div className="flex items-center justify-between mb-5">
