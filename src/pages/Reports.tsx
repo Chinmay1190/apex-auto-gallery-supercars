@@ -20,6 +20,7 @@ type Period = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'range';
 const formatINR = (n: number): string =>
   `INR ${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(n || 0)}`;
 
+const carById = new Map(cars.map((c) => [c.id, c] as const));
 const carCategoryById = new Map(cars.map((c) => [c.id, c.category] as const));
 
 const Reports = () => {
@@ -124,6 +125,25 @@ const Reports = () => {
       .sort((a, b) => b.revenue - a.revenue);
   }, [filteredItems]);
 
+  const carsPurchased = useMemo(() => {
+    const map = new Map<string, { name: string; brand: string; image: string; units: number; revenue: number }>();
+    filteredItems.forEach((it) => {
+      const car = carById.get(it.car_id);
+      const key = it.car_id;
+      const cur = map.get(key) || {
+        name: car?.name || it.car_name || 'Vehicle',
+        brand: car?.brand || it.car_brand || '-',
+        image: car?.image || it.car_image || '',
+        units: 0,
+        revenue: 0,
+      };
+      cur.units += it.quantity || 0;
+      cur.revenue += (it.price || 0) * (it.quantity || 0);
+      map.set(key, cur);
+    });
+    return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue);
+  }, [filteredItems]);
+
   const downloadPDF = async () => {
     if (period === 'range' && (!fromDate || !toDate)) {
       toast.error('Please select both From and To dates');
@@ -141,6 +161,7 @@ const Reports = () => {
           payment_method: o.payment_method,
         })),
         categoryBreakdown: categoryStats,
+        carsPurchased: carsPurchased.map(({ image, ...rest }) => rest),
       });
       toast.success('Report downloaded');
     } catch (e) {
