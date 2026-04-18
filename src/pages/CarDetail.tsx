@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Heart, ArrowLeft, Gauge, Zap, Fuel, Settings, Timer, Wind } from 'lucide-react';
 import { cars, formatPrice } from '@/data/cars';
 import { useCart } from '@/context/CartContext';
@@ -74,24 +74,58 @@ const CarDetail = () => {
               className="relative"
             >
               <div className="aspect-[4/3] rounded-xl overflow-hidden glass-panel relative">
-                <img
-                  src={car.image}
-                  alt={`${car.brand} ${car.name}`}
-                  className="w-full h-full object-cover"
-                />
-                {/* Color tint overlay — paints the car body with the selected exterior color */}
-                <div
-                  key={selectedColor}
-                  className="absolute inset-0 pointer-events-none transition-opacity duration-500"
-                  style={{
-                    backgroundColor: car.colors[selectedColor],
-                    mixBlendMode: 'color',
-                    opacity: 0.65,
-                  }}
-                  aria-hidden
-                />
-                {/* Subtle vignette for depth */}
+                {/* Layered per-color image variants — each color crossfades with its own tint, glow, and reflection */}
+                <AnimatePresence mode="sync">
+                  <motion.div
+                    key={selectedColor}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.45, ease: 'easeInOut' }}
+                    className="absolute inset-0"
+                  >
+                    <img
+                      src={car.image}
+                      alt={`${car.brand} ${car.name} in ${colorName(car.colors[selectedColor])}`}
+                      className="w-full h-full object-cover"
+                    />
+                    {/* Body paint tint */}
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        backgroundColor: car.colors[selectedColor],
+                        mixBlendMode: 'color',
+                        opacity: 0.7,
+                      }}
+                      aria-hidden
+                    />
+                    {/* Gloss highlight */}
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        background: `linear-gradient(135deg, ${car.colors[selectedColor]}33 0%, transparent 45%, transparent 60%, ${car.colors[selectedColor]}22 100%)`,
+                        mixBlendMode: 'overlay',
+                      }}
+                      aria-hidden
+                    />
+                    {/* Color-cast glow at bottom (acts like reflected paint on ground) */}
+                    <div
+                      className="absolute inset-x-0 bottom-0 h-1/3 pointer-events-none"
+                      style={{
+                        background: `linear-gradient(to top, ${car.colors[selectedColor]}55, transparent)`,
+                        mixBlendMode: 'screen',
+                        filter: 'blur(20px)',
+                      }}
+                      aria-hidden
+                    />
+                  </motion.div>
+                </AnimatePresence>
+                {/* Vignette stays on top */}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent pointer-events-none" />
+                {/* Color counter */}
+                <div className="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-background/70 backdrop-blur-sm border border-border/40 text-[10px] tracking-wider uppercase text-muted-foreground">
+                  Color <span className="text-primary font-bold">{selectedColor + 1}</span> / {car.colors.length}
+                </div>
               </div>
               {car.trending && (
                 <span className="absolute top-4 left-4 px-4 py-1.5 text-xs tracking-wider uppercase font-bold gold-gradient text-primary-foreground rounded-full">
