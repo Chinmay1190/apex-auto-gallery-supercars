@@ -20,10 +20,15 @@ const colors = {
 const PAGE_WIDTH = 210;
 const LEFT = 16;
 const RIGHT = 194;
-const FONT = 'helvetica';
+let FONT = 'helvetica';
 
-const formatMoney = (n: number): string =>
-  `INR ${new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0)}`;
+const formatMoney = (n: number): string => {
+  const v = new Intl.NumberFormat('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(n || 0);
+  return FONT === 'NotoSans' ? `\u20B9 ${v}` : `Rs. ${v}`;
+};
 
 const loadImage = (src: string): Promise<string | null> =>
   new Promise((resolve) => {
@@ -45,6 +50,43 @@ const loadImage = (src: string): Promise<string | null> =>
     img.onerror = () => resolve(null);
     img.src = src;
   });
+
+const loadFontBuffer = async (url: string): Promise<ArrayBuffer | null> => {
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    return await r.arrayBuffer();
+  } catch {
+    return null;
+  }
+};
+
+const bufToBase64 = (buffer: ArrayBuffer): string => {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+};
+
+const registerNotoSans = async (doc: jsPDF): Promise<boolean> => {
+  try {
+    const [reg, bold] = await Promise.all([
+      loadFontBuffer('/fonts/NotoSans-Regular.ttf'),
+      loadFontBuffer('/fonts/NotoSans-Bold.ttf'),
+    ]);
+    if (reg) {
+      doc.addFileToVFS('NotoSans-Regular.ttf', bufToBase64(reg));
+      doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+    }
+    if (bold) {
+      doc.addFileToVFS('NotoSans-Bold.ttf', bufToBase64(bold));
+      doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold');
+    }
+    return !!(reg && bold);
+  } catch {
+    return false;
+  }
+};
 
 const drawBg = (doc: jsPDF) => {
   const h = doc.internal.pageSize.height;
@@ -129,7 +171,7 @@ const drawStatCards = (doc: jsPDF, y: number, stats: { label: string; value: str
     doc.text(s.label.toUpperCase(), x + 5, y + 7);
 
     doc.setFont(FONT, 'bold');
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     doc.setTextColor(...colors.goldSoft);
     doc.text(s.value, x + 5, y + 16);
   });
@@ -161,7 +203,7 @@ const drawFooter = (doc: jsPDF) => {
   doc.setFont(FONT, 'normal');
   doc.setFontSize(5.5);
   doc.setTextColor(...colors.dim);
-  doc.text('Confidential — for internal use only.', PAGE_WIDTH / 2, fy + 11, { align: 'center' });
+  doc.text('Confidential \u2014 for internal use only.', PAGE_WIDTH / 2, fy + 11, { align: 'center' });
   doc.setTextColor(...colors.goldSoft);
   doc.text('Drive the extraordinary.', PAGE_WIDTH / 2, fy + 15, { align: 'center' });
 };
@@ -181,18 +223,38 @@ export interface CategoryStat {
 }
 
 export interface ReportData {
-  title: string;       // e.g., "Daily Report"
-  subtitle: string;    // e.g., "10 April 2026" or "Apr 1 → Apr 10"
+  title: string;
+  subtitle: string;
   orders: ReportOrder[];
   categoryBreakdown: CategoryStat[];
 }
 
 export const generateReportPDF = async (data: ReportData) => {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  const logo = await loadImage(velocityLogo);
 
-  drawBg(doc);
-  drawHeader(doc, data.title, data.subtitle, logo);
+  // Register font + load logo in parallel
+  const [fontLoaded, logo] = await Promise.all([
+    registerNotoSans(doc),
+    loadImage(velocityLogo),
+  ]);
+  FONT = fontLoaded ? 'NotoSans' : 'helvetica';
+  doc.setFont(FONT, 'normal');
+
+  // Page chrome — track which pages have already had bg/header/footer drawn
+  const styledPages = new Set<number>();
+  const stylePage = (pageNum: number) => {
+    if (styledPages.has(pageNum)) return;
+    styledPages.add(pageNum);
+    const cur = doc.getCurrentPageInfo().pageNumber;
+    doc.setPage(pageNum);
+    drawBg(doc);
+    drawHeader(doc, data.title, data.subtitle, logo);
+    drawFooter(doc);
+    doc.setPage(cur);
+  };
+
+  // Style page 1 BEFORE any content is drawn
+  stylePage(1);
 
   const totalRevenue = data.orders.reduce((s, o) => s + (o.total || 0), 0);
   const totalOrders = data.orders.length;
@@ -225,7 +287,7 @@ export const generateReportPDF = async (data: ReportData) => {
         totalRevenue ? `${((c.revenue / totalRevenue) * 100).toFixed(1)}%` : '0%',
       ]),
       theme: 'plain',
-      margin: { left: LEFT, right: PAGE_WIDTH - RIGHT },
+      margin: { left: LEFT, right: PAGE_WIDTH - RIGHT, bottom: 22 },
       styles: {
         font: FONT, fontSize: 8, textColor: [...colors.text],
         lineColor: [...colors.border], lineWidth: 0.15,
@@ -242,6 +304,7 @@ export const generateReportPDF = async (data: ReportData) => {
         2: { halign: 'right', textColor: [...colors.goldSoft] },
         3: { halign: 'right', textColor: [...colors.muted] },
       },
+      didAddPage: () => stylePage(doc.getCurrentPageInfo().pageNumber),
     });
     y = (doc as any).lastAutoTable.finalY + 6;
   }
@@ -279,16 +342,9 @@ export const generateReportPDF = async (data: ReportData) => {
         0: { fontStyle: 'bold', textColor: [...colors.goldSoft] },
         4: { halign: 'right', fontStyle: 'bold', textColor: [...colors.goldSoft] },
       },
-      didDrawPage: () => {
-        drawBg(doc);
-        drawHeader(doc, data.title, data.subtitle, logo);
-        drawFooter(doc);
-      },
+      didAddPage: () => stylePage(doc.getCurrentPageInfo().pageNumber),
     });
   }
-
-  // Ensure footer on first page if no table extended
-  drawFooter(doc);
 
   doc.save(`Velocity-${data.title.replace(/\s+/g, '-')}-${data.subtitle.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
 };
