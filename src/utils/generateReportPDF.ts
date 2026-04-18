@@ -304,7 +304,7 @@ export const generateReportPDF = async (data: ReportData) => {
         2: { halign: 'right', textColor: [...colors.goldSoft] },
         3: { halign: 'right', textColor: [...colors.muted] },
       },
-      didAddPage: () => stylePage(doc.getCurrentPageInfo().pageNumber),
+      willDrawPage: (d) => stylePage(d.pageNumber),
     });
     y = (doc as any).lastAutoTable.finalY + 6;
   }
@@ -342,7 +342,7 @@ export const generateReportPDF = async (data: ReportData) => {
         0: { fontStyle: 'bold', textColor: [...colors.goldSoft] },
         4: { halign: 'right', fontStyle: 'bold', textColor: [...colors.goldSoft] },
       },
-      didAddPage: () => stylePage(doc.getCurrentPageInfo().pageNumber),
+      willDrawPage: (d) => stylePage(d.pageNumber),
     });
   }
 
