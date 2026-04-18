@@ -65,10 +65,12 @@ const toText = (value: unknown, fallback = '-'): string => {
 
 const formatMoney = (value: unknown): string => {
   const amount = toNumber(value);
-  return `INR ${new Intl.NumberFormat('en-IN', {
+  const formatted = new Intl.NumberFormat('en-IN', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(amount)}`;
+  }).format(amount);
+  // Use ₹ when NotoSans loaded, else fall back to "Rs."
+  return FONT === 'NotoSans' ? `\u20B9 ${formatted}` : `Rs. ${formatted}`;
 };
 
 const formatDate = (value: unknown): string => {
@@ -384,7 +386,7 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number): number => {
   doc.setFont(FONT, 'normal');
   doc.setFontSize(6);
   doc.setTextColor(...colors.dim);
-  doc.text('* All prices are shown in Indian Rupees (INR)', LEFT, y + 3);
+  doc.text(`* All prices are shown in Indian Rupees (${FONT === 'NotoSans' ? '\u20B9' : 'Rs.'})`, LEFT, y + 3);
   doc.text('* GST charged at 28% as applicable', LEFT, y + 7);
 
   const cardX = 120;
