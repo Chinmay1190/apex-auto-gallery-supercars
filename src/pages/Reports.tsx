@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   BarChart3, Calendar as CalendarIcon, Download, TrendingUp, Package,
-  CreditCard, Layers, RefreshCw, ArrowRight,
+  CreditCard, Layers, RefreshCw, ArrowRight, Car as CarIcon,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';

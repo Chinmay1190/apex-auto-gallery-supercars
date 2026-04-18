@@ -222,11 +222,19 @@ export interface CategoryStat {
   revenue: number;
 }
 
+export interface CarPurchase {
+  name: string;
+  brand: string;
+  units: number;
+  revenue: number;
+}
+
 export interface ReportData {
   title: string;
   subtitle: string;
   orders: ReportOrder[];
   categoryBreakdown: CategoryStat[];
+  carsPurchased?: CarPurchase[];
 }
 
 export const generateReportPDF = async (data: ReportData) => {
