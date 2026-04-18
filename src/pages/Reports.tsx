@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 type Period = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'range';
 
 const formatINR = (n: number): string =>
-  `INR ${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(n || 0)}`;
+  `₹${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(n || 0)}`;
 
 const carById = new Map(cars.map((c) => [c.id, c] as const));
 const carCategoryById = new Map(cars.map((c) => [c.id, c.category] as const));
