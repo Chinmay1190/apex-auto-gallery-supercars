@@ -222,11 +222,19 @@ export interface CategoryStat {
   revenue: number;
 }
 
+export interface CarPurchase {
+  name: string;
+  brand: string;
+  units: number;
+  revenue: number;
+}
+
 export interface ReportData {
   title: string;
   subtitle: string;
   orders: ReportOrder[];
   categoryBreakdown: CategoryStat[];
+  carsPurchased?: CarPurchase[];
 }
 
 export const generateReportPDF = async (data: ReportData) => {
@@ -303,6 +311,41 @@ export const generateReportPDF = async (data: ReportData) => {
         1: { halign: 'center' },
         2: { halign: 'right', textColor: [...colors.goldSoft] },
         3: { halign: 'right', textColor: [...colors.muted] },
+      },
+      willDrawPage: (d) => stylePage(d.pageNumber),
+    });
+    y = (doc as any).lastAutoTable.finalY + 6;
+  }
+
+  // Cars Purchased section
+  if (data.carsPurchased && data.carsPurchased.length > 0) {
+    y = drawSectionTitle(doc, y + 2, 'Cars Purchased');
+    autoTable(doc, {
+      startY: y,
+      head: [['BRAND', 'MODEL', 'UNITS', 'REVENUE']],
+      body: data.carsPurchased.map(c => [
+        c.brand,
+        c.name,
+        String(c.units),
+        formatMoney(c.revenue),
+      ]),
+      theme: 'plain',
+      margin: { left: LEFT, right: PAGE_WIDTH - RIGHT, bottom: 22 },
+      styles: {
+        font: FONT, fontSize: 8, textColor: [...colors.text],
+        lineColor: [...colors.border], lineWidth: 0.15,
+        cellPadding: { top: 3.5, right: 4, bottom: 3.5, left: 4 },
+      },
+      headStyles: {
+        fillColor: [...colors.panelSoft], textColor: [...colors.gold],
+        fontStyle: 'bold', fontSize: 6.5,
+      },
+      alternateRowStyles: { fillColor: [...colors.rowAlt] },
+      columnStyles: {
+        0: { fontStyle: 'bold', textColor: [...colors.goldSoft], cellWidth: 40 },
+        1: { fontStyle: 'bold' },
+        2: { halign: 'center', cellWidth: 22 },
+        3: { halign: 'right', textColor: [...colors.goldSoft], cellWidth: 42 },
       },
       willDrawPage: (d) => stylePage(d.pageNumber),
     });

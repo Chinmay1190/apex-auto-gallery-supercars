@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   BarChart3, Calendar as CalendarIcon, Download, TrendingUp, Package,
-  CreditCard, Layers, RefreshCw, ArrowRight,
+  CreditCard, Layers, RefreshCw, ArrowRight, Car as CarIcon,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +20,7 @@ type Period = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'range';
 const formatINR = (n: number): string =>
   `INR ${new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(n || 0)}`;
 
+const carById = new Map(cars.map((c) => [c.id, c] as const));
 const carCategoryById = new Map(cars.map((c) => [c.id, c.category] as const));
 
 const Reports = () => {
@@ -124,6 +125,25 @@ const Reports = () => {
       .sort((a, b) => b.revenue - a.revenue);
   }, [filteredItems]);
 
+  const carsPurchased = useMemo(() => {
+    const map = new Map<string, { name: string; brand: string; image: string; units: number; revenue: number }>();
+    filteredItems.forEach((it) => {
+      const car = carById.get(it.car_id);
+      const key = it.car_id;
+      const cur = map.get(key) || {
+        name: car?.name || it.car_name || 'Vehicle',
+        brand: car?.brand || it.car_brand || '-',
+        image: car?.image || it.car_image || '',
+        units: 0,
+        revenue: 0,
+      };
+      cur.units += it.quantity || 0;
+      cur.revenue += (it.price || 0) * (it.quantity || 0);
+      map.set(key, cur);
+    });
+    return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue);
+  }, [filteredItems]);
+
   const downloadPDF = async () => {
     if (period === 'range' && (!fromDate || !toDate)) {
       toast.error('Please select both From and To dates');
@@ -141,6 +161,7 @@ const Reports = () => {
           payment_method: o.payment_method,
         })),
         categoryBreakdown: categoryStats,
+        carsPurchased: carsPurchased.map(({ image, ...rest }) => rest),
       });
       toast.success('Report downloaded');
     } catch (e) {
@@ -312,6 +333,55 @@ const Reports = () => {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </motion.div>
+
+          {/* Cars Purchased */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 mb-8">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="font-display text-lg font-semibold">Cars Purchased</h2>
+                <p className="text-xs text-muted-foreground">Unique vehicles in this period</p>
+              </div>
+              <CarIcon className="w-5 h-5 text-primary" />
+            </div>
+            {carsPurchased.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">No cars purchased in this period.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {carsPurchased.map((c, i) => (
+                  <motion.div
+                    key={`${c.name}-${i}`}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.04 }}
+                    className="group relative overflow-hidden rounded-xl border border-border/40 bg-secondary/20 hover:border-primary/50 transition-all"
+                  >
+                    <div className="aspect-[16/10] overflow-hidden bg-secondary/40 relative">
+                      {c.image ? (
+                        <img
+                          src={c.image}
+                          alt={`${c.brand} ${c.name}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                          <CarIcon className="w-8 h-8" />
+                        </div>
+                      )}
+                      <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-background/80 backdrop-blur text-[10px] font-bold text-primary border border-primary/30">
+                        {c.units} unit{c.units !== 1 ? 's' : ''}
+                      </div>
+                    </div>
+                    <div className="p-3">
+                      <p className="text-[10px] uppercase tracking-wider text-primary mb-0.5">{c.brand}</p>
+                      <p className="font-display text-sm font-semibold truncate">{c.name}</p>
+                      <p className="font-display gold-text text-sm font-bold mt-1">{formatINR(c.revenue)}</p>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
             )}
           </motion.div>
