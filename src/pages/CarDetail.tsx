@@ -1,17 +1,15 @@
 import { useParams, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ShoppingCart, Heart, ArrowLeft, Gauge, Zap, Fuel, Settings, Timer, Wind, Award } from 'lucide-react';
-import { getCarById, formatPrice, getCarImageForColor, colorName } from '@/data/cars';
+import { getCarById, formatPrice } from '@/data/cars';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
-import { useState } from 'react';
 
 const CarDetail = () => {
   const { id } = useParams();
   const car = getCarById(id || '');
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
-  const [selectedColor, setSelectedColor] = useState(0);
 
   if (!car) return (
     <div className="min-h-screen pt-24 flex items-center justify-center">
