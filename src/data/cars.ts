@@ -152,7 +152,7 @@ const colorImagesForBrand: Record<string, Record<string, string>> = {
 // ============================================================
 // Cars
 // ============================================================
-export const cars: Car[] = [
+const carsRaw: Car[] = [
   { id: "1", name: "Aventador SVJ", brand: "Lamborghini", price: 85000000, image: lamboImg, category: "Hypercars", fuel: "Petrol", transmission: "Automatic", topSpeed: 350, horsepower: 770, seats: 2, drivetrain: "AWD", bodyType: "Coupe", engine: "6.5L V12", acceleration: "2.8s", torque: "720 Nm", mileage: "5.5 km/l", fuelTank: "90L", description: "The Lamborghini Aventador SVJ represents the pinnacle of Lamborghini's super sports car legacy.", tagline: "Naturally aspirated. Unapologetically loud.", awards: ["Nürburgring Production Lap Record", "Top Gear Hypercar of the Year"], colors: ["#FFD700", "#FF0000", "#000000", "#FFFFFF", "#00FF00"], featured: true, trending: true, year: 2024 },
   { id: "2", name: "SF90 Stradale", brand: "Ferrari", price: 75000000, image: ferrariImg, category: "Luxury Supercars", fuel: "Hybrid", transmission: "Automatic", topSpeed: 340, horsepower: 986, seats: 2, drivetrain: "AWD", bodyType: "Coupe", engine: "4.0L V8 Hybrid", acceleration: "2.5s", torque: "800 Nm", mileage: "6.5 km/l", fuelTank: "68L", description: "Ferrari's first plug-in hybrid, combining a twin-turbo V8 with three electric motors.", tagline: "Ferrari's first PHEV. Three motors. One legend.", awards: ["Robb Report Car of the Year"], colors: ["#FF0000", "#FFD700", "#000000", "#FFFFFF", "#0000FF"], featured: true, trending: true, year: 2024 },
   { id: "3", name: "720S", brand: "McLaren", price: 55000000, image: mclarenImg, category: "Luxury Supercars", fuel: "Petrol", transmission: "Automatic", topSpeed: 341, horsepower: 710, seats: 2, drivetrain: "RWD", bodyType: "Coupe", engine: "4.0L Twin-Turbo V8", acceleration: "2.9s", torque: "770 Nm", mileage: "7.0 km/l", fuelTank: "72L", description: "The McLaren 720S redefines the supercar segment with breathtaking performance.", tagline: "Carbon fibre engineering, race-bred dynamics.", colors: ["#FF6600", "#000000", "#C0C0C0", "#FFFFFF", "#0066FF"], featured: true, trending: true, year: 2024 },
@@ -193,19 +193,23 @@ export const cars: Car[] = [
   { id: "38", name: "Purosangue", brand: "Ferrari", price: 65000000, image: ferrari2Img, category: "Luxury Supercars", fuel: "Petrol", transmission: "Automatic", topSpeed: 310, horsepower: 715, seats: 4, drivetrain: "AWD", bodyType: "SUV", engine: "6.5L V12", acceleration: "3.3s", torque: "716 Nm", mileage: "6.0 km/l", fuelTank: "100L", description: "Ferrari's first four-door four-seater. Not an SUV — a Ferrari.", tagline: "Not an SUV. A Ferrari.", colors: ["#FF0000", "#000000", "#C0C0C0", "#FFFFFF"], featured: true, year: 2024 },
   { id: "39", name: "Panamera Turbo S", brand: "Porsche", price: 30000000, image: porsche2Img, category: "Luxury Supercars", fuel: "Hybrid", transmission: "Automatic", topSpeed: 315, horsepower: 690, seats: 4, drivetrain: "AWD", bodyType: "Sedan", engine: "4.0L V8 Hybrid", acceleration: "3.2s", torque: "900 Nm", mileage: "7.5 km/l", fuelTank: "80L", description: "The ultimate sports sedan from Porsche. Four doors, no compromise.", tagline: "Four doors. No compromise.", colors: ["#FFFFFF", "#000000", "#C0C0C0"], year: 2025 },
   { id: "40", name: "Valhalla", brand: "Aston Martin", price: 150000000, image: aston2Img, category: "Hypercars", fuel: "Hybrid", transmission: "Automatic", topSpeed: 350, horsepower: 937, seats: 2, drivetrain: "AWD", bodyType: "Coupe", engine: "4.0L V8 Hybrid", acceleration: "2.5s", torque: "1000 Nm", mileage: "5.5 km/l", fuelTank: "90L", description: "Mid-engine hybrid hypercar. The new flagship of Aston Martin.", tagline: "Aston Martin's new flagship.", colors: ["#006633", "#000000", "#C0C0C0"], year: 2025 },
-].map((c) => {
+];
+
+export const cars: Car[] = carsRaw.map((c) => {
   // Auto-attach brand color image presets so each color swatch swaps the photo.
   const preset = colorImagesForBrand[c.brand] || {};
-  // Filter to only include images for colors this car actually has
   const colorImages: Record<string, string> = {};
   c.colors.forEach((hex) => {
     const u = hex.toUpperCase();
     if (preset[u]) colorImages[u] = preset[u];
     else if (preset[hex]) colorImages[hex] = preset[hex];
   });
-  return Object.keys(colorImages).length > 0
-    ? { ...c, colorImages, available: c.available ?? true, releaseYear: c.releaseYear ?? c.year }
-    : { ...c, available: c.available ?? true, releaseYear: c.releaseYear ?? c.year };
+  return {
+    ...c,
+    colorImages: Object.keys(colorImages).length > 0 ? colorImages : undefined,
+    available: c.available ?? true,
+    releaseYear: c.releaseYear ?? c.year,
+  };
 });
 
 // ============================================================
