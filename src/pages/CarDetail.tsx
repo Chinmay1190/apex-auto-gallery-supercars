@@ -1,33 +1,14 @@
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Heart, ArrowLeft, Gauge, Zap, Fuel, Settings, Timer, Wind } from 'lucide-react';
-import { cars, formatPrice } from '@/data/cars';
+import { ShoppingCart, Heart, ArrowLeft, Gauge, Zap, Fuel, Settings, Timer, Wind, Award } from 'lucide-react';
+import { getCarById, formatPrice, getCarImageForColor, colorName } from '@/data/cars';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useState } from 'react';
 
-const COLOR_NAMES: Record<string, string> = {
-  '#FFD700': 'Gold',
-  '#FF0000': 'Rosso Red',
-  '#000000': 'Jet Black',
-  '#FFFFFF': 'Pearl White',
-  '#00FF00': 'Verde Green',
-  '#0000FF': 'Royal Blue',
-  '#0066FF': 'Azure Blue',
-  '#FF6600': 'Papaya Orange',
-  '#C0C0C0': 'Silver',
-  '#006633': 'Racing Green',
-  '#1a1a2e': 'Midnight Navy',
-  '#8B0000': 'Maroon',
-};
-
-const colorName = (hex: string): string => {
-  return COLOR_NAMES[hex.toUpperCase()] || COLOR_NAMES[hex] || hex.toUpperCase();
-};
-
 const CarDetail = () => {
   const { id } = useParams();
-  const car = cars.find(c => c.id === id);
+  const car = getCarById(id || '');
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const [selectedColor, setSelectedColor] = useState(0);
@@ -85,7 +66,7 @@ const CarDetail = () => {
                     className="absolute inset-0"
                   >
                     <img
-                      src={car.image}
+                      src={getCarImageForColor(car, car.colors[selectedColor])}
                       alt={`${car.brand} ${car.name} in ${colorName(car.colors[selectedColor])}`}
                       className="w-full h-full object-cover"
                     />
@@ -142,9 +123,34 @@ const CarDetail = () => {
             >
               <p className="text-primary text-sm tracking-[0.3em] uppercase mb-2">{car.brand}</p>
               <h1 className="font-display text-3xl md:text-5xl font-bold mb-2">{car.name}</h1>
-              <p className="text-muted-foreground text-sm mb-4">{car.year} • {car.category} • {car.fuel}</p>
+              {car.tagline && (
+                <p className="text-foreground/80 italic text-sm md:text-base mb-3">"{car.tagline}"</p>
+              )}
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-4">
+                <span>{car.year}</span>
+                <span className="text-border">•</span>
+                <span>{car.category}</span>
+                <span className="text-border">•</span>
+                <span>{car.fuel}</span>
+                {car.available === false && (
+                  <span className="ml-2 px-2 py-0.5 rounded-full bg-destructive/20 text-destructive font-semibold uppercase tracking-wider text-[10px]">
+                    Sold Out
+                  </span>
+                )}
+              </div>
               <p className="font-display text-3xl md:text-4xl gold-text mb-6">{formatPrice(car.price)}</p>
-              <p className="text-muted-foreground leading-relaxed mb-8">{car.description}</p>
+              <p className="text-muted-foreground leading-relaxed mb-6">{car.description}</p>
+
+              {car.awards && car.awards.length > 0 && (
+                <div className="mb-8 space-y-1.5">
+                  {car.awards.map((award) => (
+                    <div key={award} className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Award className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                      <span>{award}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Color Selector */}
               <div className="mb-8">
