@@ -55,58 +55,12 @@ const CarDetail = () => {
               className="relative"
             >
               <div className="aspect-[4/3] rounded-xl overflow-hidden glass-panel relative">
-                {/* Layered per-color image variants — each color crossfades with its own tint, glow, and reflection */}
-                <AnimatePresence mode="sync">
-                  <motion.div
-                    key={selectedColor}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.45, ease: 'easeInOut' }}
-                    className="absolute inset-0"
-                  >
-                    <img
-                      src={getCarImageForColor(car, car.colors[selectedColor])}
-                      alt={`${car.brand} ${car.name} in ${colorName(car.colors[selectedColor])}`}
-                      className="w-full h-full object-cover"
-                    />
-                    {/* Body paint tint */}
-                    <div
-                      className="absolute inset-0 pointer-events-none"
-                      style={{
-                        backgroundColor: car.colors[selectedColor],
-                        mixBlendMode: 'color',
-                        opacity: 0.7,
-                      }}
-                      aria-hidden
-                    />
-                    {/* Gloss highlight */}
-                    <div
-                      className="absolute inset-0 pointer-events-none"
-                      style={{
-                        background: `linear-gradient(135deg, ${car.colors[selectedColor]}33 0%, transparent 45%, transparent 60%, ${car.colors[selectedColor]}22 100%)`,
-                        mixBlendMode: 'overlay',
-                      }}
-                      aria-hidden
-                    />
-                    {/* Color-cast glow at bottom (acts like reflected paint on ground) */}
-                    <div
-                      className="absolute inset-x-0 bottom-0 h-1/3 pointer-events-none"
-                      style={{
-                        background: `linear-gradient(to top, ${car.colors[selectedColor]}55, transparent)`,
-                        mixBlendMode: 'screen',
-                        filter: 'blur(20px)',
-                      }}
-                      aria-hidden
-                    />
-                  </motion.div>
-                </AnimatePresence>
-                {/* Vignette stays on top */}
+                <img
+                  src={car.image}
+                  alt={`${car.brand} ${car.name}`}
+                  className="w-full h-full object-cover"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent pointer-events-none" />
-                {/* Color counter */}
-                <div className="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-background/70 backdrop-blur-sm border border-border/40 text-[10px] tracking-wider uppercase text-muted-foreground">
-                  Color <span className="text-primary font-bold">{selectedColor + 1}</span> / {car.colors.length}
-                </div>
               </div>
               {car.trending && (
                 <span className="absolute top-4 left-4 px-4 py-1.5 text-xs tracking-wider uppercase font-bold gold-gradient text-primary-foreground rounded-full">
@@ -151,32 +105,6 @@ const CarDetail = () => {
                   ))}
                 </div>
               )}
-
-              {/* Color Selector */}
-              <div className="mb-8">
-                <h3 className="font-display text-sm tracking-wider uppercase mb-3">
-                  Exterior Color
-                  <span className="ml-2 text-xs text-muted-foreground normal-case tracking-normal">
-                    — {colorName(car.colors[selectedColor])}
-                  </span>
-                </h3>
-                <div className="flex flex-wrap gap-3">
-                  {car.colors.map((color, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setSelectedColor(i)}
-                      title={colorName(color)}
-                      className={`w-10 h-10 rounded-full border-2 transition-all shadow-md hover:scale-110 ${
-                        selectedColor === i
-                          ? 'border-primary scale-110 ring-2 ring-primary/30 ring-offset-2 ring-offset-background'
-                          : 'border-border'
-                      }`}
-                      style={{ backgroundColor: color }}
-                      aria-label={`Select ${colorName(color)}`}
-                    />
-                  ))}
-                </div>
-              </div>
 
               {/* Actions */}
               <div className="flex flex-wrap gap-3 mb-8">
