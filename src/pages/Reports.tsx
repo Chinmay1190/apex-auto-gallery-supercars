@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  BarChart3, Calendar as CalendarIcon, Download, TrendingUp, Package,
-  CreditCard, Layers, RefreshCw, ArrowRight, Car as CarIcon,
+  BarChart3, Calendar as CalendarIcon, Download, TrendingUp, TrendingDown, Package,
+  CreditCard, Layers, RefreshCw, ArrowRight, Car as CarIcon, Crown, Sparkles, Activity,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,6 +22,26 @@ const formatINR = (n: number): string =>
 
 const carById = new Map(cars.map((c) => [c.id, c] as const));
 const carCategoryById = new Map(cars.map((c) => [c.id, c.category] as const));
+
+// Animated number that counts up on mount/value change
+const AnimatedNumber = ({ value, format: fmt }: { value: number; format?: (n: number) => string }) => {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    const duration = 900;
+    const start = performance.now();
+    const from = 0;
+    let raf = 0;
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setDisplay(Math.round(from + (value - from) * eased));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+  return <>{fmt ? fmt(display) : display.toLocaleString('en-IN')}</>;
+};
 
 const Reports = () => {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -65,7 +85,7 @@ const Reports = () => {
     }
     if (period === 'weekly') {
       const day = selectedDate.getDay();
-      const diff = (day + 6) % 7; // Monday start
+      const diff = (day + 6) % 7;
       const from = startOf(new Date(selectedDate)); from.setDate(from.getDate() - diff);
       const to = endOf(new Date(from)); to.setDate(to.getDate() + 6); to.setHours(23, 59, 59, 999);
       return { from, to, label: `${format(from, 'd MMM')} - ${format(to, 'd MMM yyyy')}` };
@@ -81,19 +101,35 @@ const Reports = () => {
       const to = endOf(new Date(selectedDate.getFullYear(), q * 3 + 3, 0));
       return { from, to, label: `Q${q + 1} ${selectedDate.getFullYear()}` };
     }
-    // range
     if (fromDate && toDate) {
       return { from: startOf(fromDate), to: endOf(toDate), label: `${format(fromDate, 'd MMM yyyy')} → ${format(toDate, 'd MMM yyyy')}` };
     }
     return { from: startOf(now), to: endOf(now), label: 'Select range' };
   }, [period, selectedDate, fromDate, toDate]);
 
-  const filtered = useMemo(() => {
-    return orders.filter((o) => {
+  // Previous-period comparison range (same length, immediately preceding)
+  const prevRange = useMemo(() => {
+    const span = range.to.getTime() - range.from.getTime();
+    const to = new Date(range.from.getTime() - 1);
+    const from = new Date(range.from.getTime() - span - 1);
+    return { from, to };
+  }, [range]);
+
+  const filtered = useMemo(
+    () => orders.filter((o) => {
       const d = new Date(o.created_at).getTime();
       return d >= range.from.getTime() && d <= range.to.getTime();
-    });
-  }, [orders, range]);
+    }),
+    [orders, range],
+  );
+
+  const prevFiltered = useMemo(
+    () => orders.filter((o) => {
+      const d = new Date(o.created_at).getTime();
+      return d >= prevRange.from.getTime() && d <= prevRange.to.getTime();
+    }),
+    [orders, prevRange],
+  );
 
   const filteredItems = useMemo(() => {
     const ids = new Set(filtered.map((o) => o.id));
@@ -110,6 +146,16 @@ const Reports = () => {
       units: totalItems,
     };
   }, [filtered, filteredItems]);
+
+  const prevRevenue = useMemo(() => prevFiltered.reduce((s, o) => s + (o.total || 0), 0), [prevFiltered]);
+  const revenueDelta = useMemo(() => {
+    if (!prevRevenue) return stats.revenue > 0 ? 100 : 0;
+    return ((stats.revenue - prevRevenue) / prevRevenue) * 100;
+  }, [stats.revenue, prevRevenue]);
+  const ordersDelta = useMemo(() => {
+    if (!prevFiltered.length) return stats.orders > 0 ? 100 : 0;
+    return ((stats.orders - prevFiltered.length) / prevFiltered.length) * 100;
+  }, [stats.orders, prevFiltered.length]);
 
   const categoryStats = useMemo(() => {
     const map = new Map<string, { units: number; revenue: number }>();
@@ -143,6 +189,41 @@ const Reports = () => {
     });
     return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue);
   }, [filteredItems]);
+
+  const topCar = carsPurchased[0];
+
+  // Brand performance
+  const brandStats = useMemo(() => {
+    const map = new Map<string, { units: number; revenue: number }>();
+    filteredItems.forEach((it) => {
+      const car = carById.get(it.car_id);
+      const brand = car?.brand || it.car_brand || 'Other';
+      const cur = map.get(brand) || { units: 0, revenue: 0 };
+      cur.units += it.quantity || 0;
+      cur.revenue += (it.price || 0) * (it.quantity || 0);
+      map.set(brand, cur);
+    });
+    return Array.from(map.entries())
+      .map(([brand, v]) => ({ brand, ...v }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5);
+  }, [filteredItems]);
+
+  // Daily trend buckets across the selected range (max 14 buckets)
+  const dailyTrend = useMemo(() => {
+    const dayMs = 24 * 60 * 60 * 1000;
+    const totalDays = Math.max(1, Math.ceil((range.to.getTime() - range.from.getTime()) / dayMs));
+    const buckets = Math.min(14, totalDays);
+    const bucketMs = (range.to.getTime() - range.from.getTime()) / buckets;
+    const data = Array.from({ length: buckets }, () => 0);
+    filtered.forEach((o) => {
+      const t = new Date(o.created_at).getTime();
+      const idx = Math.min(buckets - 1, Math.max(0, Math.floor((t - range.from.getTime()) / bucketMs)));
+      data[idx] += o.total || 0;
+    });
+    const max = Math.max(1, ...data);
+    return { data, max };
+  }, [filtered, range]);
 
   const downloadPDF = async () => {
     if (period === 'range' && (!fromDate || !toDate)) {
@@ -187,27 +268,58 @@ const Reports = () => {
     { key: 'range', label: 'Custom Range' },
   ];
 
+  const statCards = [
+    { label: 'Total Orders', value: stats.orders, icon: Package, accent: 'text-primary', delta: ordersDelta, isCurrency: false },
+    { label: 'Revenue', value: stats.revenue, icon: TrendingUp, accent: 'text-emerald-400', delta: revenueDelta, isCurrency: true },
+    { label: 'Avg Order', value: stats.avg, icon: CreditCard, accent: 'text-sky-400', delta: null as number | null, isCurrency: true },
+    { label: 'Units Sold', value: stats.units, icon: Layers, accent: 'text-amber-400', delta: null as number | null, isCurrency: false },
+  ];
+
   return (
-    <div className="min-h-screen pt-20 md:pt-24">
+    <div className="min-h-screen pt-20 md:pt-24 relative overflow-hidden">
+      {/* Ambient backdrop */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -top-40 -left-40 w-[520px] h-[520px] rounded-full bg-primary/10 blur-[140px]" />
+        <div className="absolute top-1/3 -right-40 w-[420px] h-[420px] rounded-full bg-amber-500/10 blur-[140px]" />
+      </div>
+
       <div className="section-padding py-8 md:py-12">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8 flex items-start justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl gold-gradient flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-primary-foreground" />
+        <div className="max-w-7xl mx-auto">
+          {/* Hero header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative mb-8 p-6 md:p-8 rounded-3xl overflow-hidden border border-primary/20 glass-panel"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-amber-500/5 pointer-events-none" />
+            <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-primary/15 blur-3xl pointer-events-none" />
+            <div className="relative flex items-start justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="w-14 h-14 rounded-2xl gold-gradient flex items-center justify-center shadow-[0_0_30px_hsl(var(--primary)/0.4)]">
+                    <BarChart3 className="w-6 h-6 text-primary-foreground" />
+                  </div>
+                  <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-primary animate-pulse" />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-1 flex items-center gap-2">
+                    <Activity className="w-3 h-3" /> Live Performance Suite
+                  </p>
+                  <h1 className="font-display text-3xl md:text-5xl font-bold leading-tight">
+                    Reports & <span className="gold-text">Analytics</span>
+                  </h1>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Premium intelligence on your supercar acquisitions
+                  </p>
+                </div>
               </div>
-              <div>
-                <h1 className="font-display text-3xl md:text-4xl font-bold">Reports & Analytics</h1>
-                <p className="text-sm text-muted-foreground">Track your purchase trends across periods and categories</p>
-              </div>
+              <button
+                onClick={downloadPDF}
+                className="group relative inline-flex items-center gap-2 px-6 py-3 gold-gradient text-primary-foreground font-semibold text-xs uppercase tracking-wider rounded-xl shadow-[0_0_25px_hsl(var(--primary)/0.35)] hover:shadow-[0_0_40px_hsl(var(--primary)/0.55)] transition-all hover:scale-[1.03]"
+              >
+                <Download className="w-4 h-4" /> Export PDF Report
+              </button>
             </div>
-            <button
-              onClick={downloadPDF}
-              className="inline-flex items-center gap-2 px-5 py-2.5 gold-gradient text-primary-foreground font-semibold text-xs uppercase tracking-wider rounded-xl shadow-lg hover:shadow-xl transition-shadow"
-            >
-              <Download className="w-4 h-4" /> Download PDF
-            </button>
           </motion.div>
 
           {/* Period tabs */}
@@ -219,8 +331,8 @@ const Reports = () => {
                 className={cn(
                   'px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all',
                   period === t.key
-                    ? 'gold-gradient text-primary-foreground shadow-lg'
-                    : 'bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary',
+                    ? 'gold-gradient text-primary-foreground shadow-[0_0_20px_hsl(var(--primary)/0.4)]'
+                    : 'bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary border border-border/40',
                 )}
               >
                 {t.label}
@@ -229,23 +341,17 @@ const Reports = () => {
           </motion.div>
 
           {/* Date controls */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-5 mb-8 flex flex-wrap items-center gap-4">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-5 mb-8 flex flex-wrap items-center gap-4 border border-border/40">
             {period !== 'range' ? (
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className={cn('inline-flex items-center gap-2 px-4 py-2.5 bg-secondary/50 border border-border rounded-xl text-sm hover:border-primary/50 transition-colors')}>
+                  <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-secondary/50 border border-border rounded-xl text-sm hover:border-primary/50 transition-colors">
                     <CalendarIcon className="w-4 h-4 text-primary" />
                     <span className="font-medium">{range.label}</span>
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(d) => d && setSelectedDate(d)}
-                    initialFocus
-                    className={cn('p-3 pointer-events-auto')}
-                  />
+                  <Calendar mode="single" selected={selectedDate} onSelect={(d) => d && setSelectedDate(d)} initialFocus className="p-3 pointer-events-auto" />
                 </PopoverContent>
               </Popover>
             ) : (
@@ -259,7 +365,7 @@ const Reports = () => {
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={fromDate} onSelect={setFromDate} initialFocus className={cn('p-3 pointer-events-auto')} />
+                    <Calendar mode="single" selected={fromDate} onSelect={setFromDate} initialFocus className="p-3 pointer-events-auto" />
                   </PopoverContent>
                 </Popover>
                 <ArrowRight className="w-4 h-4 text-muted-foreground" />
@@ -272,73 +378,222 @@ const Reports = () => {
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={toDate} onSelect={setToDate} initialFocus className={cn('p-3 pointer-events-auto')} />
+                    <Calendar mode="single" selected={toDate} onSelect={setToDate} initialFocus className="p-3 pointer-events-auto" />
                   </PopoverContent>
                 </Popover>
               </div>
             )}
-            <span className="text-xs text-muted-foreground ml-auto">Showing data for <span className="text-foreground font-semibold">{range.label}</span></span>
+            <span className="text-xs text-muted-foreground ml-auto">
+              Showing data for <span className="text-foreground font-semibold">{range.label}</span>
+            </span>
           </motion.div>
 
-          {/* Stat cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-            {[
-              { label: 'Total Orders', value: stats.orders, icon: Package, accent: 'text-primary' },
-              { label: 'Revenue', value: formatINR(stats.revenue), icon: TrendingUp, accent: 'text-emerald-400' },
-              { label: 'Avg Order', value: formatINR(stats.avg), icon: CreditCard, accent: 'text-sky-400' },
-              { label: 'Units Sold', value: stats.units, icon: Layers, accent: 'text-amber-400' },
-            ].map((s, i) => (
-              <motion.div key={s.label} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                className="glass-panel p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-secondary/60 flex items-center justify-center flex-shrink-0">
-                  <s.icon className={`w-5 h-5 ${s.accent}`} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[11px] text-muted-foreground uppercase tracking-wider truncate">{s.label}</p>
-                  <p className="font-display text-lg font-bold truncate">{s.value}</p>
-                </div>
-              </motion.div>
-            ))}
+          {/* Premium stat cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {statCards.map((s, i) => {
+              const positive = s.delta != null && s.delta >= 0;
+              return (
+                <motion.div
+                  key={s.label}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.07 }}
+                  className="group relative p-5 rounded-2xl border border-border/40 bg-gradient-to-br from-secondary/40 to-secondary/10 backdrop-blur hover:border-primary/40 transition-all overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                  <div className="relative flex items-start justify-between mb-3">
+                    <div className={cn('w-11 h-11 rounded-xl flex items-center justify-center bg-secondary/70 border border-border/50', s.accent)}>
+                      <s.icon className="w-5 h-5" />
+                    </div>
+                    {s.delta != null && (
+                      <span className={cn(
+                        'inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full',
+                        positive ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400',
+                      )}>
+                        {positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                        {Math.abs(s.delta).toFixed(0)}%
+                      </span>
+                    )}
+                  </div>
+                  <p className="relative text-[10px] text-muted-foreground uppercase tracking-[0.15em] mb-1">{s.label}</p>
+                  <p className="relative font-display text-2xl md:text-3xl font-bold">
+                    <AnimatedNumber value={s.value} format={s.isCurrency ? formatINR : undefined} />
+                  </p>
+                </motion.div>
+              );
+            })}
           </div>
 
-          {/* Category breakdown */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 mb-8">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h2 className="font-display text-lg font-semibold">Category-wise Sales</h2>
-                <p className="text-xs text-muted-foreground">How different supercar categories performed</p>
-              </div>
-              <Layers className="w-5 h-5 text-primary" />
-            </div>
-            {categoryStats.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No sales in this period.</p>
-            ) : (
-              <div className="space-y-3">
-                {categoryStats.map((c) => {
-                  const pct = stats.revenue ? (c.revenue / stats.revenue) * 100 : 0;
-                  return (
-                    <div key={c.category} className="space-y-1.5">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">{c.category}</span>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span>{c.units} unit{c.units !== 1 ? 's' : ''}</span>
-                          <span className="font-display gold-text font-semibold">{formatINR(c.revenue)}</span>
-                          <span className="w-12 text-right">{pct.toFixed(1)}%</span>
-                        </div>
+          {/* Top car spotlight + Daily trend */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            {/* Top car spotlight */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="lg:col-span-1 relative rounded-2xl overflow-hidden border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent group"
+            >
+              {topCar ? (
+                <>
+                  <div className="aspect-[4/3] overflow-hidden bg-secondary/40 relative">
+                    {topCar.image ? (
+                      <img src={topCar.image} alt={topCar.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><CarIcon className="w-10 h-10 text-muted-foreground" /></div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+                    <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full gold-gradient text-primary-foreground text-[10px] font-bold uppercase tracking-wider">
+                      <Crown className="w-3 h-3" /> Top Performer
+                    </div>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 p-5">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-primary mb-1">{topCar.brand}</p>
+                    <h3 className="font-display text-xl font-bold mb-2">{topCar.name}</h3>
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Revenue</p>
+                        <p className="font-display gold-text text-lg font-bold">{formatINR(topCar.revenue)}</p>
                       </div>
-                      <div className="h-2 bg-secondary/50 rounded-full overflow-hidden">
-                        <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.6 }}
-                          className="h-full gold-gradient rounded-full" />
+                      <div className="text-right">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Units</p>
+                        <p className="font-display text-lg font-bold">{topCar.units}</p>
                       </div>
                     </div>
+                  </div>
+                </>
+              ) : (
+                <div className="p-8 text-center text-sm text-muted-foreground">
+                  <Crown className="w-8 h-8 text-primary/50 mx-auto mb-2" />
+                  No top performer yet for this period.
+                </div>
+              )}
+            </motion.div>
+
+            {/* Daily trend chart */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="lg:col-span-2 glass-panel p-6 border border-border/40"
+            >
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="font-display text-lg font-semibold flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-primary" /> Revenue Pulse
+                  </h2>
+                  <p className="text-xs text-muted-foreground">Distribution across the selected period</p>
+                </div>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Peak {formatINR(dailyTrend.max)}</span>
+              </div>
+              <div className="flex items-end gap-1.5 h-40">
+                {dailyTrend.data.map((v, i) => {
+                  const h = Math.max(4, (v / dailyTrend.max) * 100);
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{ height: 0 }}
+                      animate={{ height: `${h}%` }}
+                      transition={{ delay: i * 0.04, duration: 0.5, ease: 'easeOut' }}
+                      className="flex-1 rounded-t-md bg-gradient-to-t from-primary/40 via-primary/70 to-primary relative group cursor-pointer"
+                    >
+                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold whitespace-nowrap bg-background border border-primary/40 px-1.5 py-0.5 rounded-md text-primary">
+                        {formatINR(v)}
+                      </div>
+                    </motion.div>
                   );
                 })}
               </div>
-            )}
-          </motion.div>
+              <div className="flex items-center justify-between mt-2 text-[10px] text-muted-foreground">
+                <span>{format(range.from, 'd MMM')}</span>
+                <span>{format(range.to, 'd MMM')}</span>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Category + Brand performance row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Category breakdown */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 border border-border/40">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="font-display text-lg font-semibold">Category Performance</h2>
+                  <p className="text-xs text-muted-foreground">How segments compare</p>
+                </div>
+                <Layers className="w-5 h-5 text-primary" />
+              </div>
+              {categoryStats.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No sales in this period.</p>
+              ) : (
+                <div className="space-y-3.5">
+                  {categoryStats.map((c, i) => {
+                    const pct = stats.revenue ? (c.revenue / stats.revenue) * 100 : 0;
+                    return (
+                      <div key={c.category} className="space-y-1.5">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary" /> {c.category}
+                          </span>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            <span>{c.units} unit{c.units !== 1 ? 's' : ''}</span>
+                            <span className="font-display gold-text font-semibold">{formatINR(c.revenue)}</span>
+                            <span className="w-12 text-right">{pct.toFixed(1)}%</span>
+                          </div>
+                        </div>
+                        <div className="h-2.5 bg-secondary/50 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ duration: 0.7, delay: i * 0.05 }}
+                            className="h-full gold-gradient rounded-full shadow-[0_0_10px_hsl(var(--primary)/0.5)]"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.div>
+
+            {/* Brand leaderboard */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-panel p-6 border border-border/40">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="font-display text-lg font-semibold">Brand Leaderboard</h2>
+                  <p className="text-xs text-muted-foreground">Top marques by revenue</p>
+                </div>
+                <Crown className="w-5 h-5 text-primary" />
+              </div>
+              {brandStats.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No brand data in this period.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {brandStats.map((b, i) => (
+                    <motion.li
+                      key={b.brand}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border/30 hover:border-primary/40 transition-colors"
+                    >
+                      <div className={cn(
+                        'w-8 h-8 rounded-lg flex items-center justify-center font-display font-bold text-xs',
+                        i === 0 ? 'gold-gradient text-primary-foreground' : 'bg-secondary text-muted-foreground',
+                      )}>
+                        {i + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-display font-semibold text-sm truncate">{b.brand}</p>
+                        <p className="text-[11px] text-muted-foreground">{b.units} unit{b.units !== 1 ? 's' : ''}</p>
+                      </div>
+                      <p className="font-display gold-text font-bold text-sm">{formatINR(b.revenue)}</p>
+                    </motion.li>
+                  ))}
+                </ul>
+              )}
+            </motion.div>
+          </div>
 
           {/* Cars Purchased */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 mb-8">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 mb-8 border border-border/40">
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h2 className="font-display text-lg font-semibold">Cars Purchased</h2>
@@ -356,20 +611,13 @@ const Reports = () => {
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04 }}
-                    className="group relative overflow-hidden rounded-xl border border-border/40 bg-secondary/20 hover:border-primary/50 transition-all"
+                    className="group relative overflow-hidden rounded-xl border border-border/40 bg-secondary/20 hover:border-primary/50 transition-all hover:shadow-[0_0_20px_hsl(var(--primary)/0.15)]"
                   >
                     <div className="aspect-[16/10] overflow-hidden bg-secondary/40 relative">
                       {c.image ? (
-                        <img
-                          src={c.image}
-                          alt={`${c.brand} ${c.name}`}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          loading="lazy"
-                        />
+                        <img src={c.image} alt={`${c.brand} ${c.name}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                          <CarIcon className="w-8 h-8" />
-                        </div>
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground"><CarIcon className="w-8 h-8" /></div>
                       )}
                       <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-background/80 backdrop-blur text-[10px] font-bold text-primary border border-primary/30">
                         {c.units} unit{c.units !== 1 ? 's' : ''}
@@ -387,7 +635,7 @@ const Reports = () => {
           </motion.div>
 
           {/* Orders list in period */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 border border-border/40">
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h2 className="font-display text-lg font-semibold">Orders in Period</h2>
