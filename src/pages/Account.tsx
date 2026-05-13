@@ -164,11 +164,29 @@ const Account = () => {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               className="flex flex-col md:flex-row items-start md:items-center gap-6">
               {/* Avatar */}
-              <div className="relative">
-                <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl gold-gradient flex items-center justify-center gold-glow">
-                  <span className="font-display text-3xl md:text-4xl text-primary-foreground font-bold">{initials}</span>
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-green-500 border-3 border-background flex items-center justify-center">
+              <div className="relative group">
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  className="w-24 h-24 md:w-28 md:h-28 rounded-2xl gold-gradient flex items-center justify-center gold-glow overflow-hidden relative"
+                  aria-label="Change profile picture"
+                >
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="font-display text-3xl md:text-4xl text-primary-foreground font-bold">{initials}</span>
+                  )}
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    {uploadingAvatar ? (
+                      <Loader2 className="w-6 h-6 text-white animate-spin" />
+                    ) : (
+                      <Camera className="w-6 h-6 text-white" />
+                    )}
+                  </div>
+                </button>
+                <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-green-500 border-3 border-background flex items-center justify-center pointer-events-none">
                   <Shield className="w-3.5 h-3.5 text-white" />
                 </div>
               </div>
@@ -209,19 +227,20 @@ const Account = () => {
 
       {/* Quick Stats */}
       <div className="section-padding -mt-2">
-        <div className="max-w-5xl mx-auto grid grid-cols-3 gap-4">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {[
             { to: '/orders', icon: Package, value: orders.length, label: 'Orders', color: 'text-primary' },
-            { to: '/wishlist', icon: Heart, value: '—', label: 'Wishlist', color: 'text-accent' },
-            { to: '/cart', icon: ShoppingBag, value: '—', label: 'Cart', color: 'text-primary' },
+            { to: '/orders', icon: TrendingUp, value: formatPrice(stats.totalSpent), label: 'Total Spent', color: 'text-emerald-400' },
+            { to: '/wishlist', icon: Sparkles, value: stats.favBrand, label: 'Favorite Brand', color: 'text-accent' },
+            { to: '#', icon: Calendar, value: `${stats.memberDays}d`, label: 'Member For', color: 'text-primary' },
           ].map((s, i) => (
             <Link key={i} to={s.to}>
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="glass-panel p-5 hover:border-primary/30 transition-all group cursor-pointer text-center">
+                transition={{ delay: i * 0.08 }}
+                className="glass-panel p-4 md:p-5 hover:border-primary/30 transition-all group cursor-pointer text-center">
                 <s.icon className={`w-5 h-5 ${s.color} mx-auto mb-2 group-hover:scale-110 transition-transform`} />
-                <div className="font-display text-xl font-bold">{s.value}</div>
-                <div className="text-xs text-muted-foreground">{s.label}</div>
+                <div className="font-display text-base md:text-lg font-bold truncate">{s.value}</div>
+                <div className="text-[11px] text-muted-foreground uppercase tracking-wider mt-0.5">{s.label}</div>
               </motion.div>
             </Link>
           ))}
