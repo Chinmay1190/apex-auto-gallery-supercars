@@ -1,8 +1,8 @@
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, LogOut, Heart, ShoppingBag, Package, Edit2, Save, X, MapPin, Phone, Mail, Calendar, Shield, Crown, ChevronRight } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { User, LogOut, Heart, ShoppingBag, Package, Edit2, Save, X, MapPin, Phone, Mail, Calendar, Shield, Crown, ChevronRight, Camera, Loader2, TrendingUp, Sparkles } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/cars';
 import { toast } from 'sonner';
@@ -15,7 +15,10 @@ const Account = () => {
   const [form, setForm] = useState({ full_name: '', phone: '', address: '', city: '', state: '', pincode: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [orders, setOrders] = useState<any[]>([]);
+  const [orderItems, setOrderItems] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'profile' | 'orders'>('profile');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateField = (key: string, value: string): string => {
     const v = value.trim();
@@ -66,10 +69,54 @@ const Account = () => {
 
   useEffect(() => {
     if (user) {
-      supabase.from('orders').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10)
-        .then(({ data }) => { if (data) setOrders(data); });
+      Promise.all([
+        supabase.from('orders').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('order_items').select('*'),
+      ]).then(([{ data: o }, { data: items }]) => {
+        if (o) setOrders(o);
+        if (items) setOrderItems(items);
+      });
     }
   }, [user]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be smaller than 5 MB');
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+      await updateProfile({ avatar_url: publicUrl });
+      toast.success('Profile picture updated!');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to upload avatar');
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const stats = useMemo(() => {
+    const totalSpent = orders.reduce((s, o) => s + (o.total || 0), 0);
+    const userOrderIds = new Set(orders.map(o => o.id));
+    const myItems = orderItems.filter(i => userOrderIds.has(i.order_id));
+    const brandCount: Record<string, number> = {};
+    myItems.forEach(i => { brandCount[i.car_brand] = (brandCount[i.car_brand] || 0) + (i.quantity || 1); });
+    const favBrand = Object.entries(brandCount).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
+    const memberDays = user?.created_at ? Math.max(1, Math.floor((Date.now() - new Date(user.created_at).getTime()) / 86400000)) : 0;
+    return { totalSpent, favBrand, memberDays };
+  }, [orders, orderItems, user]);
 
   const handleSave = async () => {
     if (!validateAll()) {
@@ -117,11 +164,29 @@ const Account = () => {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               className="flex flex-col md:flex-row items-start md:items-center gap-6">
               {/* Avatar */}
-              <div className="relative">
-                <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl gold-gradient flex items-center justify-center gold-glow">
-                  <span className="font-display text-3xl md:text-4xl text-primary-foreground font-bold">{initials}</span>
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-green-500 border-3 border-background flex items-center justify-center">
+              <div className="relative group">
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  className="w-24 h-24 md:w-28 md:h-28 rounded-2xl gold-gradient flex items-center justify-center gold-glow overflow-hidden relative"
+                  aria-label="Change profile picture"
+                >
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="font-display text-3xl md:text-4xl text-primary-foreground font-bold">{initials}</span>
+                  )}
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    {uploadingAvatar ? (
+                      <Loader2 className="w-6 h-6 text-white animate-spin" />
+                    ) : (
+                      <Camera className="w-6 h-6 text-white" />
+                    )}
+                  </div>
+                </button>
+                <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-green-500 border-3 border-background flex items-center justify-center pointer-events-none">
                   <Shield className="w-3.5 h-3.5 text-white" />
                 </div>
               </div>
@@ -162,19 +227,20 @@ const Account = () => {
 
       {/* Quick Stats */}
       <div className="section-padding -mt-2">
-        <div className="max-w-5xl mx-auto grid grid-cols-3 gap-4">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {[
             { to: '/orders', icon: Package, value: orders.length, label: 'Orders', color: 'text-primary' },
-            { to: '/wishlist', icon: Heart, value: '—', label: 'Wishlist', color: 'text-accent' },
-            { to: '/cart', icon: ShoppingBag, value: '—', label: 'Cart', color: 'text-primary' },
+            { to: '/orders', icon: TrendingUp, value: formatPrice(stats.totalSpent), label: 'Total Spent', color: 'text-emerald-400' },
+            { to: '/wishlist', icon: Sparkles, value: stats.favBrand, label: 'Favorite Brand', color: 'text-accent' },
+            { to: '#', icon: Calendar, value: `${stats.memberDays}d`, label: 'Member For', color: 'text-primary' },
           ].map((s, i) => (
             <Link key={i} to={s.to}>
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="glass-panel p-5 hover:border-primary/30 transition-all group cursor-pointer text-center">
+                transition={{ delay: i * 0.08 }}
+                className="glass-panel p-4 md:p-5 hover:border-primary/30 transition-all group cursor-pointer text-center">
                 <s.icon className={`w-5 h-5 ${s.color} mx-auto mb-2 group-hover:scale-110 transition-transform`} />
-                <div className="font-display text-xl font-bold">{s.value}</div>
-                <div className="text-xs text-muted-foreground">{s.label}</div>
+                <div className="font-display text-base md:text-lg font-bold truncate">{s.value}</div>
+                <div className="text-[11px] text-muted-foreground uppercase tracking-wider mt-0.5">{s.label}</div>
               </motion.div>
             </Link>
           ))}
