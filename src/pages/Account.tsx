@@ -1,8 +1,8 @@
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, LogOut, Heart, ShoppingBag, Package, Edit2, Save, X, MapPin, Phone, Mail, Calendar, Shield, Crown, ChevronRight } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { User, LogOut, Heart, ShoppingBag, Package, Edit2, Save, X, MapPin, Phone, Mail, Calendar, Shield, Crown, ChevronRight, Camera, Loader2, TrendingUp, Sparkles } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/cars';
 import { toast } from 'sonner';
@@ -15,7 +15,10 @@ const Account = () => {
   const [form, setForm] = useState({ full_name: '', phone: '', address: '', city: '', state: '', pincode: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [orders, setOrders] = useState<any[]>([]);
+  const [orderItems, setOrderItems] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'profile' | 'orders'>('profile');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateField = (key: string, value: string): string => {
     const v = value.trim();
@@ -66,10 +69,54 @@ const Account = () => {
 
   useEffect(() => {
     if (user) {
-      supabase.from('orders').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10)
-        .then(({ data }) => { if (data) setOrders(data); });
+      Promise.all([
+        supabase.from('orders').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('order_items').select('*'),
+      ]).then(([{ data: o }, { data: items }]) => {
+        if (o) setOrders(o);
+        if (items) setOrderItems(items);
+      });
     }
   }, [user]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be smaller than 5 MB');
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+      await updateProfile({ avatar_url: publicUrl });
+      toast.success('Profile picture updated!');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to upload avatar');
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const stats = useMemo(() => {
+    const totalSpent = orders.reduce((s, o) => s + (o.total || 0), 0);
+    const userOrderIds = new Set(orders.map(o => o.id));
+    const myItems = orderItems.filter(i => userOrderIds.has(i.order_id));
+    const brandCount: Record<string, number> = {};
+    myItems.forEach(i => { brandCount[i.car_brand] = (brandCount[i.car_brand] || 0) + (i.quantity || 1); });
+    const favBrand = Object.entries(brandCount).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
+    const memberDays = user?.created_at ? Math.max(1, Math.floor((Date.now() - new Date(user.created_at).getTime()) / 86400000)) : 0;
+    return { totalSpent, favBrand, memberDays };
+  }, [orders, orderItems, user]);
 
   const handleSave = async () => {
     if (!validateAll()) {
