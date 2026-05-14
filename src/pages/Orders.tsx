@@ -24,6 +24,8 @@ const Orders = () => {
   const [orderItems, setOrderItems] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest');
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) navigate('/auth');
@@ -47,7 +49,53 @@ const Orders = () => {
     }
   }, [user]);
 
-  const filteredOrders = filter === 'all' ? orders : orders.filter((o) => o.status === filter);
+  // Filter + search + sort
+  const filteredOrders = useMemo(() => {
+    let list = filter === 'all' ? [...orders] : orders.filter((o) => o.status === filter);
+
+    const q = search.trim().toLowerCase();
+    if (q) {
+      list = list.filter((o) => {
+        const items = orderItems[o.id] || [];
+        const inItems = items.some((it) =>
+          it.car_name?.toLowerCase().includes(q) || it.car_brand?.toLowerCase().includes(q)
+        );
+        return (
+          o.order_number?.toLowerCase().includes(q) ||
+          o.shipping_city?.toLowerCase().includes(q) ||
+          o.shipping_state?.toLowerCase().includes(q) ||
+          inItems
+        );
+      });
+    }
+
+    switch (sortBy) {
+      case 'oldest':
+        list.sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at));
+        break;
+      case 'highest':
+        list.sort((a, b) => (b.total || 0) - (a.total || 0));
+        break;
+      case 'lowest':
+        list.sort((a, b) => (a.total || 0) - (b.total || 0));
+        break;
+      default:
+        list.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+    }
+    return list;
+  }, [orders, orderItems, filter, search, sortBy]);
+
+  // Group by month
+  const groupedOrders = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    filteredOrders.forEach((o) => {
+      const d = new Date(o.created_at);
+      const key = d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(o);
+    });
+    return groups;
+  }, [filteredOrders]);
 
   const stats = {
     total: orders.length,
