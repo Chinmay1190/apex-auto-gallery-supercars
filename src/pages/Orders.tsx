@@ -382,6 +382,9 @@ const Orders = () => {
                       </motion.div>
                     );
                   })}
+                    </motion.div>
+                  ))}
+                  </AnimatePresence>
                 </div>
               )}
             </>
