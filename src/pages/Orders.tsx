@@ -213,14 +213,84 @@ const Orders = () => {
                 ))}
               </motion.div>
 
-              {/* Orders List */}
+              {/* Search + Sort */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.22 }}
+                className="flex flex-col sm:flex-row gap-3 mb-6"
+              >
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by order #, car, brand or city..."
+                    className="w-full pl-10 pr-10 py-2.5 rounded-lg bg-secondary/50 border border-border/40 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary/40 focus:bg-secondary/70 transition-colors"
+                  />
+                  {search && (
+                    <button
+                      onClick={() => setSearch('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-background/50"
+                    >
+                      <X className="w-3.5 h-3.5 text-muted-foreground" />
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <ArrowUpDown className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="appearance-none pl-10 pr-8 py-2.5 rounded-lg bg-secondary/50 border border-border/40 text-sm focus:outline-none focus:border-primary/40 cursor-pointer min-w-[180px]"
+                  >
+                    <option value="newest">Newest first</option>
+                    <option value="oldest">Oldest first</option>
+                    <option value="highest">Highest amount</option>
+                    <option value="lowest">Lowest amount</option>
+                  </select>
+                </div>
+              </motion.div>
+
+              {/* Orders List grouped by month */}
               {filteredOrders.length === 0 ? (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16">
-                  <p className="text-muted-foreground">No orders with status "{filter}"</p>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16 glass-panel">
+                  <Package className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
+                  <p className="text-muted-foreground">
+                    {search ? `No orders matching "${search}"` : `No orders with status "${filter}"`}
+                  </p>
+                  {search && (
+                    <button
+                      onClick={() => setSearch('')}
+                      className="mt-3 text-xs text-primary hover:underline"
+                    >
+                      Clear search
+                    </button>
+                  )}
                 </motion.div>
               ) : (
-                <div className="space-y-4">
-                  {filteredOrders.map((order, i) => {
+                <div className="space-y-8">
+                  <AnimatePresence mode="popLayout">
+                  {Object.entries(groupedOrders).map(([month, monthOrders]) => (
+                    <motion.div
+                      key={month}
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="space-y-4"
+                    >
+                      <div className="flex items-center gap-3">
+                        <h3 className="font-display text-sm uppercase tracking-[0.2em] text-muted-foreground">
+                          {month}
+                        </h3>
+                        <div className="flex-1 h-px bg-border/40" />
+                        <span className="text-[11px] text-muted-foreground/70">
+                          {monthOrders.length} order{monthOrders.length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      {monthOrders.map((order, i) => {
                     const items = orderItems[order.id] || [];
                     const cfg = statusConfig[order.status] || statusConfig.confirmed;
                     const StatusIcon = cfg.icon;
