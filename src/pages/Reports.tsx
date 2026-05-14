@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   BarChart3, Calendar as CalendarIcon, Download, TrendingUp, TrendingDown, Package,
   CreditCard, Layers, RefreshCw, ArrowRight, Car as CarIcon, Crown, Sparkles, Activity,
+  Wallet, PieChart, Flame, Target, Zap,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -209,21 +210,64 @@ const Reports = () => {
       .slice(0, 5);
   }, [filteredItems]);
 
-  // Daily trend buckets across the selected range (max 14 buckets)
+  // Daily trend buckets across the selected range (max 14 buckets) + previous-period overlay
   const dailyTrend = useMemo(() => {
     const dayMs = 24 * 60 * 60 * 1000;
     const totalDays = Math.max(1, Math.ceil((range.to.getTime() - range.from.getTime()) / dayMs));
     const buckets = Math.min(14, totalDays);
     const bucketMs = (range.to.getTime() - range.from.getTime()) / buckets;
     const data = Array.from({ length: buckets }, () => 0);
+    const prev = Array.from({ length: buckets }, () => 0);
     filtered.forEach((o) => {
       const t = new Date(o.created_at).getTime();
       const idx = Math.min(buckets - 1, Math.max(0, Math.floor((t - range.from.getTime()) / bucketMs)));
       data[idx] += o.total || 0;
     });
-    const max = Math.max(1, ...data);
-    return { data, max };
-  }, [filtered, range]);
+    prevFiltered.forEach((o) => {
+      const t = new Date(o.created_at).getTime();
+      const idx = Math.min(buckets - 1, Math.max(0, Math.floor((t - prevRange.from.getTime()) / bucketMs)));
+      prev[idx] += o.total || 0;
+    });
+    const max = Math.max(1, ...data, ...prev);
+    // bucket date labels
+    const labels = Array.from({ length: buckets }, (_, i) => {
+      const d = new Date(range.from.getTime() + bucketMs * i + bucketMs / 2);
+      return format(d, buckets > 7 ? 'd MMM' : 'EEE d');
+    });
+    return { data, prev, max, labels };
+  }, [filtered, prevFiltered, range, prevRange]);
+
+  // Status distribution
+  const statusStats = useMemo(() => {
+    const map = new Map<string, number>();
+    filtered.forEach((o) => map.set(o.status, (map.get(o.status) || 0) + 1));
+    return Array.from(map.entries()).map(([key, count]) => ({ key, count }));
+  }, [filtered]);
+
+  // Payment method split (by revenue)
+  const paymentStats = useMemo(() => {
+    const map = new Map<string, number>();
+    filtered.forEach((o) => map.set(o.payment_method || 'other', (map.get(o.payment_method || 'other') || 0) + (o.total || 0)));
+    return Array.from(map.entries())
+      .map(([method, revenue]) => ({ method, revenue }))
+      .sort((a, b) => b.revenue - a.revenue);
+  }, [filtered]);
+
+  // Insights: best day, best brand, peak revenue bucket, repeat buyer ratio
+  const insights = useMemo(() => {
+    const peakIdx = dailyTrend.data.reduce((best, v, i, arr) => (v > arr[best] ? i : best), 0);
+    const peakAmount = dailyTrend.data[peakIdx] || 0;
+    const peakLabel = dailyTrend.labels[peakIdx] || '—';
+    const avgPerDay = dailyTrend.data.length ? Math.round(dailyTrend.data.reduce((a, b) => a + b, 0) / dailyTrend.data.length) : 0;
+    const topBrand = brandStats[0]?.brand || '—';
+    const completionRate = filtered.length
+      ? Math.round((filtered.filter((o) => o.status === 'delivered').length / filtered.length) * 100)
+      : 0;
+    return { peakAmount, peakLabel, avgPerDay, topBrand, completionRate };
+  }, [dailyTrend, brandStats, filtered]);
+
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+  const chartRef = useRef<SVGSVGElement>(null);
 
   const downloadPDF = async () => {
     if (period === 'range' && (!fromDate || !toDate)) {
@@ -468,44 +512,254 @@ const Reports = () => {
               )}
             </motion.div>
 
-            {/* Daily trend chart */}
+            {/* Daily trend chart — SVG area + previous-period overlay */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
               className="lg:col-span-2 glass-panel p-6 border border-border/40"
             >
-              <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
                 <div>
                   <h2 className="font-display text-lg font-semibold flex items-center gap-2">
                     <Activity className="w-4 h-4 text-primary" /> Revenue Pulse
                   </h2>
-                  <p className="text-xs text-muted-foreground">Distribution across the selected period</p>
+                  <p className="text-xs text-muted-foreground">Current vs previous period</p>
                 </div>
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Peak {formatINR(dailyTrend.max)}</span>
+                <div className="flex items-center gap-4 text-[10px] uppercase tracking-wider">
+                  <span className="flex items-center gap-1.5 text-primary">
+                    <span className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.7)]" /> Current
+                  </span>
+                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                    <span className="w-2.5 h-2.5 rounded-full bg-muted-foreground/40" /> Previous
+                  </span>
+                  <span className="text-muted-foreground">Peak {formatINR(dailyTrend.max)}</span>
+                </div>
               </div>
-              <div className="flex items-end gap-1.5 h-40">
-                {dailyTrend.data.map((v, i) => {
-                  const h = Math.max(4, (v / dailyTrend.max) * 100);
-                  return (
-                    <motion.div
-                      key={i}
-                      initial={{ height: 0 }}
-                      animate={{ height: `${h}%` }}
-                      transition={{ delay: i * 0.04, duration: 0.5, ease: 'easeOut' }}
-                      className="flex-1 rounded-t-md bg-gradient-to-t from-primary/40 via-primary/70 to-primary relative group cursor-pointer"
+
+              {(() => {
+                const W = 600, H = 180, P = 8;
+                const n = dailyTrend.data.length;
+                const stepX = n > 1 ? (W - P * 2) / (n - 1) : 0;
+                const yFor = (v: number) => H - P - (v / dailyTrend.max) * (H - P * 2);
+                const xFor = (i: number) => P + i * stepX;
+                const linePath = dailyTrend.data
+                  .map((v, i) => `${i === 0 ? 'M' : 'L'} ${xFor(i)} ${yFor(v)}`)
+                  .join(' ');
+                const areaPath = `${linePath} L ${xFor(Math.max(0, n - 1))} ${H - P} L ${xFor(0)} ${H - P} Z`;
+                const prevPath = dailyTrend.prev
+                  .map((v, i) => `${i === 0 ? 'M' : 'L'} ${xFor(i)} ${yFor(v)}`)
+                  .join(' ');
+
+                return (
+                  <div className="relative">
+                    <svg
+                      ref={chartRef}
+                      viewBox={`0 0 ${W} ${H}`}
+                      preserveAspectRatio="none"
+                      className="w-full h-44 cursor-crosshair"
+                      onMouseMove={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const px = ((e.clientX - rect.left) / rect.width) * W;
+                        const idx = Math.max(0, Math.min(n - 1, Math.round((px - P) / Math.max(1, stepX))));
+                        setHoverIdx(idx);
+                      }}
+                      onMouseLeave={() => setHoverIdx(null)}
                     >
-                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold whitespace-nowrap bg-background border border-primary/40 px-1.5 py-0.5 rounded-md text-primary">
-                        {formatINR(v)}
+                      <defs>
+                        <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.45" />
+                          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+
+                      {[0.25, 0.5, 0.75].map((g) => (
+                        <line key={g} x1={P} x2={W - P}
+                          y1={P + g * (H - P * 2)} y2={P + g * (H - P * 2)}
+                          stroke="hsl(var(--border))" strokeWidth="0.5" strokeDasharray="2 4" opacity="0.5" />
+                      ))}
+
+                      {dailyTrend.prev.some((v) => v > 0) && (
+                        <motion.path d={prevPath} fill="none" stroke="hsl(var(--muted-foreground))"
+                          strokeOpacity="0.4" strokeWidth="1.5" strokeDasharray="3 3"
+                          initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1 }} />
+                      )}
+
+                      <motion.path d={areaPath} fill="url(#areaFill)"
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} />
+                      <motion.path d={linePath} fill="none" stroke="hsl(var(--primary))"
+                        strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                        initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.2, ease: 'easeInOut' }}
+                        style={{ filter: 'drop-shadow(0 0 6px hsl(var(--primary) / 0.5))' }} />
+
+                      {dailyTrend.data.map((v, i) => (
+                        <circle key={i} cx={xFor(i)} cy={yFor(v)}
+                          r={hoverIdx === i ? 4 : 2.5}
+                          fill="hsl(var(--primary))" stroke="hsl(var(--background))" strokeWidth="1.5"
+                          style={{ transition: 'r 0.2s' }} />
+                      ))}
+
+                      {hoverIdx != null && (
+                        <line x1={xFor(hoverIdx)} x2={xFor(hoverIdx)} y1={P} y2={H - P}
+                          stroke="hsl(var(--primary))" strokeWidth="0.8" strokeDasharray="2 2" opacity="0.5" />
+                      )}
+                    </svg>
+
+                    {hoverIdx != null && (
+                      <div
+                        className="absolute -top-2 pointer-events-none px-3 py-2 rounded-lg bg-background/95 backdrop-blur border border-primary/40 shadow-[0_0_20px_hsl(var(--primary)/0.3)] text-[11px]"
+                        style={{ left: `calc(${(xFor(hoverIdx) / W) * 100}% - 60px)` }}
+                      >
+                        <p className="text-muted-foreground text-[10px] uppercase tracking-wider">{dailyTrend.labels[hoverIdx]}</p>
+                        <p className="font-display gold-text font-bold">{formatINR(dailyTrend.data[hoverIdx])}</p>
+                        {dailyTrend.prev[hoverIdx] > 0 && (
+                          <p className="text-muted-foreground text-[10px]">prev: {formatINR(dailyTrend.prev[hoverIdx])}</p>
+                        )}
                       </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               <div className="flex items-center justify-between mt-2 text-[10px] text-muted-foreground">
                 <span>{format(range.from, 'd MMM')}</span>
                 <span>{format(range.to, 'd MMM')}</span>
               </div>
+            </motion.div>
+          </div>
+
+          {/* Insights strip */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+            {[
+              { icon: Flame, label: 'Peak Bucket', value: insights.peakLabel, sub: formatINR(insights.peakAmount), accent: 'text-rose-400' },
+              { icon: Target, label: 'Avg / Bucket', value: formatINR(insights.avgPerDay), sub: 'across period', accent: 'text-sky-400' },
+              { icon: Crown, label: 'Lead Brand', value: insights.topBrand, sub: brandStats[0] ? formatINR(brandStats[0].revenue) : '—', accent: 'text-primary' },
+              { icon: Zap, label: 'Fulfilment', value: `${insights.completionRate}%`, sub: 'delivered', accent: 'text-emerald-400' },
+            ].map((it, i) => (
+              <motion.div
+                key={it.label}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="relative group p-4 rounded-2xl border border-border/40 bg-gradient-to-br from-secondary/30 to-transparent hover:border-primary/40 transition-all overflow-hidden"
+              >
+                <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-primary/10 blur-2xl opacity-60 group-hover:opacity-100 transition-opacity" />
+                <div className="relative flex items-center gap-3">
+                  <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center bg-secondary/60 border border-border/40', it.accent)}>
+                    <it.icon className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{it.label}</p>
+                    <p className="font-display text-base font-bold truncate">{it.value}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{it.sub}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Status donut + Payment split */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 border border-border/40">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="font-display text-lg font-semibold">Order Status Mix</h2>
+                  <p className="text-xs text-muted-foreground">Pipeline distribution</p>
+                </div>
+                <PieChart className="w-5 h-5 text-primary" />
+              </div>
+              {statusStats.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No orders in this period.</p>
+              ) : (() => {
+                const total = statusStats.reduce((s, x) => s + x.count, 0) || 1;
+                const colors: Record<string, string> = {
+                  confirmed: 'hsl(var(--primary))',
+                  processing: '#f59e0b',
+                  shipped: '#38bdf8',
+                  delivered: '#34d399',
+                };
+                let cumulative = 0;
+                const R = 60, C = 80;
+                return (
+                  <div className="flex items-center gap-6 flex-wrap">
+                    <svg width="160" height="160" viewBox="0 0 160 160">
+                      <circle cx={C} cy={C} r={R} fill="none" stroke="hsl(var(--secondary))" strokeWidth="20" />
+                      {statusStats.map((s, i) => {
+                        const frac = s.count / total;
+                        const circumference = 2 * Math.PI * R;
+                        const dash = frac * circumference;
+                        const offset = -cumulative * circumference;
+                        cumulative += frac;
+                        return (
+                          <motion.circle key={s.key} cx={C} cy={C} r={R} fill="none"
+                            stroke={colors[s.key] || 'hsl(var(--muted))'} strokeWidth="20"
+                            strokeDasharray={`${dash} ${circumference}`} strokeDashoffset={offset}
+                            transform={`rotate(-90 ${C} ${C})`}
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.1 }} />
+                        );
+                      })}
+                      <text x={C} y={C - 4} textAnchor="middle" className="fill-foreground font-display font-bold" fontSize="22">{total}</text>
+                      <text x={C} y={C + 14} textAnchor="middle" className="fill-muted-foreground" fontSize="9">ORDERS</text>
+                    </svg>
+                    <ul className="flex-1 min-w-[140px] space-y-2">
+                      {statusStats.map((s) => {
+                        const pct = (s.count / total) * 100;
+                        return (
+                          <li key={s.key} className="flex items-center gap-2 text-sm">
+                            <span className="w-2.5 h-2.5 rounded-full" style={{ background: colors[s.key] || 'hsl(var(--muted))' }} />
+                            <span className="capitalize flex-1">{s.key}</span>
+                            <span className="text-muted-foreground text-xs">{s.count}</span>
+                            <span className="font-semibold text-xs w-12 text-right">{pct.toFixed(0)}%</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                );
+              })()}
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-panel p-6 border border-border/40">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="font-display text-lg font-semibold">Payment Mix</h2>
+                  <p className="text-xs text-muted-foreground">Revenue by method</p>
+                </div>
+                <Wallet className="w-5 h-5 text-primary" />
+              </div>
+              {paymentStats.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No payments in this period.</p>
+              ) : (() => {
+                const total = paymentStats.reduce((s, p) => s + p.revenue, 0) || 1;
+                const tones = ['gold-gradient', 'bg-sky-400/80', 'bg-emerald-400/80', 'bg-rose-400/80', 'bg-violet-400/80'];
+                const dots = ['bg-primary', 'bg-sky-400', 'bg-emerald-400', 'bg-rose-400', 'bg-violet-400'];
+                return (
+                  <>
+                    <div className="flex h-3 rounded-full overflow-hidden mb-4 border border-border/30">
+                      {paymentStats.map((p, i) => (
+                        <motion.div key={p.method}
+                          initial={{ width: 0 }} animate={{ width: `${(p.revenue / total) * 100}%` }}
+                          transition={{ duration: 0.7, delay: i * 0.08 }}
+                          className={tones[i % tones.length]}
+                          title={`${p.method}: ${formatINR(p.revenue)}`} />
+                      ))}
+                    </div>
+                    <ul className="space-y-2">
+                      {paymentStats.map((p, i) => {
+                        const pct = (p.revenue / total) * 100;
+                        return (
+                          <li key={p.method} className="flex items-center gap-3 text-sm p-2 rounded-lg hover:bg-secondary/30 transition-colors">
+                            <span className={cn('w-2.5 h-2.5 rounded-full', dots[i % dots.length])} />
+                            <span className="capitalize flex-1">{p.method}</span>
+                            <span className="font-display gold-text font-semibold text-xs">{formatINR(p.revenue)}</span>
+                            <span className="text-xs text-muted-foreground w-12 text-right">{pct.toFixed(0)}%</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </>
+                );
+              })()}
             </motion.div>
           </div>
 
