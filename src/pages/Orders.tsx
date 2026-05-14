@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Package, ChevronRight, ShoppingBag, Truck, CheckCircle2,
-  Clock, RefreshCw, Calendar, CreditCard, MapPin, Hash
+  Clock, RefreshCw, Calendar, CreditCard, MapPin, Hash,
+  Search, ArrowUpDown, X
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
