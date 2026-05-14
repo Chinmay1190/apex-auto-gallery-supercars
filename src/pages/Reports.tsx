@@ -210,21 +210,64 @@ const Reports = () => {
       .slice(0, 5);
   }, [filteredItems]);
 
-  // Daily trend buckets across the selected range (max 14 buckets)
+  // Daily trend buckets across the selected range (max 14 buckets) + previous-period overlay
   const dailyTrend = useMemo(() => {
     const dayMs = 24 * 60 * 60 * 1000;
     const totalDays = Math.max(1, Math.ceil((range.to.getTime() - range.from.getTime()) / dayMs));
     const buckets = Math.min(14, totalDays);
     const bucketMs = (range.to.getTime() - range.from.getTime()) / buckets;
     const data = Array.from({ length: buckets }, () => 0);
+    const prev = Array.from({ length: buckets }, () => 0);
     filtered.forEach((o) => {
       const t = new Date(o.created_at).getTime();
       const idx = Math.min(buckets - 1, Math.max(0, Math.floor((t - range.from.getTime()) / bucketMs)));
       data[idx] += o.total || 0;
     });
-    const max = Math.max(1, ...data);
-    return { data, max };
-  }, [filtered, range]);
+    prevFiltered.forEach((o) => {
+      const t = new Date(o.created_at).getTime();
+      const idx = Math.min(buckets - 1, Math.max(0, Math.floor((t - prevRange.from.getTime()) / bucketMs)));
+      prev[idx] += o.total || 0;
+    });
+    const max = Math.max(1, ...data, ...prev);
+    // bucket date labels
+    const labels = Array.from({ length: buckets }, (_, i) => {
+      const d = new Date(range.from.getTime() + bucketMs * i + bucketMs / 2);
+      return format(d, buckets > 7 ? 'd MMM' : 'EEE d');
+    });
+    return { data, prev, max, labels };
+  }, [filtered, prevFiltered, range, prevRange]);
+
+  // Status distribution
+  const statusStats = useMemo(() => {
+    const map = new Map<string, number>();
+    filtered.forEach((o) => map.set(o.status, (map.get(o.status) || 0) + 1));
+    return Array.from(map.entries()).map(([key, count]) => ({ key, count }));
+  }, [filtered]);
+
+  // Payment method split (by revenue)
+  const paymentStats = useMemo(() => {
+    const map = new Map<string, number>();
+    filtered.forEach((o) => map.set(o.payment_method || 'other', (map.get(o.payment_method || 'other') || 0) + (o.total || 0)));
+    return Array.from(map.entries())
+      .map(([method, revenue]) => ({ method, revenue }))
+      .sort((a, b) => b.revenue - a.revenue);
+  }, [filtered]);
+
+  // Insights: best day, best brand, peak revenue bucket, repeat buyer ratio
+  const insights = useMemo(() => {
+    const peakIdx = dailyTrend.data.reduce((best, v, i, arr) => (v > arr[best] ? i : best), 0);
+    const peakAmount = dailyTrend.data[peakIdx] || 0;
+    const peakLabel = dailyTrend.labels[peakIdx] || '—';
+    const avgPerDay = dailyTrend.data.length ? Math.round(dailyTrend.data.reduce((a, b) => a + b, 0) / dailyTrend.data.length) : 0;
+    const topBrand = brandStats[0]?.brand || '—';
+    const completionRate = filtered.length
+      ? Math.round((filtered.filter((o) => o.status === 'delivered').length / filtered.length) * 100)
+      : 0;
+    return { peakAmount, peakLabel, avgPerDay, topBrand, completionRate };
+  }, [dailyTrend, brandStats, filtered]);
+
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+  const chartRef = useRef<SVGSVGElement>(null);
 
   const downloadPDF = async () => {
     if (period === 'range' && (!fromDate || !toDate)) {
