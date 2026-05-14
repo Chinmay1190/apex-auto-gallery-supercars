@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   BarChart3, Calendar as CalendarIcon, Download, TrendingUp, TrendingDown, Package,
   CreditCard, Layers, RefreshCw, ArrowRight, Car as CarIcon, Crown, Sparkles, Activity,
+  Wallet, PieChart, Flame, Target, Zap,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
