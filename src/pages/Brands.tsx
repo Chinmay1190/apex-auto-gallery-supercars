@@ -12,6 +12,13 @@ const brandData = [
   { name: 'Bugatti', country: 'France', founded: '1909', tagline: 'Art, Forme, Technique', description: 'The absolute pinnacle of automotive luxury and speed.', color: '#003399', gradient: 'from-blue-600/20 via-blue-600/5 to-transparent' },
   { name: 'Aston Martin', country: 'United Kingdom', founded: '1913', tagline: 'Power, Beauty and Soul', description: 'British elegance meets grand touring excellence. The gentleman\'s supercar.', color: '#006633', gradient: 'from-emerald-600/20 via-emerald-600/5 to-transparent' },
   { name: 'Rolls-Royce', country: 'United Kingdom', founded: '1904', tagline: 'Strive for perfection', description: 'The spirit of ecstasy. Unparalleled luxury, craftsmanship, and prestige.', color: '#1a1a2e', gradient: 'from-purple-900/20 via-purple-900/5 to-transparent' },
+  { name: 'Maserati', country: 'Italy', founded: '1914', tagline: 'Audaci per vocazione', description: 'The trident of Modena. Italian elegance with a racing soul.', color: '#0033A0', gradient: 'from-blue-700/20 via-blue-700/5 to-transparent' },
+  { name: 'Bentley', country: 'United Kingdom', founded: '1919', tagline: 'Be Extraordinary', description: 'Hand-crafted British grand tourers blending power with refinement.', color: '#004225', gradient: 'from-green-800/20 via-green-800/5 to-transparent' },
+  { name: 'Koenigsegg', country: 'Sweden', founded: '1994', tagline: 'A factory of dreams', description: 'Swedish hypercar pioneers redefining the limits of speed and engineering.', color: '#C0C0C0', gradient: 'from-slate-400/20 via-slate-400/5 to-transparent' },
+  { name: 'Pagani', country: 'Italy', founded: '1992', tagline: 'Science and art', description: 'Where automotive engineering becomes rolling sculpture.', color: '#8B0000', gradient: 'from-red-900/20 via-red-900/5 to-transparent' },
+  { name: 'Mercedes-AMG', country: 'Germany', founded: '1967', tagline: 'Driving Performance', description: 'Hand-built thunder from Affalterbach. One man, one engine.', color: '#000000', gradient: 'from-zinc-700/20 via-zinc-700/5 to-transparent' },
+  { name: 'Rimac', country: 'Croatia', founded: '2009', tagline: 'The future is electric', description: 'Croatian electric hypercar pioneers shattering performance records.', color: '#00C2A8', gradient: 'from-teal-500/20 via-teal-500/5 to-transparent' },
+  { name: 'Lotus', country: 'United Kingdom', founded: '1952', tagline: 'For the drivers', description: 'Simplify, then add lightness. British driver-focused engineering.', color: '#FFD700', gradient: 'from-yellow-600/20 via-yellow-600/5 to-transparent' },
 ];
 
 const Brands = () => {
@@ -50,7 +57,7 @@ const Brands = () => {
               <span className="gold-text">Automotive Excellence</span>
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-              Seven legendary manufacturers. Centuries of combined heritage. 
+              Fourteen legendary manufacturers. Centuries of combined heritage.
               Each marque a masterpiece of engineering and design.
             </p>
 
@@ -279,10 +286,10 @@ const Brands = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-primary/3 via-transparent to-primary/3" />
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
           {[
-            { value: '7', label: 'Premium Brands', icon: '🏎️' },
-            { value: '40+', label: 'Exclusive Models', icon: '⚡' },
-            { value: '5', label: 'Countries', icon: '🌍' },
-            { value: '100+', label: 'Years of Legacy', icon: '👑' },
+            { value: '14', label: 'Premium Brands', icon: '🏎️' },
+            { value: '80+', label: 'Exclusive Models', icon: '⚡' },
+            { value: '8', label: 'Countries', icon: '🌍' },
+            { value: '120+', label: 'Years of Legacy', icon: '👑' },
           ].map((stat, i) => (
             <motion.div
               key={stat.label}
