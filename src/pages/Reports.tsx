@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { cars } from '@/data/cars';
+import { cars, brandLogos } from '@/data/cars';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -819,28 +819,46 @@ const Reports = () => {
               {brandStats.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">No brand data in this period.</p>
               ) : (
-                <ul className="space-y-2">
-                  {brandStats.map((b, i) => (
-                    <motion.li
-                      key={b.brand}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border/30 hover:border-primary/40 transition-colors"
-                    >
-                      <div className={cn(
-                        'w-8 h-8 rounded-lg flex items-center justify-center font-display font-bold text-xs',
-                        i === 0 ? 'gold-gradient text-primary-foreground' : 'bg-secondary text-muted-foreground',
-                      )}>
-                        {i + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-display font-semibold text-sm truncate">{b.brand}</p>
-                        <p className="text-[11px] text-muted-foreground">{b.units} unit{b.units !== 1 ? 's' : ''}</p>
-                      </div>
-                      <p className="font-display gold-text font-bold text-sm">{formatINR(b.revenue)}</p>
-                    </motion.li>
-                  ))}
+                <ul className="space-y-2.5">
+                  {(() => {
+                    const topRev = brandStats[0]?.revenue || 1;
+                    return brandStats.map((b, i) => {
+                      const pct = (b.revenue / topRev) * 100;
+                      const logo = brandLogos[b.brand];
+                      return (
+                        <motion.li
+                          key={b.brand}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.05 }}
+                          className="relative flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border/30 hover:border-primary/40 transition-colors overflow-hidden"
+                        >
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ duration: 0.8, delay: i * 0.05 }}
+                            className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent pointer-events-none"
+                          />
+                          <div className={cn(
+                            'relative w-8 h-8 rounded-lg flex items-center justify-center font-display font-bold text-xs shrink-0',
+                            i === 0 ? 'gold-gradient text-primary-foreground shadow-[0_0_15px_hsl(var(--primary)/0.5)]' : 'bg-secondary text-muted-foreground',
+                          )}>
+                            {i + 1}
+                          </div>
+                          {logo && (
+                            <div className="relative w-9 h-9 rounded-lg bg-background/80 border border-border/40 flex items-center justify-center p-1 shrink-0">
+                              <img src={logo} alt={b.brand} className="w-full h-full object-contain" loading="lazy" />
+                            </div>
+                          )}
+                          <div className="relative flex-1 min-w-0">
+                            <p className="font-display font-semibold text-sm truncate">{b.brand}</p>
+                            <p className="text-[11px] text-muted-foreground">{b.units} unit{b.units !== 1 ? 's' : ''} • {pct.toFixed(0)}%</p>
+                          </div>
+                          <p className="relative font-display gold-text font-bold text-sm">{formatINR(b.revenue)}</p>
+                        </motion.li>
+                      );
+                    });
+                  })()}
                 </ul>
               )}
             </motion.div>
