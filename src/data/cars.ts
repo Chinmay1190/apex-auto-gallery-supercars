@@ -297,6 +297,13 @@ import logoPorsche from '@/assets/logo-porsche.png';
 import logoBugatti from '@/assets/logo-bugatti.png';
 import logoAston from '@/assets/logo-aston.png';
 import logoRolls from '@/assets/logo-rolls.png';
+import logoMaserati from '@/assets/logo-maserati.png';
+import logoBentley from '@/assets/logo-bentley.png';
+import logoKoenigsegg from '@/assets/logo-koenigsegg.png';
+import logoPagani from '@/assets/logo-pagani.png';
+import logoAmg from '@/assets/logo-amg.png';
+import logoRimac from '@/assets/logo-rimac.png';
+import logoLotus from '@/assets/logo-lotus.png';
 
 export const brandLogos: Record<string, string> = {
   'Lamborghini': logoLambo,
@@ -306,6 +313,13 @@ export const brandLogos: Record<string, string> = {
   'Bugatti': logoBugatti,
   'Aston Martin': logoAston,
   'Rolls-Royce': logoRolls,
+  'Maserati': logoMaserati,
+  'Bentley': logoBentley,
+  'Koenigsegg': logoKoenigsegg,
+  'Pagani': logoPagani,
+  'Mercedes-AMG': logoAmg,
+  'Rimac': logoRimac,
+  'Lotus': logoLotus,
 };
 
 // ============================================================
