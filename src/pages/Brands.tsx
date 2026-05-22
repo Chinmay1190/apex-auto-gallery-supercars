@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { cars, brandLogos } from '@/data/cars';
-import { MapPin, Calendar, ChevronRight, ArrowRight, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { MapPin, Calendar, ChevronRight, ArrowRight, Sparkles, Search, Globe2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+
 
 const brandData = [
   { name: 'Lamborghini', country: 'Italy', founded: '1963', tagline: 'Expect the unexpected', description: 'Bold, angular supercars with naturally aspirated V10 and V12 engines.', color: '#FFD700', gradient: 'from-yellow-500/20 via-amber-500/5 to-transparent' },
@@ -23,6 +24,20 @@ const brandData = [
 
 const Brands = () => {
   const [hoveredBrand, setHoveredBrand] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [country, setCountry] = useState<string>('All');
+
+  const countries = useMemo(() => ['All', ...Array.from(new Set(brandData.map(b => b.country)))], []);
+
+  const filteredRest = useMemo(() => {
+    return brandData.slice(1).filter(b => {
+      const matchesQ = !query || b.name.toLowerCase().includes(query.toLowerCase()) || b.country.toLowerCase().includes(query.toLowerCase());
+      const matchesC = country === 'All' || b.country === country;
+      return matchesQ && matchesC;
+    });
+  }, [query, country]);
+
+
 
   return (
     <div className="min-h-screen pt-20 md:pt-24">
@@ -176,13 +191,56 @@ const Brands = () => {
       {/* Brand Grid */}
       <section className="section-padding py-8 md:py-12">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-1 h-8 rounded-full gold-gradient" />
-            <h2 className="font-display text-2xl font-bold">All Brands</h2>
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-1 h-10 rounded-full gold-gradient" />
+              <div>
+                <h2 className="font-display text-2xl md:text-3xl font-bold">The Collection</h2>
+                <p className="text-muted-foreground text-xs tracking-[0.2em] uppercase mt-1">All legendary marques</p>
+              </div>
+            </div>
+
+            {/* Search */}
+            <div className="relative w-full md:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search brand or country..."
+                className="w-full pl-10 pr-4 py-2.5 bg-card/40 backdrop-blur-sm border border-border/40 rounded-xl text-sm focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all"
+              />
+            </div>
           </div>
 
+          {/* Country filter pills */}
+          <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2 scrollbar-thin">
+            <Globe2 className="w-4 h-4 text-primary shrink-0" />
+            {countries.map((c) => {
+              const active = c === country;
+              return (
+                <button
+                  key={c}
+                  onClick={() => setCountry(c)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap tracking-wider transition-all border ${
+                    active
+                      ? 'gold-gradient text-primary-foreground border-transparent shadow-lg shadow-primary/20'
+                      : 'bg-card/30 border-border/40 text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                  }`}
+                >
+                  {c}
+                </button>
+              );
+            })}
+          </div>
+
+          {filteredRest.length === 0 ? (
+            <div className="text-center py-20 text-muted-foreground">
+              No brands match your filters.
+            </div>
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {brandData.slice(1).map((brand, i) => {
+            {filteredRest.map((brand, i) => {
+
               const brandCars = cars.filter(c => c.brand === brand.name);
               const startingPrice = brandCars.length > 0 ? Math.min(...brandCars.map(c => c.price)) : 0;
               const logo = brandLogos[brand.name];
@@ -278,8 +336,10 @@ const Brands = () => {
               );
             })}
           </div>
+          )}
         </div>
       </section>
+
 
       {/* Stats Bar */}
       <section className="section-padding py-16 mt-8 border-t border-border/20 relative overflow-hidden">
