@@ -349,7 +349,10 @@ export const brandLogos: Record<string, string> = {
   'Mercedes-AMG': logoAmg,
   'Rimac': logoRimac,
   'Lotus': logoLotus,
+  'Alfa Romeo': logoAlfa,
+  'Lexus': logoLexus,
 };
+
 
 // ============================================================
 // Formatting & helpers
