@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, Eye, Check } from 'lucide-react';
-import { Car, formatPrice } from '@/data/cars';
+import { Car, formatPrice, brandLogos } from '@/data/cars';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -100,11 +100,19 @@ const CarCard = ({ car, index = 0 }: CarCardProps) => {
             Trending
           </span>
         )}
+
+        {/* Brand logo badge */}
+        {brandLogos[car.brand] && (
+          <div className="absolute bottom-3 left-3 w-10 h-10 rounded-xl bg-background/85 backdrop-blur-md border border-border/50 p-1.5 flex items-center justify-center shadow-lg">
+            <img src={brandLogos[car.brand]} alt={car.brand} className="w-full h-full object-contain" loading="lazy" />
+          </div>
+        )}
       </div>
 
       <div className="p-4 md:p-5">
         <p className="text-xs text-primary tracking-wider uppercase mb-1">{car.brand}</p>
         <h3 className="font-display text-lg text-foreground mb-1">{car.name}</h3>
+
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
           <span>{car.horsepower} HP</span>
           <span>•</span>
