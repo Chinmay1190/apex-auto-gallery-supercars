@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, Eye, Check } from 'lucide-react';
-import { Car, formatPrice } from '@/data/cars';
+import { Car, formatPrice, brandLogos } from '@/data/cars';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { motion, AnimatePresence } from 'framer-motion';
