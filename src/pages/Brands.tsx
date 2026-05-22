@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { cars, brandLogos } from '@/data/cars';
-import { MapPin, Calendar, ChevronRight, ArrowRight, Sparkles, Search, Globe2, Trophy, Flame } from 'lucide-react';
+import { MapPin, Calendar, ChevronRight, ArrowRight, Sparkles, Search, Globe2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 
