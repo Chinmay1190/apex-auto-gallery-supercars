@@ -20,7 +20,10 @@ const brandData = [
   { name: 'Mercedes-AMG', country: 'Germany', founded: '1967', tagline: 'Driving Performance', description: 'Hand-built thunder from Affalterbach. One man, one engine.', color: '#000000', gradient: 'from-zinc-700/20 via-zinc-700/5 to-transparent' },
   { name: 'Rimac', country: 'Croatia', founded: '2009', tagline: 'The future is electric', description: 'Croatian electric hypercar pioneers shattering performance records.', color: '#00C2A8', gradient: 'from-teal-500/20 via-teal-500/5 to-transparent' },
   { name: 'Lotus', country: 'United Kingdom', founded: '1952', tagline: 'For the drivers', description: 'Simplify, then add lightness. British driver-focused engineering.', color: '#FFD700', gradient: 'from-yellow-600/20 via-yellow-600/5 to-transparent' },
+  { name: 'Alfa Romeo', country: 'Italy', founded: '1910', tagline: 'La meccanica delle emozioni', description: 'The mechanics of emotion. Italian passion since 1910.', color: '#B71C1C', gradient: 'from-red-700/20 via-red-700/5 to-transparent' },
+  { name: 'Lexus', country: 'Japan', founded: '1989', tagline: 'Experience Amazing', description: 'Japanese precision meets uncompromising luxury.', color: '#1a1a2e', gradient: 'from-zinc-500/20 via-zinc-500/5 to-transparent' },
 ];
+
 
 const Brands = () => {
   const [hoveredBrand, setHoveredBrand] = useState<string | null>(null);
