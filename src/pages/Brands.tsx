@@ -75,7 +75,7 @@ const Brands = () => {
               <span className="gold-text">Automotive Excellence</span>
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-              Fourteen legendary manufacturers. Centuries of combined heritage.
+              Sixteen legendary manufacturers. Centuries of combined heritage.
               Each marque a masterpiece of engineering and design.
             </p>
 
