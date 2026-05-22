@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { cars, brandLogos } from '@/data/cars';
-import { MapPin, Calendar, ChevronRight, ArrowRight, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { MapPin, Calendar, ChevronRight, ArrowRight, Sparkles, Search, Globe2, Trophy, Flame } from 'lucide-react';
+import { useMemo, useState } from 'react';
+
 
 const brandData = [
   { name: 'Lamborghini', country: 'Italy', founded: '1963', tagline: 'Expect the unexpected', description: 'Bold, angular supercars with naturally aspirated V10 and V12 engines.', color: '#FFD700', gradient: 'from-yellow-500/20 via-amber-500/5 to-transparent' },
