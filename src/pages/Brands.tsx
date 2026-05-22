@@ -24,6 +24,20 @@ const brandData = [
 
 const Brands = () => {
   const [hoveredBrand, setHoveredBrand] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [country, setCountry] = useState<string>('All');
+
+  const countries = useMemo(() => ['All', ...Array.from(new Set(brandData.map(b => b.country)))], []);
+
+  const filteredRest = useMemo(() => {
+    return brandData.slice(1).filter(b => {
+      const matchesQ = !query || b.name.toLowerCase().includes(query.toLowerCase()) || b.country.toLowerCase().includes(query.toLowerCase());
+      const matchesC = country === 'All' || b.country === country;
+      return matchesQ && matchesC;
+    });
+  }, [query, country]);
+
+
 
   return (
     <div className="min-h-screen pt-20 md:pt-24">
