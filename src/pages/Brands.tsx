@@ -336,8 +336,10 @@ const Brands = () => {
               );
             })}
           </div>
+          )}
         </div>
       </section>
+
 
       {/* Stats Bar */}
       <section className="section-padding py-16 mt-8 border-t border-border/20 relative overflow-hidden">
