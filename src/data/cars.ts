@@ -39,6 +39,10 @@ import rollsBoatTailImg from '@/assets/car-rolls-boattail.jpg';
 import rimacNeveraImg from '@/assets/car-rimac-nevera.jpg';
 import lotusEvijaImg from '@/assets/car-lotus-evija.jpg';
 import astonValhallaImg from '@/assets/car-aston-valhalla.jpg';
+import alfa33Img from '@/assets/car-alfa-33.jpg';
+import lexusLfaImg from '@/assets/car-lexus-lfa.jpg';
+
+
 
 // ============================================================
 // Centralized exterior color names — single source of truth.
