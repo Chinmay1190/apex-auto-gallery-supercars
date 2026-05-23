@@ -370,6 +370,8 @@ import logoRimac from '@/assets/logo-rimac.png';
 import logoLotus from '@/assets/logo-lotus.png';
 import logoAlfa from '@/assets/logo-alfa.png';
 import logoLexus from '@/assets/logo-lexus.png';
+import logoBmw from '@/assets/logo-bmw.png';
+import logoAudi from '@/assets/logo-audi.png';
 
 
 export const brandLogos: Record<string, string> = {
