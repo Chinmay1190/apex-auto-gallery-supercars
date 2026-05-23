@@ -391,6 +391,8 @@ export const brandLogos: Record<string, string> = {
   'Lotus': logoLotus,
   'Alfa Romeo': logoAlfa,
   'Lexus': logoLexus,
+  'BMW M': logoBmw,
+  'Audi': logoAudi,
 };
 
 
