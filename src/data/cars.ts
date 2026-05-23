@@ -41,6 +41,12 @@ import lotusEvijaImg from '@/assets/car-lotus-evija.jpg';
 import astonValhallaImg from '@/assets/car-aston-valhalla.jpg';
 import alfa33Img from '@/assets/car-alfa-33.jpg';
 import lexusLfaImg from '@/assets/car-lexus-lfa.jpg';
+import bmwM4Img from '@/assets/car-bmw-m4.jpg';
+import bmwM5Img from '@/assets/car-bmw-m5.jpg';
+import bmwXmImg from '@/assets/car-bmw-xm.jpg';
+import audiR8Img from '@/assets/car-audi-r8.jpg';
+import audiEtronImg from '@/assets/car-audi-etron.jpg';
+import audiRs6Img from '@/assets/car-audi-rs6.jpg';
 
 
 
