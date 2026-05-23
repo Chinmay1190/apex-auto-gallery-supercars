@@ -258,8 +258,8 @@ const Shop = () => {
                 <div className="space-y-3">
                   <input
                     type="range"
-                    min={20000000}
-                    max={500000000}
+                    min={5000000}
+                    max={700000000}
                     step={10000000}
                     value={priceRange[1]}
                     onChange={e => setPriceRange([priceRange[0], Number(e.target.value)])}
