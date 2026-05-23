@@ -53,7 +53,7 @@ const Shop = () => {
     setSelectedFuel('');
     setSelectedTransmission('');
     setSelectedDrivetrain('');
-    setPriceRange([20000000, 500000000]);
+    setPriceRange([5000000, 700000000]);
     setSearchQuery('');
   };
 
