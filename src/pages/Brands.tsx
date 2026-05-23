@@ -22,6 +22,8 @@ const brandData = [
   { name: 'Lotus', country: 'United Kingdom', founded: '1952', tagline: 'For the drivers', description: 'Simplify, then add lightness. British driver-focused engineering.', color: '#FFD700', gradient: 'from-yellow-600/20 via-yellow-600/5 to-transparent' },
   { name: 'Alfa Romeo', country: 'Italy', founded: '1910', tagline: 'La meccanica delle emozioni', description: 'The mechanics of emotion. Italian passion since 1910.', color: '#B71C1C', gradient: 'from-red-700/20 via-red-700/5 to-transparent' },
   { name: 'Lexus', country: 'Japan', founded: '1989', tagline: 'Experience Amazing', description: 'Japanese precision meets uncompromising luxury.', color: '#1a1a2e', gradient: 'from-zinc-500/20 via-zinc-500/5 to-transparent' },
+  { name: 'BMW M', country: 'Germany', founded: '1972', tagline: 'The Most Powerful Letter In The World', description: 'Motorsport-bred precision from Munich. Three colours, one obsession.', color: '#0066FF', gradient: 'from-blue-600/20 via-blue-600/5 to-transparent' },
+  { name: 'Audi', country: 'Germany', founded: '1909', tagline: 'Vorsprung durch Technik', description: 'Four rings. Quattro grip. Engineering as art form.', color: '#BB0A30', gradient: 'from-red-600/20 via-red-600/5 to-transparent' },
 ];
 
 
@@ -349,8 +351,8 @@ const Brands = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-primary/3 via-transparent to-primary/3" />
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
           {[
-            { value: '16', label: 'Premium Brands', icon: '🏎️' },
-            { value: '100', label: 'Exclusive Models', icon: '⚡' },
+            { value: '18', label: 'Premium Brands', icon: '🏎️' },
+            { value: '130', label: 'Exclusive Models', icon: '⚡' },
             { value: '9', label: 'Countries', icon: '🌍' },
 
             { value: '120+', label: 'Years of Legacy', icon: '👑' },
