@@ -351,8 +351,8 @@ const Brands = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-primary/3 via-transparent to-primary/3" />
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
           {[
-            { value: '16', label: 'Premium Brands', icon: '🏎️' },
-            { value: '100', label: 'Exclusive Models', icon: '⚡' },
+            { value: '18', label: 'Premium Brands', icon: '🏎️' },
+            { value: '130', label: 'Exclusive Models', icon: '⚡' },
             { value: '9', label: 'Countries', icon: '🌍' },
 
             { value: '120+', label: 'Years of Legacy', icon: '👑' },
