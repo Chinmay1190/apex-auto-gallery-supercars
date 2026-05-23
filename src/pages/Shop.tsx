@@ -16,7 +16,7 @@ const Shop = () => {
   const [selectedFuel, setSelectedFuel] = useState('');
   const [selectedTransmission, setSelectedTransmission] = useState('');
   const [selectedDrivetrain, setSelectedDrivetrain] = useState('');
-  const [priceRange, setPriceRange] = useState<[number, number]>([20000000, 500000000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([5000000, 700000000]);
   const [sortBy, setSortBy] = useState('popular');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'large'>('grid');
@@ -53,7 +53,7 @@ const Shop = () => {
     setSelectedFuel('');
     setSelectedTransmission('');
     setSelectedDrivetrain('');
-    setPriceRange([20000000, 500000000]);
+    setPriceRange([5000000, 700000000]);
     setSearchQuery('');
   };
 
@@ -258,8 +258,8 @@ const Shop = () => {
                 <div className="space-y-3">
                   <input
                     type="range"
-                    min={20000000}
-                    max={500000000}
+                    min={5000000}
+                    max={700000000}
                     step={10000000}
                     value={priceRange[1]}
                     onChange={e => setPriceRange([priceRange[0], Number(e.target.value)])}
