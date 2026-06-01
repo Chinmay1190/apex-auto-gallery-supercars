@@ -597,6 +597,16 @@ export const brandLogos: Record<string, string> = {
   'Lexus': logoLexus,
   'BMW M': logoBmw,
   'Audi': logoAudi,
+  'Ford': logoFord,
+  'Chevrolet': logoCorvette,
+  'Nissan': logoNissan,
+  'Hennessey': logoHennessey,
+  'SSC': logoSsc,
+  'Czinger': logoCzinger,
+  'Gordon Murray': logoGma,
+  'Jaguar': logoJaguar,
+  'Tesla': logoTesla,
+  'Lucid': logoLucid,
 };
 
 
