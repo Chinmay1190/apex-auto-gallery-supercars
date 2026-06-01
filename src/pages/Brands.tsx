@@ -24,7 +24,18 @@ const brandData = [
   { name: 'Lexus', country: 'Japan', founded: '1989', tagline: 'Experience Amazing', description: 'Japanese precision meets uncompromising luxury.', color: '#1a1a2e', gradient: 'from-zinc-500/20 via-zinc-500/5 to-transparent' },
   { name: 'BMW M', country: 'Germany', founded: '1972', tagline: 'The Most Powerful Letter In The World', description: 'Motorsport-bred precision from Munich. Three colours, one obsession.', color: '#0066FF', gradient: 'from-blue-600/20 via-blue-600/5 to-transparent' },
   { name: 'Audi', country: 'Germany', founded: '1909', tagline: 'Vorsprung durch Technik', description: 'Four rings. Quattro grip. Engineering as art form.', color: '#BB0A30', gradient: 'from-red-600/20 via-red-600/5 to-transparent' },
+  { name: 'Ford', country: 'United States', founded: '1903', tagline: 'Built Ford Tough', description: 'Le Mans royalty. American muscle and GT heritage in one badge.', color: '#003478', gradient: 'from-blue-700/20 via-blue-700/5 to-transparent' },
+  { name: 'Chevrolet', country: 'United States', founded: '1911', tagline: 'Find New Roads', description: 'Home of the Corvette — America\'s sports car for seven decades.', color: '#FFD700', gradient: 'from-amber-500/20 via-amber-500/5 to-transparent' },
+  { name: 'Nissan', country: 'Japan', founded: '1933', tagline: 'Innovation that excites', description: 'Godzilla territory. Skyline GT-R lineage and Z-car icons.', color: '#C3002F', gradient: 'from-red-600/20 via-red-600/5 to-transparent' },
+  { name: 'Hennessey', country: 'United States', founded: '1991', tagline: 'World\'s Fastest', description: 'Texas tuning legends. From Venom hypercars to 1000-HP trucks.', color: '#000000', gradient: 'from-zinc-800/20 via-zinc-800/5 to-transparent' },
+  { name: 'SSC', country: 'United States', founded: '1998', tagline: 'Pure Performance', description: 'American hypercar challengers. Tuatara, Bonneville record-breaker.', color: '#C0C0C0', gradient: 'from-slate-400/20 via-slate-400/5 to-transparent' },
+  { name: 'Czinger', country: 'United States', founded: '2019', tagline: '3D-printed revolution', description: 'Tandem-seat hypercars built with AI-driven 3D printing.', color: '#FF6600', gradient: 'from-orange-500/20 via-orange-500/5 to-transparent' },
+  { name: 'Gordon Murray', country: 'United Kingdom', founded: '2017', tagline: 'Driver-first engineering', description: 'McLaren F1 designer\'s ultimate driver-focused supercars.', color: '#1a1a2e', gradient: 'from-blue-900/20 via-blue-900/5 to-transparent' },
+  { name: 'Jaguar', country: 'United Kingdom', founded: '1935', tagline: 'The Art of Performance', description: 'British grace with a sporting bite. E-Type to F-Type heritage.', color: '#006633', gradient: 'from-emerald-600/20 via-emerald-600/5 to-transparent' },
+  { name: 'Tesla', country: 'United States', founded: '2003', tagline: 'Accelerating sustainable transport', description: 'Plaid speed. The brand that electrified the supercar world.', color: '#CC0000', gradient: 'from-red-600/20 via-red-600/5 to-transparent' },
+  { name: 'Lucid', country: 'United States', founded: '2007', tagline: 'Air, made luxurious', description: 'California-built EV grand tourers with quad-digit horsepower.', color: '#1a1a2e', gradient: 'from-slate-700/20 via-slate-700/5 to-transparent' },
 ];
+
 
 
 const Brands = () => {
