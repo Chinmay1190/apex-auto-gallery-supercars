@@ -47,6 +47,19 @@ import bmwXmImg from '@/assets/car-bmw-xm.jpg';
 import audiR8Img from '@/assets/car-audi-r8.jpg';
 import audiEtronImg from '@/assets/car-audi-etron.jpg';
 import audiRs6Img from '@/assets/car-audi-rs6.jpg';
+// New brands 2026
+import fordGtImg from '@/assets/car-ford-gt.jpg';
+import corvetteImg from '@/assets/car-corvette.jpg';
+import nissanGtrImg from '@/assets/car-nissan-gtr.jpg';
+import hennesseyImg from '@/assets/car-hennessey.jpg';
+import sscImg from '@/assets/car-ssc.jpg';
+import czingerImg from '@/assets/car-czinger.jpg';
+import gmaT50Img from '@/assets/car-gma-t50.jpg';
+import jaguarImg from '@/assets/car-jaguar.jpg';
+import teslaImg from '@/assets/car-tesla.jpg';
+import lucidImg from '@/assets/car-lucid.jpg';
+
+
 
 
 
