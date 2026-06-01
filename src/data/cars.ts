@@ -566,6 +566,16 @@ import logoAlfa from '@/assets/logo-alfa.png';
 import logoLexus from '@/assets/logo-lexus.png';
 import logoBmw from '@/assets/logo-bmw.png';
 import logoAudi from '@/assets/logo-audi.png';
+import logoFord from '@/assets/logo-ford.png';
+import logoCorvette from '@/assets/logo-corvette.png';
+import logoNissan from '@/assets/logo-nissan.png';
+import logoHennessey from '@/assets/logo-hennessey.png';
+import logoSsc from '@/assets/logo-ssc.png';
+import logoCzinger from '@/assets/logo-czinger.png';
+import logoGma from '@/assets/logo-gma.png';
+import logoJaguar from '@/assets/logo-jaguar.png';
+import logoTesla from '@/assets/logo-tesla.png';
+import logoLucid from '@/assets/logo-lucid.png';
 
 
 export const brandLogos: Record<string, string> = {
