@@ -1141,7 +1141,7 @@ export const cars: Car[] = carsRaw.map((c) => {
 // ============================================================
 // Reference lists
 // ============================================================
-export const brands = ["Lamborghini", "Ferrari", "McLaren", "Porsche", "Bugatti", "Aston Martin", "Rolls-Royce", "Maserati", "Bentley", "Koenigsegg", "Pagani", "Mercedes-AMG", "Rimac", "Lotus", "Alfa Romeo", "Lexus", "BMW M", "Audi", "Ford", "Chevrolet", "Nissan", "Hennessey", "SSC", "Czinger", "Gordon Murray", "Jaguar", "Tesla", "Lucid"];
+export const brands = ["Lamborghini", "Ferrari", "McLaren", "Porsche", "Bugatti", "Aston Martin", "Rolls-Royce", "Maserati", "Bentley", "Koenigsegg", "Pagani", "Mercedes-AMG", "Rimac", "Lotus", "Alfa Romeo", "Lexus", "BMW M", "Audi", "Ford", "Chevrolet", "Nissan", "Hennessey", "SSC", "Czinger", "Gordon Murray", "Jaguar", "Tesla", "Lucid", "Pininfarina", "Maybach", "Acura", "Polestar"];
 export const categories = ["Hypercars", "Luxury Supercars", "Electric Supercars", "Track Edition", "Convertible Series", "Limited Editions"];
 export const fuelTypes = ["Petrol", "Hybrid", "Electric"];
 export const transmissions = ["Automatic", "Manual"];
