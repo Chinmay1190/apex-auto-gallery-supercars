@@ -1181,6 +1181,10 @@ import logoGma from '@/assets/logo-gma.png';
 import logoJaguar from '@/assets/logo-jaguar.png';
 import logoTesla from '@/assets/logo-tesla.png';
 import logoLucid from '@/assets/logo-lucid.png';
+import logoPininfarina from '@/assets/logo-pininfarina.png';
+import logoMaybach from '@/assets/logo-maybach.png';
+import logoAcura from '@/assets/logo-acura.png';
+import logoPolestar from '@/assets/logo-polestar.png';
 
 
 export const brandLogos: Record<string, string> = {
@@ -1212,6 +1216,10 @@ export const brandLogos: Record<string, string> = {
   'Jaguar': logoJaguar,
   'Tesla': logoTesla,
   'Lucid': logoLucid,
+  'Pininfarina': logoPininfarina,
+  'Maybach': logoMaybach,
+  'Acura': logoAcura,
+  'Polestar': logoPolestar,
 };
 
 
