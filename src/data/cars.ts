@@ -58,6 +58,11 @@ import gmaT50Img from '@/assets/car-gma-t50.jpg';
 import jaguarImg from '@/assets/car-jaguar.jpg';
 import teslaImg from '@/assets/car-tesla.jpg';
 import lucidImg from '@/assets/car-lucid.jpg';
+import pininfarinaImg from '@/assets/car-pininfarina.jpg';
+import maybachImg from '@/assets/car-maybach.jpg';
+import acuraImg from '@/assets/car-acura.jpg';
+import polestarImg from '@/assets/car-polestar.jpg';
+
 
 
 
