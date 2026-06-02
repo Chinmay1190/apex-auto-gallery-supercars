@@ -364,6 +364,39 @@ const Reports = () => {
                 <Download className="w-4 h-4" /> Export PDF Report
               </button>
             </div>
+
+            {/* Live marquee strip */}
+            <div className="relative mt-6 overflow-hidden rounded-xl border border-primary/15 bg-background/40 backdrop-blur">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10 pr-3 bg-gradient-to-r from-background via-background to-transparent">
+                <span className="relative flex w-2 h-2">
+                  <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                  <span className="relative rounded-full w-2 h-2 bg-emerald-400" />
+                </span>
+                <span className="text-[10px] uppercase tracking-[0.3em] text-emerald-400 font-bold">Live</span>
+              </div>
+              <motion.div
+                className="flex whitespace-nowrap py-2 pl-24 text-[10px] uppercase tracking-[0.25em] text-muted-foreground"
+                animate={{ x: ['0%', '-50%'] }}
+                transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+              >
+                {[...Array(2)].map((_, dup) => (
+                  <span key={dup} className="flex items-center gap-8 pr-8">
+                    <span>Revenue <b className="gold-text ml-1">{formatINR(stats.revenue)}</b></span>
+                    <span>•</span>
+                    <span>Orders <b className="text-foreground ml-1">{stats.orders}</b></span>
+                    <span>•</span>
+                    <span>Avg Ticket <b className="text-sky-400 ml-1">{formatINR(stats.avg)}</b></span>
+                    <span>•</span>
+                    <span>Units <b className="text-amber-400 ml-1">{stats.units}</b></span>
+                    <span>•</span>
+                    <span>Lead Brand <b className="text-primary ml-1">{insights.topBrand}</b></span>
+                    <span>•</span>
+                    <span>Fulfilment <b className="text-emerald-400 ml-1">{insights.completionRate}%</b></span>
+                    <span>•</span>
+                  </span>
+                ))}
+              </motion.div>
+            </div>
           </motion.div>
 
           {/* Period tabs */}

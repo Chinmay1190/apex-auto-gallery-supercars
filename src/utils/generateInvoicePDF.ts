@@ -152,15 +152,37 @@ const addBackground = (doc: jsPDF) => {
   doc.setFillColor(...colors.bg);
   doc.rect(0, 0, PAGE_WIDTH, pageHeight, 'F');
 
+  // Subtle corner glow tiles (simulated radial via stacked low-opacity rects)
+  doc.setFillColor(28, 24, 14);
+  doc.rect(0, 0, 80, 80, 'F');
+  doc.setFillColor(24, 22, 14);
+  doc.rect(PAGE_WIDTH - 80, pageHeight - 80, 80, 80, 'F');
+
+  // Diagonal watermark "VELOCITY" repeated
+  doc.saveGraphicsState?.();
+  doc.setFont(FONT, 'bold');
+  doc.setFontSize(52);
+  doc.setTextColor(28, 28, 36);
+  for (let i = 0; i < 6; i++) {
+    doc.text('VELOCITY', 20, 60 + i * 50, { angle: -28 });
+  }
+  doc.restoreGraphicsState?.();
+
+  // Top accent bar
   doc.setFillColor(...colors.gold);
   doc.rect(0, 0, PAGE_WIDTH, 2.2, 'F');
 
+  // Corner brackets
   doc.setDrawColor(...colors.gold);
   doc.setLineWidth(0.7);
   doc.line(8, 8, 20, 8);
   doc.line(8, 8, 8, 20);
   doc.line(PAGE_WIDTH - 20, 8, PAGE_WIDTH - 8, 8);
   doc.line(PAGE_WIDTH - 8, 8, PAGE_WIDTH - 8, 20);
+  doc.line(8, pageHeight - 8, 20, pageHeight - 8);
+  doc.line(8, pageHeight - 20, 8, pageHeight - 8);
+  doc.line(PAGE_WIDTH - 20, pageHeight - 8, PAGE_WIDTH - 8, pageHeight - 8);
+  doc.line(PAGE_WIDTH - 8, pageHeight - 20, PAGE_WIDTH - 8, pageHeight - 8);
 };
 
 const drawHeader = (doc: jsPDF, order: InvoiceOrder, logoData: string | null) => {

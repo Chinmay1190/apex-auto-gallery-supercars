@@ -92,6 +92,21 @@ const drawBg = (doc: jsPDF) => {
   const h = doc.internal.pageSize.height;
   doc.setFillColor(...colors.bg);
   doc.rect(0, 0, PAGE_WIDTH, h, 'F');
+
+  // Corner glow tiles
+  doc.setFillColor(28, 24, 14);
+  doc.rect(0, 0, 80, 80, 'F');
+  doc.setFillColor(24, 22, 14);
+  doc.rect(PAGE_WIDTH - 80, h - 80, 80, 80, 'F');
+
+  // Diagonal watermark
+  doc.setFont(FONT, 'bold');
+  doc.setFontSize(48);
+  doc.setTextColor(26, 26, 34);
+  for (let i = 0; i < 6; i++) {
+    doc.text('ANALYTICS', 18, 60 + i * 50, { angle: -28 });
+  }
+
   doc.setFillColor(...colors.gold);
   doc.rect(0, 0, PAGE_WIDTH, 2.2, 'F');
   doc.setDrawColor(...colors.gold);
@@ -99,6 +114,9 @@ const drawBg = (doc: jsPDF) => {
   doc.line(8, 8, 20, 8); doc.line(8, 8, 8, 20);
   doc.line(PAGE_WIDTH - 20, 8, PAGE_WIDTH - 8, 8);
   doc.line(PAGE_WIDTH - 8, 8, PAGE_WIDTH - 8, 20);
+  doc.line(8, h - 8, 20, h - 8); doc.line(8, h - 20, 8, h - 8);
+  doc.line(PAGE_WIDTH - 20, h - 8, PAGE_WIDTH - 8, h - 8);
+  doc.line(PAGE_WIDTH - 8, h - 20, PAGE_WIDTH - 8, h - 8);
 };
 
 const drawHeader = (doc: jsPDF, title: string, subtitle: string, logo: string | null) => {
