@@ -20,6 +20,8 @@ const Shop = () => {
   const [sortBy, setSortBy] = useState('popular');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'large'>('grid');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(24);
 
   const filteredCars = useMemo(() => {
     let result = [...cars];
