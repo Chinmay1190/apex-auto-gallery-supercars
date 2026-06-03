@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SlidersHorizontal, X, Search, ChevronDown, LayoutGrid, Rows3, Sparkles } from 'lucide-react';
+import { SlidersHorizontal, X, Search, ChevronDown, LayoutGrid, Rows3, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import CarCard from '@/components/CarCard';
 import { cars, brands, categories, fuelTypes, transmissions, drivetrains, formatPrice } from '@/data/cars';
 
@@ -20,6 +20,8 @@ const Shop = () => {
   const [sortBy, setSortBy] = useState('popular');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'large'>('grid');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(24);
 
   const filteredCars = useMemo(() => {
     let result = [...cars];
@@ -42,6 +44,14 @@ const Shop = () => {
     }
     return result;
   }, [selectedBrands, selectedCategory, selectedFuel, selectedTransmission, selectedDrivetrain, priceRange, sortBy, searchQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredCars.length / perPage));
+  const pagedCars = useMemo(() => filteredCars.slice((page - 1) * perPage, page * perPage), [filteredCars, page, perPage]);
+
+  useEffect(() => { setPage(1); }, [selectedBrands, selectedCategory, selectedFuel, selectedTransmission, selectedDrivetrain, priceRange, searchQuery, sortBy]);
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [page]);
+
+
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]);
@@ -307,22 +317,82 @@ const Shop = () => {
             )}
 
             {filteredCars.length > 0 ? (
-              <motion.div
-                layout
-                className={`grid gap-5 ${
-                  viewMode === 'large'
-                    ? 'grid-cols-1 md:grid-cols-2'
-                    : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-                }`}
-              >
-                {filteredCars.map((car, i) => <CarCard key={car.id} car={car} index={i} />)}
-              </motion.div>
+              <>
+                <motion.div
+                  layout
+                  className={`grid gap-5 ${
+                    viewMode === 'large'
+                      ? 'grid-cols-1 md:grid-cols-2'
+                      : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                  }`}
+                >
+                  {pagedCars.map((car, i) => <CarCard key={car.id} car={car} index={i} />)}
+                </motion.div>
+
+                {totalPages > 1 && (
+                  <div className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <p className="text-xs text-muted-foreground">
+                      Showing <span className="text-foreground font-semibold">{(page - 1) * perPage + 1}</span>–<span className="text-foreground font-semibold">{Math.min(page * perPage, filteredCars.length)}</span> of <span className="text-foreground font-semibold">{filteredCars.length}</span>
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="p-2 rounded-lg border border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      {(() => {
+                        const pages: (number | 'dots')[] = [];
+                        const add = (n: number) => pages.push(n);
+                        const window = 1;
+                        for (let i = 1; i <= totalPages; i++) {
+                          if (i === 1 || i === totalPages || (i >= page - window && i <= page + window)) add(i);
+                          else if (pages[pages.length - 1] !== 'dots') pages.push('dots');
+                        }
+                        return pages.map((p, idx) =>
+                          p === 'dots' ? (
+                            <span key={`d${idx}`} className="px-2 text-muted-foreground text-xs">…</span>
+                          ) : (
+                            <button
+                              key={p}
+                              onClick={() => setPage(p)}
+                              className={`min-w-9 h-9 px-2 rounded-lg text-xs font-medium transition-all ${
+                                p === page
+                                  ? 'gold-gradient text-primary-foreground shadow-[0_0_12px_hsl(var(--gold)/0.3)]'
+                                  : 'border border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40'
+                              }`}
+                            >
+                              {p}
+                            </button>
+                          )
+                        );
+                      })()}
+                      <button
+                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                        disabled={page === totalPages}
+                        className="p-2 rounded-lg border border-border/50 text-muted-foreground hover:text-primary hover:border-primary/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <select
+                      value={perPage}
+                      onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }}
+                      className="px-3 py-2 glass-panel text-xs bg-card/60 border-border/50 text-foreground rounded-lg cursor-pointer focus:outline-none focus:border-primary/50"
+                    >
+                      {[24, 48, 96, 150].map(n => <option key={n} value={n}>{n} / page</option>)}
+                    </select>
+                  </div>
+                )}
+              </>
             ) : (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-center py-24"
               >
+
                 <div className="w-16 h-16 rounded-2xl glass-panel flex items-center justify-center mx-auto mb-5">
                   <Search className="w-7 h-7 text-muted-foreground" />
                 </div>
