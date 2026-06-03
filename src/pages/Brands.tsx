@@ -34,6 +34,16 @@ const brandData = [
   { name: 'Jaguar', country: 'United Kingdom', founded: '1935', tagline: 'The Art of Performance', description: 'British grace with a sporting bite. E-Type to F-Type heritage.', color: '#006633', gradient: 'from-emerald-600/20 via-emerald-600/5 to-transparent' },
   { name: 'Tesla', country: 'United States', founded: '2003', tagline: 'Accelerating sustainable transport', description: 'Plaid speed. The brand that electrified the supercar world.', color: '#CC0000', gradient: 'from-red-600/20 via-red-600/5 to-transparent' },
   { name: 'Lucid', country: 'United States', founded: '2007', tagline: 'Air, made luxurious', description: 'California-built EV grand tourers with quad-digit horsepower.', color: '#1a1a2e', gradient: 'from-slate-700/20 via-slate-700/5 to-transparent' },
+  { name: 'Pininfarina', country: 'Italy', founded: '1930', tagline: 'Designed in Italy', description: 'Iconic Italian design house turned electric hypercar maker.', color: '#003B6F', gradient: 'from-blue-800/20 via-blue-800/5 to-transparent' },
+  { name: 'Maybach', country: 'Germany', founded: '1909', tagline: 'Beyond luxury', description: 'The ultimate expression of Mercedes-Benz craftsmanship.', color: '#1a1a2e', gradient: 'from-zinc-800/20 via-zinc-800/5 to-transparent' },
+  { name: 'Acura', country: 'Japan', founded: '1986', tagline: 'Precision Crafted Performance', description: 'Honda\'s premium arm — home of the NSX supercar.', color: '#CC0000', gradient: 'from-red-600/20 via-red-600/5 to-transparent' },
+  { name: 'Polestar', country: 'Sweden', founded: '2017', tagline: 'Pure progressive performance', description: 'Scandinavian-minimalist EV performance cars.', color: '#00C2A8', gradient: 'from-teal-500/20 via-teal-500/5 to-transparent' },
+  { name: 'Apollo', country: 'Germany', founded: '2016', tagline: 'Pure intensity', description: 'Hand-crafted carbon-fibre hypercars built for analogue thrills.', color: '#FFB200', gradient: 'from-amber-500/20 via-amber-500/5 to-transparent' },
+  { name: 'Spyker', country: 'Netherlands', founded: '1999', tagline: 'Nulla tenaci invia est via', description: 'Dutch aviation-inspired luxury supercars — exposed gearchanges and propeller motifs.', color: '#C0C0C0', gradient: 'from-slate-400/20 via-slate-400/5 to-transparent' },
+  { name: 'Zenvo', country: 'Denmark', founded: '2007', tagline: 'Engineered to thrill', description: 'Danish hypercar maker producing track-savage limited runs.', color: '#00FF7F', gradient: 'from-emerald-500/20 via-emerald-500/5 to-transparent' },
+  { name: 'W Motors', country: 'United Arab Emirates', founded: '2012', tagline: 'Driven by passion', description: 'Arabian hypercars with jewel-encrusted headlights and 7-figure tags.', color: '#FFD700', gradient: 'from-yellow-500/20 via-yellow-500/5 to-transparent' },
+  { name: 'De Tomaso', country: 'Italy', founded: '1959', tagline: 'A vision reborn', description: 'Italian-American mid-engined GTs — Pantera heritage, modern flair.', color: '#B8860B', gradient: 'from-amber-700/20 via-amber-700/5 to-transparent' },
+  { name: 'Rezvani', country: 'United States', founded: '2014', tagline: 'Beyond the impossible', description: 'California specialists in extreme road cars and armoured SUVs.', color: '#000000', gradient: 'from-zinc-900/20 via-zinc-900/5 to-transparent' },
 ];
 
 
