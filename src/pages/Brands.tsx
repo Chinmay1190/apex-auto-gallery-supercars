@@ -98,7 +98,7 @@ const Brands = () => {
               <span className="gold-text">Automotive Excellence</span>
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-              Twenty-eight legendary manufacturers. Centuries of combined heritage.
+              Thirty-eight legendary manufacturers. 1,500 exclusive models. Centuries of combined heritage.
               Each marque a masterpiece of engineering and design.
             </p>
 
@@ -372,9 +372,9 @@ const Brands = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-primary/3 via-transparent to-primary/3" />
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
           {[
-            { value: '28', label: 'Premium Brands', icon: '🏎️' },
-            { value: '300', label: 'Exclusive Models', icon: '⚡' },
-            { value: '12', label: 'Countries', icon: '🌍' },
+            { value: '38', label: 'Premium Brands', icon: '🏎️' },
+            { value: '1500', label: 'Exclusive Models', icon: '⚡' },
+            { value: '15', label: 'Countries', icon: '🌍' },
 
             { value: '120+', label: 'Years of Legacy', icon: '👑' },
           ].map((stat, i) => (
