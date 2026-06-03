@@ -45,6 +45,14 @@ const Shop = () => {
     return result;
   }, [selectedBrands, selectedCategory, selectedFuel, selectedTransmission, selectedDrivetrain, priceRange, sortBy, searchQuery]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredCars.length / perPage));
+  const pagedCars = useMemo(() => filteredCars.slice((page - 1) * perPage, page * perPage), [filteredCars, page, perPage]);
+
+  useEffect(() => { setPage(1); }, [selectedBrands, selectedCategory, selectedFuel, selectedTransmission, selectedDrivetrain, priceRange, searchQuery, sortBy]);
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [page]);
+
+
+
   const toggleBrand = (brand: string) => {
     setSelectedBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]);
   };
