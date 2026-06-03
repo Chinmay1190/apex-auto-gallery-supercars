@@ -3,7 +3,6 @@ import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SlidersHorizontal, X, Search, ChevronDown, LayoutGrid, Rows3, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import CarCard from '@/components/CarCard';
-import CarCard from '@/components/CarCard';
 import { cars, brands, categories, fuelTypes, transmissions, drivetrains, formatPrice } from '@/data/cars';
 
 const Shop = () => {
