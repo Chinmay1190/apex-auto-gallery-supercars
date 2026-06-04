@@ -381,7 +381,8 @@ const Shop = () => {
                       onChange={e => { setPerPage(Number(e.target.value)); setPage(1); }}
                       className="px-3 py-2 glass-panel text-xs bg-card/60 border-border/50 text-foreground rounded-lg cursor-pointer focus:outline-none focus:border-primary/50"
                     >
-                      {[24, 48, 96, 150].map(n => <option key={n} value={n}>{n} / page</option>)}
+                      {[24, 48, 96, 150, 300, 600].map(n => <option key={n} value={n}>{n} / page</option>)}
+                      <option value={9999}>All ({filteredCars.length})</option>
                     </select>
                   </div>
                 )}
