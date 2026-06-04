@@ -30,572 +30,408 @@ interface InvoiceItem {
 
 type RGB = [number, number, number];
 
-const colors = {
-  bg: [12, 12, 16] as RGB,
-  panel: [22, 22, 28] as RGB,
-  panelSoft: [28, 28, 36] as RGB,
-  gold: [192, 155, 68] as RGB,
-  goldSoft: [220, 192, 132] as RGB,
-  text: [246, 246, 248] as RGB,
-  muted: [170, 170, 180] as RGB,
-  dim: [118, 118, 130] as RGB,
-  border: [44, 44, 56] as RGB,
-  rowAlt: [17, 17, 24] as RGB,
+// Light, premium palette — ivory paper, deep gold, ink
+const C = {
+  paper: [253, 251, 246] as RGB,
+  cream: [247, 243, 234] as RGB,
+  card: [255, 253, 249] as RGB,
+  ink: [22, 22, 26] as RGB,
+  body: [55, 55, 62] as RGB,
+  muted: [120, 118, 112] as RGB,
+  dim: [165, 162, 154] as RGB,
+  hair: [225, 218, 200] as RGB,
+  gold: [176, 137, 52] as RGB,
+  goldDeep: [140, 105, 30] as RGB,
+  goldSoft: [225, 200, 130] as RGB,
 };
 
-let FONT = 'helvetica'; // Will be updated to NotoSans if custom font loads
+let FONT = 'helvetica';
 const PAGE_WIDTH = 210;
 const LEFT = 16;
 const RIGHT = 194;
 const CONTENT_WIDTH = RIGHT - LEFT;
 
-const toNumber = (value: unknown): number => {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value === 'string') {
-    const parsed = Number(value.replace(/[^\d.-]/g, ''));
-    return Number.isFinite(parsed) ? parsed : 0;
+const toNumber = (v: unknown): number => {
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  if (typeof v === 'string') {
+    const p = Number(v.replace(/[^\d.-]/g, ''));
+    return Number.isFinite(p) ? p : 0;
   }
   return 0;
 };
-
-const toText = (value: unknown, fallback = '-'): string => {
-  const text = String(value ?? '').trim();
-  return text || fallback;
+const toText = (v: unknown, fb = '-'): string => (String(v ?? '').trim() || fb);
+const formatMoney = (v: unknown): string => {
+  const n = toNumber(v);
+  const f = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+  return FONT === 'NotoSans' ? `\u20B9 ${f}` : `Rs. ${f}`;
+};
+const formatDate = (v: unknown): string => {
+  const d = new Date(String(v ?? ''));
+  if (Number.isNaN(d.getTime())) return toText(v, 'N/A');
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 };
 
-const formatMoney = (value: unknown): string => {
-  const amount = toNumber(value);
-  const formatted = new Intl.NumberFormat('en-IN', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
-  // Use ₹ when NotoSans loaded, else fall back to "Rs."
-  return FONT === 'NotoSans' ? `\u20B9 ${formatted}` : `Rs. ${formatted}`;
-};
-
-const formatDate = (value: unknown): string => {
-  const date = new Date(String(value ?? ''));
-  if (Number.isNaN(date.getTime())) return toText(value, 'N/A');
-  return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
-};
-
-// Load an image URL and return a base64 data URL
-const loadImageAsBase64 = (src: string): Promise<string | null> => {
-  return new Promise((resolve) => {
+const loadImageAsBase64 = (src: string): Promise<string | null> =>
+  new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       try {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth || img.width;
-        canvas.height = img.naturalHeight || img.height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) { resolve(null); return; }
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth || img.width;
+        c.height = img.naturalHeight || img.height;
+        const ctx = c.getContext('2d');
+        if (!ctx) return resolve(null);
         ctx.drawImage(img, 0, 0);
-        resolve(canvas.toDataURL('image/jpeg', 0.8));
-      } catch {
-        resolve(null);
-      }
+        resolve(c.toDataURL('image/jpeg', 0.85));
+      } catch { resolve(null); }
     };
     img.onerror = () => resolve(null);
     img.src = src;
   });
-};
 
-// Load a font file and return ArrayBuffer
-const loadFontAsArrayBuffer = async (url: string): Promise<ArrayBuffer | null> => {
-  try {
-    const response = await fetch(url);
-    if (!response.ok) return null;
-    return await response.arrayBuffer();
-  } catch {
-    return null;
-  }
+const loadFontAB = async (url: string): Promise<ArrayBuffer | null> => {
+  try { const r = await fetch(url); return r.ok ? await r.arrayBuffer() : null; } catch { return null; }
 };
-
-// Convert ArrayBuffer to base64 string
-const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
+const abToB64 = (buf: ArrayBuffer): string => {
+  const b = new Uint8Array(buf); let s = '';
+  for (let i = 0; i < b.byteLength; i++) s += String.fromCharCode(b[i]);
+  return btoa(s);
 };
-
-// Register NotoSans font with jsPDF for ₹ symbol support
 const registerNotoSans = async (doc: jsPDF): Promise<boolean> => {
   try {
-    const [regularBuf, boldBuf] = await Promise.all([
-      loadFontAsArrayBuffer('/fonts/NotoSans-Regular.ttf'),
-      loadFontAsArrayBuffer('/fonts/NotoSans-Bold.ttf'),
+    const [reg, bold] = await Promise.all([
+      loadFontAB('/fonts/NotoSans-Regular.ttf'),
+      loadFontAB('/fonts/NotoSans-Bold.ttf'),
     ]);
-
-    if (regularBuf) {
-      const regularBase64 = arrayBufferToBase64(regularBuf);
-      doc.addFileToVFS('NotoSans-Regular.ttf', regularBase64);
-      doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
-    }
-    if (boldBuf) {
-      const boldBase64 = arrayBufferToBase64(boldBuf);
-      doc.addFileToVFS('NotoSans-Bold.ttf', boldBase64);
-      doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold');
-    }
-    return !!(regularBuf && boldBuf);
-  } catch {
-    return false;
-  }
+    if (reg) { doc.addFileToVFS('NotoSans-Regular.ttf', abToB64(reg)); doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal'); }
+    if (bold) { doc.addFileToVFS('NotoSans-Bold.ttf', abToB64(bold)); doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold'); }
+    return !!(reg && bold);
+  } catch { return false; }
 };
 
-const addBackground = (doc: jsPDF) => {
-  const pageHeight = doc.internal.pageSize.height;
-  doc.setFillColor(...colors.bg);
-  doc.rect(0, 0, PAGE_WIDTH, pageHeight, 'F');
-
-  // Subtle corner glow tiles (simulated radial via stacked low-opacity rects)
-  doc.setFillColor(28, 24, 14);
-  doc.rect(0, 0, 80, 80, 'F');
-  doc.setFillColor(24, 22, 14);
-  doc.rect(PAGE_WIDTH - 80, pageHeight - 80, 80, 80, 'F');
-
-  // Diagonal watermark "VELOCITY" repeated
-  doc.saveGraphicsState?.();
-  doc.setFont(FONT, 'bold');
-  doc.setFontSize(52);
-  doc.setTextColor(28, 28, 36);
-  for (let i = 0; i < 6; i++) {
-    doc.text('VELOCITY', 20, 60 + i * 50, { angle: -28 });
-  }
-  doc.restoreGraphicsState?.();
-
-  // Top accent bar
-  doc.setFillColor(...colors.gold);
-  doc.rect(0, 0, PAGE_WIDTH, 2.2, 'F');
-
-  // Corner brackets
-  doc.setDrawColor(...colors.gold);
-  doc.setLineWidth(0.7);
-  doc.line(8, 8, 20, 8);
-  doc.line(8, 8, 8, 20);
-  doc.line(PAGE_WIDTH - 20, 8, PAGE_WIDTH - 8, 8);
-  doc.line(PAGE_WIDTH - 8, 8, PAGE_WIDTH - 8, 20);
-  doc.line(8, pageHeight - 8, 20, pageHeight - 8);
-  doc.line(8, pageHeight - 20, 8, pageHeight - 8);
-  doc.line(PAGE_WIDTH - 20, pageHeight - 8, PAGE_WIDTH - 8, pageHeight - 8);
-  doc.line(PAGE_WIDTH - 8, pageHeight - 20, PAGE_WIDTH - 8, pageHeight - 8);
+const drawPageChrome = (doc: jsPDF) => {
+  const h = doc.internal.pageSize.height;
+  // Paper background
+  doc.setFillColor(...C.paper);
+  doc.rect(0, 0, PAGE_WIDTH, h, 'F');
+  // Top & bottom gold band
+  doc.setFillColor(...C.gold);
+  doc.rect(0, 0, PAGE_WIDTH, 4, 'F');
+  doc.setFillColor(...C.goldDeep);
+  doc.rect(0, 4, PAGE_WIDTH, 0.6, 'F');
+  doc.setFillColor(...C.gold);
+  doc.rect(0, h - 4, PAGE_WIDTH, 4, 'F');
+  doc.setFillColor(...C.goldDeep);
+  doc.rect(0, h - 4.6, PAGE_WIDTH, 0.6, 'F');
+  // Inner hairline frame
+  doc.setDrawColor(...C.goldSoft);
+  doc.setLineWidth(0.25);
+  doc.rect(8, 9, PAGE_WIDTH - 16, h - 18, 'S');
+  doc.setDrawColor(...C.hair);
+  doc.setLineWidth(0.15);
+  doc.rect(10, 11, PAGE_WIDTH - 20, h - 22, 'S');
 };
 
-const drawHeader = (doc: jsPDF, order: InvoiceOrder, logoData: string | null) => {
-  doc.setFillColor(...colors.panel);
-  doc.rect(0, 2.2, PAGE_WIDTH, 46, 'F');
-
-  // Logo
-  if (logoData) {
-    try {
-      doc.addImage(logoData, 'PNG', LEFT, 6, 18, 18);
-    } catch { /* skip if fails */ }
+const drawHeader = (doc: jsPDF, order: InvoiceOrder, logo: string | null) => {
+  // Brand mark
+  if (logo) {
+    try { doc.addImage(logo, 'PNG', LEFT, 16, 20, 20); } catch { /* */ }
   }
-
-  const textStart = logoData ? LEFT + 22 : LEFT;
+  const tx = logo ? LEFT + 24 : LEFT;
 
   doc.setFont(FONT, 'bold');
   doc.setFontSize(26);
-  doc.setTextColor(...colors.gold);
-  doc.text('VELOCITY', textStart, 20);
+  doc.setTextColor(...C.ink);
+  doc.text('VELOCITY', tx, 26);
 
   doc.setFont(FONT, 'normal');
   doc.setFontSize(6.5);
-  doc.setTextColor(...colors.dim);
-  doc.text('L U X U R Y   S U P E R C A R S   I N D I A', textStart, 27);
+  doc.setTextColor(...C.goldDeep);
+  doc.text('L U X U R Y   S U P E R C A R S   \u00B7   I N D I A', tx, 31);
 
-  // Gold accent bar
-  doc.setFillColor(...colors.gold);
-  doc.rect(textStart, 30, 28, 1, 'F');
+  doc.setDrawColor(...C.gold);
+  doc.setLineWidth(0.8);
+  doc.line(tx, 33.5, tx + 36, 33.5);
 
-  // Invoice badge
-  doc.setFillColor(...colors.panelSoft);
-  doc.roundedRect(PAGE_WIDTH - 74, 8, 58, 32, 3, 3, 'F');
-  doc.setDrawColor(...colors.gold);
-  doc.setLineWidth(0.45);
-  doc.roundedRect(PAGE_WIDTH - 74, 8, 58, 32, 3, 3, 'S');
-
+  // Invoice label block — right
   doc.setFont(FONT, 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...colors.gold);
-  doc.text('TAX INVOICE', PAGE_WIDTH - 45, 18, { align: 'center' });
+  doc.setFontSize(20);
+  doc.setTextColor(...C.goldDeep);
+  doc.text('INVOICE', RIGHT, 22, { align: 'right' });
 
   doc.setFont(FONT, 'normal');
   doc.setFontSize(7);
-  doc.setTextColor(...colors.goldSoft);
-  doc.text(toText(order.order_number, 'N/A'), PAGE_WIDTH - 45, 24, { align: 'center' });
+  doc.setTextColor(...C.muted);
+  doc.text('Invoice No.', RIGHT - 38, 28);
+  doc.setFont(FONT, 'bold');
+  doc.setTextColor(...C.ink);
+  doc.text(toText(order.order_number, 'N/A'), RIGHT, 28, { align: 'right' });
 
-  doc.setTextColor(...colors.muted);
-  doc.text(formatDate(order.created_at), PAGE_WIDTH - 45, 30, { align: 'center' });
+  doc.setFont(FONT, 'normal');
+  doc.setTextColor(...C.muted);
+  doc.text('Date', RIGHT - 38, 33);
+  doc.setFont(FONT, 'bold');
+  doc.setTextColor(...C.ink);
+  doc.text(formatDate(order.created_at), RIGHT, 33, { align: 'right' });
 
-  // Bottom separator
-  doc.setDrawColor(...colors.gold);
-  doc.setLineWidth(0.4);
-  doc.line(LEFT, 52, RIGHT, 52);
+  // Divider under header
+  doc.setDrawColor(...C.gold);
+  doc.setLineWidth(0.5);
+  doc.line(LEFT, 42, RIGHT, 42);
+  doc.setDrawColor(...C.goldSoft);
+  doc.setLineWidth(0.2);
+  doc.line(LEFT, 43.5, RIGHT, 43.5);
 };
 
-const drawInfoBox = (
-  doc: jsPDF,
-  x: number,
-  y: number,
-  w: number,
-  title: string,
-  lines: string[],
-) => {
-  const boxH = 36;
-  doc.setFillColor(...colors.panel);
-  doc.roundedRect(x, y, w, boxH, 3, 3, 'F');
-  doc.setDrawColor(...colors.border);
-  doc.setLineWidth(0.25);
-  doc.roundedRect(x, y, w, boxH, 3, 3, 'S');
-
-  doc.setFillColor(...colors.gold);
-  doc.rect(x, y + 3, 2.2, boxH - 6, 'F');
-
+const drawAddressBlock = (doc: jsPDF, x: number, y: number, w: number, label: string, lines: string[]) => {
   doc.setFont(FONT, 'bold');
-  doc.setFontSize(6);
-  doc.setTextColor(...colors.gold);
-  doc.text(title, x + 7, y + 6);
+  doc.setFontSize(6.5);
+  doc.setTextColor(...C.goldDeep);
+  doc.text(label, x, y);
+  doc.setDrawColor(...C.gold);
+  doc.setLineWidth(0.4);
+  doc.line(x, y + 1.5, x + 14, y + 1.5);
 
-  let lineY = y + 11;
-  lines.forEach((raw, index) => {
-    const wrapped = doc.splitTextToSize(toText(raw), w - 12);
-    doc.setFont(FONT, index === 0 ? 'bold' : 'normal');
-    doc.setFontSize(index === 0 ? 7.5 : 7);
-    doc.setTextColor(...(index === 0 ? colors.text : colors.muted));
-    wrapped.slice(0, 2).forEach((line: string) => {
-      doc.text(line, x + 7, lineY);
-      lineY += index === 0 ? 5 : 4.5;
-    });
+  let ly = y + 7;
+  lines.forEach((raw, i) => {
+    const wrapped = doc.splitTextToSize(toText(raw), w);
+    doc.setFont(FONT, i === 0 ? 'bold' : 'normal');
+    doc.setFontSize(i === 0 ? 9.5 : 8);
+    doc.setTextColor(...(i === 0 ? C.ink : C.body));
+    wrapped.slice(0, 2).forEach((ln: string) => { doc.text(ln, x, ly); ly += i === 0 ? 5 : 4.5; });
   });
 };
 
-const drawCustomerAndPayment = (doc: jsPDF, order: InvoiceOrder): number => {
-  const sectionTop = 58;
-  const boxGap = 6;
-  const boxW = (CONTENT_WIDTH - boxGap) / 2;
+const drawParties = (doc: jsPDF, order: InvoiceOrder): number => {
+  const y = 52;
+  const colW = (CONTENT_WIDTH - 8) / 2;
 
-  drawInfoBox(doc, LEFT, sectionTop, boxW, 'BILL TO', [
+  drawAddressBlock(doc, LEFT, y, colW, 'BILLED TO', [
     order.shipping_name,
     order.shipping_email,
     order.shipping_phone,
   ]);
-
-  drawInfoBox(doc, LEFT + boxW + boxGap, sectionTop, boxW, 'SHIP TO', [
+  drawAddressBlock(doc, LEFT + colW + 8, y, colW, 'SHIPPED TO', [
     order.shipping_address,
     `${toText(order.shipping_city)}, ${toText(order.shipping_state)}`,
-    `PIN: ${toText(order.shipping_pincode)}`,
+    `PIN ${toText(order.shipping_pincode)}`,
   ]);
 
-  const paymentY = sectionTop + 40;
-  doc.setFillColor(...colors.panelSoft);
-  doc.roundedRect(LEFT, paymentY, 72, 13, 3, 3, 'F');
-  doc.setDrawColor(...colors.gold);
-  doc.roundedRect(LEFT, paymentY, 72, 13, 3, 3, 'S');
+  // Payment pill
+  const py = y + 30;
+  doc.setFillColor(...C.cream);
+  doc.roundedRect(LEFT, py, CONTENT_WIDTH, 9, 1.5, 1.5, 'F');
+  doc.setDrawColor(...C.goldSoft);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(LEFT, py, CONTENT_WIDTH, 9, 1.5, 1.5, 'S');
 
   doc.setFont(FONT, 'bold');
   doc.setFontSize(6.5);
-  doc.setTextColor(...colors.dim);
-  doc.text('PAYMENT METHOD', LEFT + 6, paymentY + 8);
+  doc.setTextColor(...C.goldDeep);
+  doc.text('PAYMENT METHOD', LEFT + 4, py + 5.8);
+  doc.setFont(FONT, 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...C.ink);
+  doc.text(toText(order.payment_method, 'N/A').toUpperCase(), LEFT + 42, py + 5.8);
 
-  doc.setFontSize(8);
-  doc.setTextColor(...colors.text);
-  doc.text(toText(order.payment_method, 'N/A').toUpperCase(), LEFT + 38, paymentY + 8);
+  doc.setFont(FONT, 'normal');
+  doc.setFontSize(6.5);
+  doc.setTextColor(...C.muted);
+  doc.text('STATUS', RIGHT - 30, py + 5.8);
+  doc.setFont(FONT, 'bold');
+  doc.setTextColor(...C.goldDeep);
+  doc.setFontSize(8.5);
+  doc.text('PAID', RIGHT - 4, py + 5.8, { align: 'right' });
 
-  return paymentY + 20;
+  return py + 15;
 };
 
-const drawItems = (
-  doc: jsPDF,
-  startY: number,
-  items: InvoiceItem[],
-  carImages: Map<number, string>,
-): number => {
-  const safeItems = items.length ? items : [{ quantity: 1 } as InvoiceItem];
-
-  const rows = safeItems.map((item, idx) => {
-    const name = toText(item.car?.name || item.car_name || 'Vehicle');
-    const brand = toText(item.car?.brand || item.car_brand || '-');
-    const unit = toNumber(item.car?.price ?? item.price);
-    const qty = Math.max(1, Math.floor(toNumber(item.quantity)));
-
-    return [
-      String(idx + 1).padStart(2, '0'),
-      '', // image placeholder column
-      name,
-      brand,
-      String(qty),
-      formatMoney(unit),
-      formatMoney(unit * qty),
-    ];
+const drawItems = (doc: jsPDF, startY: number, items: InvoiceItem[], carImages: Map<number, string>): number => {
+  const safe = items.length ? items : [{ quantity: 1 } as InvoiceItem];
+  const rows = safe.map((it, idx) => {
+    const name = toText(it.car?.name || it.car_name || 'Vehicle');
+    const brand = toText(it.car?.brand || it.car_brand || '-');
+    const unit = toNumber(it.car?.price ?? it.price);
+    const qty = Math.max(1, Math.floor(toNumber(it.quantity)));
+    return [String(idx + 1).padStart(2, '0'), '', name, brand, String(qty), formatMoney(unit), formatMoney(unit * qty)];
   });
 
   autoTable(doc, {
     startY,
-    head: [['NO.', '', 'VEHICLE', 'BRAND', 'QTY', 'UNIT PRICE', 'AMOUNT']],
+    head: [['#', '', 'VEHICLE', 'BRAND', 'QTY', 'UNIT PRICE', 'AMOUNT']],
     body: rows,
     theme: 'plain',
-    margin: { left: LEFT, right: PAGE_WIDTH - RIGHT },
+    margin: { left: LEFT, right: PAGE_WIDTH - RIGHT, bottom: 28 },
     styles: {
-      font: FONT,
-      fontSize: 7.5,
-      textColor: [...colors.text],
-      lineColor: [...colors.border],
-      lineWidth: 0.15,
-      cellPadding: { top: 3.5, right: 3, bottom: 3.5, left: 3 },
-      overflow: 'linebreak',
-      minCellHeight: 13,
+      font: FONT, fontSize: 8.5, textColor: [...C.body],
+      lineColor: [...C.hair], lineWidth: 0.15,
+      cellPadding: { top: 4, right: 3, bottom: 4, left: 3 },
+      minCellHeight: 14, valign: 'middle',
     },
     headStyles: {
-      fillColor: [...colors.panelSoft],
-      textColor: [...colors.gold],
-      fontStyle: 'bold',
-      fontSize: 6,
-      cellPadding: { top: 4, right: 3, bottom: 4, left: 3 },
-      minCellHeight: 8,
+      fillColor: [...C.ink], textColor: [...C.goldSoft],
+      fontStyle: 'bold', fontSize: 6.8,
+      cellPadding: { top: 4, right: 3, bottom: 4, left: 3 }, minCellHeight: 9,
     },
-    alternateRowStyles: {
-      fillColor: [...colors.rowAlt],
-    },
+    alternateRowStyles: { fillColor: [...C.cream] },
     columnStyles: {
-      0: { halign: 'center', cellWidth: 10, textColor: [...colors.goldSoft], fontStyle: 'bold' },
-      1: { cellWidth: 16 }, // image column
-      2: { cellWidth: 42, fontStyle: 'bold' },
-      3: { cellWidth: 24, textColor: [...colors.muted] },
+      0: { halign: 'center', cellWidth: 10, textColor: [...C.goldDeep], fontStyle: 'bold' },
+      1: { cellWidth: 16 },
+      2: { cellWidth: 42, fontStyle: 'bold', textColor: [...C.ink] },
+      3: { cellWidth: 24, textColor: [...C.muted] },
       4: { halign: 'center', cellWidth: 10 },
       5: { halign: 'right', cellWidth: 32 },
-      6: { halign: 'right', cellWidth: 32, textColor: [...colors.goldSoft], fontStyle: 'bold' },
+      6: { halign: 'right', cellWidth: 32, textColor: [...C.ink], fontStyle: 'bold' },
     },
     didDrawCell: (data) => {
-      // Draw car image in column 1 (body rows only)
       if (data.section === 'body' && data.column.index === 1) {
-        const imgData = carImages.get(data.row.index);
-        if (imgData) {
+        const img = carImages.get(data.row.index);
+        if (img) {
           try {
-            const imgSize = 10;
-            const x = data.cell.x + (data.cell.width - imgSize) / 2;
-            const y = data.cell.y + (data.cell.height - imgSize) / 2;
-            doc.setFillColor(...colors.panelSoft);
-            doc.roundedRect(x - 0.5, y - 0.5, imgSize + 1, imgSize + 1, 2, 2, 'F');
-            doc.addImage(imgData, 'JPEG', x, y, imgSize, imgSize);
-          } catch { /* skip */ }
+            const sz = 10;
+            const x = data.cell.x + (data.cell.width - sz) / 2;
+            const y = data.cell.y + (data.cell.height - sz) / 2;
+            doc.setDrawColor(...C.goldSoft);
+            doc.setLineWidth(0.3);
+            doc.roundedRect(x - 0.6, y - 0.6, sz + 1.2, sz + 1.2, 1.2, 1.2, 'S');
+            doc.addImage(img, 'JPEG', x, y, sz, sz);
+          } catch { /* */ }
         }
       }
     },
+    willDrawPage: () => drawPageChrome(doc),
   });
-
   return (doc as any).lastAutoTable?.finalY || startY + 30;
 };
 
-const FOOTER_HEIGHT = 22;
-
 const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number): number => {
-  const pageHeight = doc.internal.pageSize.height;
+  const h = doc.internal.pageSize.height;
   const hasDiscount = toNumber(order.discount) > 0;
-  const cardHeight = hasDiscount ? 42 : 36;
+  const cardH = hasDiscount ? 46 : 38;
+  let y = fromY + 6;
+  if (y + cardH + 50 > h - 14) { doc.addPage(); drawPageChrome(doc); y = 20; }
 
-  let y = fromY + 4;
-  if (y + cardHeight + 65 > pageHeight) {
-    doc.addPage();
-    addBackground(doc);
-    y = 20;
-  }
-
+  // Notes — left
   doc.setFont(FONT, 'normal');
-  doc.setFontSize(6);
-  doc.setTextColor(...colors.dim);
-  doc.text(`* All prices are shown in Indian Rupees (${FONT === 'NotoSans' ? '\u20B9' : 'Rs.'})`, LEFT, y + 3);
-  doc.text('* GST charged at 28% as applicable', LEFT, y + 7);
+  doc.setFontSize(6.5);
+  doc.setTextColor(...C.muted);
+  doc.text('Notes', LEFT, y + 4);
+  doc.setDrawColor(...C.gold);
+  doc.setLineWidth(0.3);
+  doc.line(LEFT, y + 5.5, LEFT + 10, y + 5.5);
+  doc.setFontSize(7);
+  doc.setTextColor(...C.body);
+  doc.text('All prices include applicable GST at 28%.', LEFT, y + 10);
+  doc.text('Vehicle delivered with manufacturer warranty.', LEFT, y + 14);
+  doc.text('E. & O.E.   |   Computer-generated invoice.', LEFT, y + 18);
 
-  const cardX = 120;
+  // Totals card — right
+  const cardX = 118;
   const cardW = RIGHT - cardX;
+  doc.setFillColor(...C.ink);
+  doc.roundedRect(cardX, y, cardW, cardH, 2, 2, 'F');
+  doc.setFillColor(...C.gold);
+  doc.rect(cardX, y, cardW, 1.4, 'F');
 
-  doc.setFillColor(...colors.panel);
-  doc.roundedRect(cardX, y - 1, cardW, cardHeight, 3, 3, 'F');
-  doc.setDrawColor(...colors.gold);
-  doc.setLineWidth(0.4);
-  doc.roundedRect(cardX, y - 1, cardW, cardHeight, 3, 3, 'S');
-
-  doc.setFillColor(...colors.gold);
-  doc.rect(cardX + 6, y - 1, cardW - 12, 1.2, 'F');
-
-  let lineY = y + 6;
-  const row = (label: string, value: string, opts?: { bold?: boolean; accent?: boolean }) => {
-    const bold = opts?.bold || false;
-    const accent = opts?.accent || false;
+  let ly = y + 8;
+  const row = (label: string, value: string, opts?: { bold?: boolean; soft?: boolean }) => {
+    const bold = !!opts?.bold;
     doc.setFont(FONT, bold ? 'bold' : 'normal');
-    doc.setFontSize(bold ? 9 : 7.5);
-    doc.setTextColor(...(bold ? colors.text : accent ? colors.gold : colors.muted));
-    doc.text(label, cardX + 6, lineY);
-    doc.setTextColor(...(bold ? colors.gold : accent ? colors.goldSoft : colors.text));
-    doc.text(value, cardX + cardW - 6, lineY, { align: 'right' });
-    lineY += bold ? 0 : 7.5;
+    doc.setFontSize(bold ? 10 : 8);
+    doc.setTextColor(...(bold ? C.goldSoft : C.dim));
+    doc.text(label, cardX + 6, ly);
+    doc.setTextColor(...(bold ? [255, 255, 255] as RGB : opts?.soft ? C.goldSoft : [240, 236, 226] as RGB));
+    doc.text(value, cardX + cardW - 6, ly, { align: 'right' });
+    ly += 7.5;
   };
 
   row('Subtotal', formatMoney(order.subtotal));
-  row('GST (28%)', formatMoney(order.gst_amount), { accent: true });
+  row('GST (28%)', formatMoney(order.gst_amount), { soft: true });
   if (hasDiscount) row('Discount', `- ${formatMoney(order.discount)}`);
 
-  lineY += 1;
-  doc.setDrawColor(...colors.gold);
+  doc.setDrawColor(...C.goldSoft);
   doc.setLineWidth(0.3);
-  doc.line(cardX + 6, lineY, cardX + cardW - 6, lineY);
-  lineY += 5;
-
+  doc.line(cardX + 6, ly - 3, cardX + cardW - 6, ly - 3);
+  ly += 2;
   row('GRAND TOTAL', formatMoney(order.total), { bold: true });
 
-  return y + cardHeight;
+  return y + cardH;
 };
 
-const drawSignatory = (doc: jsPDF, afterY: number): number => {
-  const pageHeight = doc.internal.pageSize.height;
-  const sectionHeight = 32;
+const drawSignatory = (doc: jsPDF, afterY: number) => {
+  const h = doc.internal.pageSize.height;
+  let y = afterY + 8;
+  if (y + 32 > h - 18) { doc.addPage(); drawPageChrome(doc); y = 22; }
 
-  let y = afterY + 5;
-  if (y + sectionHeight + FOOTER_HEIGHT + 6 > pageHeight) {
-    doc.addPage();
-    addBackground(doc);
-    y = 20;
-  }
-
-  // Signatory box — right side
-  const sigX = 126;
-  const sigW = RIGHT - sigX;
-
-  doc.setFillColor(...colors.panel);
-  doc.roundedRect(sigX, y, sigW, sectionHeight, 3, 3, 'F');
-  doc.setDrawColor(...colors.border);
-  doc.setLineWidth(0.25);
-  doc.roundedRect(sigX, y, sigW, sectionHeight, 3, 3, 'S');
-
-  doc.setFillColor(...colors.gold);
-  doc.rect(sigX + 6, y, sigW - 12, 1, 'F');
-
-  doc.setFont(FONT, 'normal');
-  doc.setFontSize(5.5);
-  doc.setTextColor(...colors.muted);
-  doc.text('For VELOCITY SUPERCARS PVT. LTD.', sigX + sigW / 2, y + 6, { align: 'center' });
-
-  // Signature strokes
-  const lineStartX = sigX + 10;
-  const lineEndX = sigX + sigW - 10;
-  const sigLineY = y + 16;
-  const midX = (lineStartX + lineEndX) / 2;
-
-  doc.setDrawColor(...colors.gold);
-  doc.setLineWidth(0.5);
-  doc.line(lineStartX + 2, sigLineY - 1, midX - 6, sigLineY - 3);
-  doc.line(midX - 6, sigLineY - 3, midX, sigLineY);
-  doc.line(midX, sigLineY, midX + 5, sigLineY - 4);
-  doc.line(midX + 5, sigLineY - 4, lineEndX - 6, sigLineY - 2);
-
-  doc.setDrawColor(...colors.dim);
-  doc.setLineWidth(0.2);
-  doc.line(lineStartX, sigLineY + 2, lineEndX, sigLineY + 2);
-
-  doc.setFont(FONT, 'bold');
-  doc.setFontSize(6.5);
-  doc.setTextColor(...colors.goldSoft);
-  doc.text('Chinmay Pinglee', sigX + sigW / 2, sigLineY + 7, { align: 'center' });
-
-  doc.setFont(FONT, 'normal');
-  doc.setFontSize(5);
-  doc.setTextColor(...colors.dim);
-  doc.text('Authorized Signatory  |  CEO', sigX + sigW / 2, sigLineY + 11, { align: 'center' });
-
-  // Left side — terms + seal
-  doc.setFont(FONT, 'normal');
-  doc.setFontSize(5);
-  doc.setTextColor(...colors.dim);
-  doc.text('This is a computer-generated invoice.', LEFT, y + 5);
-  doc.text('No physical signature is required.', LEFT, y + 9);
-  doc.text('E. & O.E.', LEFT, y + 14);
-
-  // Seal
-  const sealX = LEFT + 26;
-  const sealY = y + 23;
-  doc.setDrawColor(...colors.gold);
-  doc.setLineWidth(0.4);
-  doc.circle(sealX, sealY, 5.5, 'S');
-  doc.setLineWidth(0.25);
-  doc.circle(sealX, sealY, 4.5, 'S');
-
-  doc.setFont(FONT, 'bold');
+  // Left — seal
+  const sx = LEFT + 12, sy = y + 10;
+  doc.setDrawColor(...C.gold); doc.setLineWidth(0.5); doc.circle(sx, sy, 8, 'S');
+  doc.setLineWidth(0.25); doc.circle(sx, sy, 6.5, 'S');
+  doc.setFont(FONT, 'bold'); doc.setFontSize(4.5); doc.setTextColor(...C.goldDeep);
+  doc.text('VELOCITY', sx, sy - 1, { align: 'center' });
   doc.setFontSize(3.5);
-  doc.setTextColor(...colors.gold);
-  doc.text('VELOCITY', sealX, sealY - 0.5, { align: 'center' });
-  doc.setFontSize(2.5);
-  doc.text('SUPERCARS', sealX, sealY + 1.5, { align: 'center' });
-  doc.setFont(FONT, 'normal');
-  doc.setFontSize(2.5);
-  doc.setTextColor(...colors.dim);
-  doc.text('SEALED', sealX, sealY + 3.5, { align: 'center' });
+  doc.text('SUPERCARS', sx, sy + 1.5, { align: 'center' });
+  doc.setFont(FONT, 'normal'); doc.setFontSize(3); doc.setTextColor(...C.muted);
+  doc.text('OFFICIAL SEAL', sx, sy + 4, { align: 'center' });
 
-  return y + sectionHeight;
+  // Right — signatory
+  const lineX1 = RIGHT - 60, lineX2 = RIGHT - 4, lineY = y + 14;
+  doc.setDrawColor(...C.gold); doc.setLineWidth(0.5);
+  doc.line(lineX1 + 2, lineY - 2, lineX1 + 18, lineY - 5);
+  doc.line(lineX1 + 18, lineY - 5, lineX1 + 28, lineY);
+  doc.line(lineX1 + 28, lineY, lineX1 + 36, lineY - 4);
+  doc.line(lineX1 + 36, lineY - 4, lineX2 - 4, lineY - 2);
+  doc.setDrawColor(...C.hair); doc.setLineWidth(0.3);
+  doc.line(lineX1, lineY + 2, lineX2, lineY + 2);
+
+  doc.setFont(FONT, 'bold'); doc.setFontSize(8); doc.setTextColor(...C.ink);
+  doc.text('Chinmay Pinglee', (lineX1 + lineX2) / 2, lineY + 7, { align: 'center' });
+  doc.setFont(FONT, 'normal'); doc.setFontSize(6); doc.setTextColor(...C.muted);
+  doc.text('Authorized Signatory  \u00B7  CEO', (lineX1 + lineX2) / 2, lineY + 11, { align: 'center' });
 };
 
 const drawFooter = (doc: jsPDF) => {
-  const pageHeight = doc.internal.pageSize.height;
-  const footerY = pageHeight - FOOTER_HEIGHT;
-
-  doc.setFillColor(...colors.panel);
-  doc.rect(0, footerY, PAGE_WIDTH, FOOTER_HEIGHT, 'F');
-
-  doc.setFillColor(...colors.gold);
-  doc.rect(0, footerY, PAGE_WIDTH, 1, 'F');
-
-  doc.setFont(FONT, 'bold');
-  doc.setFontSize(7);
-  doc.setTextColor(...colors.gold);
-  doc.text('VELOCITY SUPERCARS PVT. LTD.', PAGE_WIDTH / 2, footerY + 5.5, { align: 'center' });
-
-  doc.setFont(FONT, 'normal');
-  doc.setFontSize(5.5);
-  doc.setTextColor(...colors.dim);
-  doc.text('GSTIN: 27AADCV1234A1ZB  |  CIN: U34100MH2024PTC123456', PAGE_WIDTH / 2, footerY + 10, { align: 'center' });
-  doc.text('Dharampeth, Nagpur, Maharashtra 440010  |  +91 98765 43210  |  info@velocity.in', PAGE_WIDTH / 2, footerY + 14, { align: 'center' });
-
-  doc.setTextColor(...colors.goldSoft);
-  doc.setFontSize(5.5);
-  doc.text('Thank you for choosing Velocity. Drive the extraordinary.', PAGE_WIDTH / 2, footerY + 19, { align: 'center' });
+  const h = doc.internal.pageSize.height;
+  const fy = h - 14;
+  doc.setFont(FONT, 'bold'); doc.setFontSize(7); doc.setTextColor(...C.goldDeep);
+  doc.text('VELOCITY SUPERCARS PVT. LTD.', PAGE_WIDTH / 2, fy, { align: 'center' });
+  doc.setFont(FONT, 'normal'); doc.setFontSize(5.5); doc.setTextColor(...C.muted);
+  doc.text('GSTIN 27AADCV1234A1ZB  \u00B7  Dharampeth, Nagpur 440010  \u00B7  +91 98765 43210  \u00B7  info@velocity.in',
+    PAGE_WIDTH / 2, fy + 4, { align: 'center' });
+  doc.setTextColor(...C.goldDeep);
+  doc.text('Thank you for choosing Velocity \u2014 Drive the extraordinary.', PAGE_WIDTH / 2, fy + 8, { align: 'center' });
 };
 
 export const generateInvoicePDF = async (order: InvoiceOrder, items: InvoiceItem[]) => {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
-  // Register custom font for ₹ symbol support + load images in parallel
   const [fontLoaded, logoData, ...carResults] = await Promise.all([
     registerNotoSans(doc),
     loadImageAsBase64(velocityLogo),
     ...(items || []).map((item, idx) => {
-      const imgSrc = item.car_image || item.car?.image || '';
-      if (!imgSrc) return Promise.resolve({ idx, data: null });
-      return loadImageAsBase64(imgSrc).then((data) => ({ idx, data }));
+      const src = item.car_image || item.car?.image || '';
+      if (!src) return Promise.resolve({ idx, data: null });
+      return loadImageAsBase64(src).then((data) => ({ idx, data }));
     }),
   ]);
 
-  // Set global font variable for all drawing functions
   FONT = fontLoaded ? 'NotoSans' : 'helvetica';
   doc.setFont(FONT, 'normal');
 
   const carImages = new Map<number, string>();
-  carResults.forEach((result) => {
-    if (result && result.data) {
-      carImages.set(result.idx, result.data);
-    }
-  });
+  carResults.forEach((r) => { if (r && r.data) carImages.set(r.idx, r.data); });
 
-  addBackground(doc);
+  drawPageChrome(doc);
   drawHeader(doc, order, logoData);
-  const startY = drawCustomerAndPayment(doc, order);
-  const finalTableY = drawItems(doc, startY, items, carImages);
-  const totalsEndY = drawTotals(doc, order, finalTableY);
-  drawSignatory(doc, totalsEndY);
-  drawFooter(doc);
+  const afterParties = drawParties(doc, order);
+  const afterItems = drawItems(doc, afterParties, items, carImages);
+  const afterTotals = drawTotals(doc, order, afterItems);
+  drawSignatory(doc, afterTotals);
+
+  // Footer on every page
+  const total = doc.getNumberOfPages();
+  for (let i = 1; i <= total; i++) { doc.setPage(i); drawFooter(doc); }
 
   doc.save(`Velocity-Invoice-${toText(order.order_number, 'ORDER')}.pdf`);
 };
