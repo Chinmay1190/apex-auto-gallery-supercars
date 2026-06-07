@@ -100,8 +100,8 @@ const Brands = () => {
               <span className="gold-text">Automotive Excellence</span>
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-              Thirty-eight legendary manufacturers. 1,500 exclusive models. Centuries of combined heritage.
-              Each marque a masterpiece of engineering and design.
+              Forty legendary manufacturers. 1,200 exclusive models. Thirty hand-picked masterpieces per marque.
+              A complete atlas of the world's most desirable machines.
             </p>
 
             {/* Scrolling brand marquee */}
