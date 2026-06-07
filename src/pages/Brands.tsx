@@ -284,6 +284,16 @@ const Brands = () => {
             })}
           </div>
 
+          {/* Results count */}
+          <div className="flex items-center justify-between mb-6 text-xs text-muted-foreground">
+            <span><span className="text-foreground font-semibold">{filteredRest.length}</span> of {brandData.length - 1} marques</span>
+            {(query || country !== 'All') && (
+              <button onClick={() => { setQuery(''); setCountry('All'); }} className="text-primary hover:underline">Clear filters</button>
+            )}
+          </div>
+
+
+
           {filteredRest.length === 0 ? (
             <div className="text-center py-20 text-muted-foreground">
               No brands match your filters.
