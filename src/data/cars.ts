@@ -71,8 +71,6 @@ import detomasoImg from '@/assets/car-detomaso.jpg';
 import rezvaniImg from '@/assets/car-rezvani.jpg';
 import nobleImg from '@/assets/car-noble.jpg';
 import hispanoImg from '@/assets/car-hispano.jpg';
-import nobleImg from '@/assets/car-noble.jpg';
-import hispanoImg from '@/assets/car-hispano.jpg';
 
 
 
@@ -1486,8 +1484,6 @@ import logoZenvo from '@/assets/logo-zenvo.png';
 import logoWmotors from '@/assets/logo-wmotors.png';
 import logoDetomaso from '@/assets/logo-detomaso.png';
 import logoRezvani from '@/assets/logo-rezvani.png';
-import logoNoble from '@/assets/logo-noble.png';
-import logoHispano from '@/assets/logo-hispano.png';
 import logoNoble from '@/assets/logo-noble.png';
 import logoHispano from '@/assets/logo-hispano.png';
 
