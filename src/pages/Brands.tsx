@@ -44,6 +44,8 @@ const brandData = [
   { name: 'W Motors', country: 'United Arab Emirates', founded: '2012', tagline: 'Driven by passion', description: 'Arabian hypercars with jewel-encrusted headlights and 7-figure tags.', color: '#FFD700', gradient: 'from-yellow-500/20 via-yellow-500/5 to-transparent' },
   { name: 'De Tomaso', country: 'Italy', founded: '1959', tagline: 'A vision reborn', description: 'Italian-American mid-engined GTs — Pantera heritage, modern flair.', color: '#B8860B', gradient: 'from-amber-700/20 via-amber-700/5 to-transparent' },
   { name: 'Rezvani', country: 'United States', founded: '2014', tagline: 'Beyond the impossible', description: 'California specialists in extreme road cars and armoured SUVs.', color: '#000000', gradient: 'from-zinc-900/20 via-zinc-900/5 to-transparent' },
+  { name: 'Noble', country: 'United Kingdom', founded: '1999', tagline: 'Pure analogue thrill', description: 'British boutique supercar maker famed for the hand-built M600 and unfiltered driver feedback.', color: '#006633', gradient: 'from-emerald-700/20 via-emerald-700/5 to-transparent' },
+  { name: 'Hispano-Suiza', country: 'Spain', founded: '1904', tagline: 'A century of elegance', description: 'Spanish luxury revived as a hand-built electric hypercar — art deco curves, modern silicon.', color: '#FFD700', gradient: 'from-amber-500/20 via-amber-500/5 to-transparent' },
 ];
 
 
@@ -52,16 +54,27 @@ const Brands = () => {
   const [hoveredBrand, setHoveredBrand] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [country, setCountry] = useState<string>('All');
+  const [sortBy, setSortBy] = useState<'default' | 'name' | 'founded' | 'models'>('default');
 
-  const countries = useMemo(() => ['All', ...Array.from(new Set(brandData.map(b => b.country)))], []);
+  const countries = useMemo(() => ['All', ...Array.from(new Set(brandData.map(b => b.country))).sort()], []);
+
+  const modelCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    cars.forEach(c => { map[c.brand] = (map[c.brand] || 0) + 1; });
+    return map;
+  }, []);
 
   const filteredRest = useMemo(() => {
-    return brandData.slice(1).filter(b => {
+    let list = brandData.slice(1).filter(b => {
       const matchesQ = !query || b.name.toLowerCase().includes(query.toLowerCase()) || b.country.toLowerCase().includes(query.toLowerCase());
       const matchesC = country === 'All' || b.country === country;
       return matchesQ && matchesC;
     });
-  }, [query, country]);
+    if (sortBy === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+    else if (sortBy === 'founded') list = [...list].sort((a, b) => parseInt(a.founded) - parseInt(b.founded));
+    else if (sortBy === 'models') list = [...list].sort((a, b) => (modelCounts[b.name] || 0) - (modelCounts[a.name] || 0));
+    return list;
+  }, [query, country, sortBy, modelCounts]);
 
 
 
@@ -98,8 +111,8 @@ const Brands = () => {
               <span className="gold-text">Automotive Excellence</span>
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-              Thirty-eight legendary manufacturers. 1,500 exclusive models. Centuries of combined heritage.
-              Each marque a masterpiece of engineering and design.
+              Forty legendary manufacturers. 1,200 exclusive models. Thirty hand-picked masterpieces per marque.
+              A complete atlas of the world's most desirable machines.
             </p>
 
             {/* Scrolling brand marquee */}
@@ -226,20 +239,32 @@ const Brands = () => {
               </div>
             </div>
 
-            {/* Search */}
-            <div className="relative w-full md:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search brand or country..."
-                className="w-full pl-10 pr-4 py-2.5 bg-card/40 backdrop-blur-sm border border-border/40 rounded-xl text-sm focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all"
-              />
+            {/* Search + Sort */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              <div className="relative flex-1 sm:w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search brand or country..."
+                  className="w-full pl-10 pr-4 py-2.5 bg-card/40 backdrop-blur-sm border border-border/40 rounded-xl text-sm focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all"
+                />
+              </div>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="px-4 py-2.5 bg-card/40 backdrop-blur-sm border border-border/40 rounded-xl text-sm focus:outline-none focus:border-primary/50 transition-all"
+              >
+                <option value="default">Sort: Curated</option>
+                <option value="name">Sort: A → Z</option>
+                <option value="founded">Sort: Oldest first</option>
+                <option value="models">Sort: Most models</option>
+              </select>
             </div>
           </div>
 
           {/* Country filter pills */}
-          <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2 scrollbar-thin">
+          <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-2 scrollbar-thin">
             <Globe2 className="w-4 h-4 text-primary shrink-0" />
             {countries.map((c) => {
               const active = c === country;
@@ -258,6 +283,16 @@ const Brands = () => {
               );
             })}
           </div>
+
+          {/* Results count */}
+          <div className="flex items-center justify-between mb-6 text-xs text-muted-foreground">
+            <span><span className="text-foreground font-semibold">{filteredRest.length}</span> of {brandData.length - 1} marques</span>
+            {(query || country !== 'All') && (
+              <button onClick={() => { setQuery(''); setCountry('All'); }} className="text-primary hover:underline">Clear filters</button>
+            )}
+          </div>
+
+
 
           {filteredRest.length === 0 ? (
             <div className="text-center py-20 text-muted-foreground">
@@ -372,10 +407,9 @@ const Brands = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-primary/3 via-transparent to-primary/3" />
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
           {[
-            { value: '38', label: 'Premium Brands', icon: '🏎️' },
-            { value: '1500', label: 'Exclusive Models', icon: '⚡' },
-            { value: '15', label: 'Countries', icon: '🌍' },
-
+            { value: '40', label: 'Premium Brands', icon: '🏎️' },
+            { value: '1,200', label: 'Exclusive Models', icon: '⚡' },
+            { value: '30', label: 'Models per Marque', icon: '🏁' },
             { value: '120+', label: 'Years of Legacy', icon: '👑' },
           ].map((stat, i) => (
             <motion.div
