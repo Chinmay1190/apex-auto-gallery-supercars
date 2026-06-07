@@ -44,6 +44,8 @@ const brandData = [
   { name: 'W Motors', country: 'United Arab Emirates', founded: '2012', tagline: 'Driven by passion', description: 'Arabian hypercars with jewel-encrusted headlights and 7-figure tags.', color: '#FFD700', gradient: 'from-yellow-500/20 via-yellow-500/5 to-transparent' },
   { name: 'De Tomaso', country: 'Italy', founded: '1959', tagline: 'A vision reborn', description: 'Italian-American mid-engined GTs — Pantera heritage, modern flair.', color: '#B8860B', gradient: 'from-amber-700/20 via-amber-700/5 to-transparent' },
   { name: 'Rezvani', country: 'United States', founded: '2014', tagline: 'Beyond the impossible', description: 'California specialists in extreme road cars and armoured SUVs.', color: '#000000', gradient: 'from-zinc-900/20 via-zinc-900/5 to-transparent' },
+  { name: 'Noble', country: 'United Kingdom', founded: '1999', tagline: 'Pure analogue thrill', description: 'British boutique supercar maker famed for the hand-built M600 and unfiltered driver feedback.', color: '#006633', gradient: 'from-emerald-700/20 via-emerald-700/5 to-transparent' },
+  { name: 'Hispano-Suiza', country: 'Spain', founded: '1904', tagline: 'A century of elegance', description: 'Spanish luxury revived as a hand-built electric hypercar — art deco curves, modern silicon.', color: '#FFD700', gradient: 'from-amber-500/20 via-amber-500/5 to-transparent' },
 ];
 
 
