@@ -54,16 +54,27 @@ const Brands = () => {
   const [hoveredBrand, setHoveredBrand] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [country, setCountry] = useState<string>('All');
+  const [sortBy, setSortBy] = useState<'default' | 'name' | 'founded' | 'models'>('default');
 
-  const countries = useMemo(() => ['All', ...Array.from(new Set(brandData.map(b => b.country)))], []);
+  const countries = useMemo(() => ['All', ...Array.from(new Set(brandData.map(b => b.country))).sort()], []);
+
+  const modelCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    cars.forEach(c => { map[c.brand] = (map[c.brand] || 0) + 1; });
+    return map;
+  }, []);
 
   const filteredRest = useMemo(() => {
-    return brandData.slice(1).filter(b => {
+    let list = brandData.slice(1).filter(b => {
       const matchesQ = !query || b.name.toLowerCase().includes(query.toLowerCase()) || b.country.toLowerCase().includes(query.toLowerCase());
       const matchesC = country === 'All' || b.country === country;
       return matchesQ && matchesC;
     });
-  }, [query, country]);
+    if (sortBy === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+    else if (sortBy === 'founded') list = [...list].sort((a, b) => parseInt(a.founded) - parseInt(b.founded));
+    else if (sortBy === 'models') list = [...list].sort((a, b) => (modelCounts[b.name] || 0) - (modelCounts[a.name] || 0));
+    return list;
+  }, [query, country, sortBy, modelCounts]);
 
 
 
