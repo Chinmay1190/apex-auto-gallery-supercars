@@ -16,7 +16,7 @@ const Shop = () => {
   const [selectedFuel, setSelectedFuel] = useState('');
   const [selectedTransmission, setSelectedTransmission] = useState('');
   const [selectedDrivetrain, setSelectedDrivetrain] = useState('');
-  const [priceRange, setPriceRange] = useState<[number, number]>([5000000, 700000000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([4000000, 700000000]);
   const [sortBy, setSortBy] = useState('popular');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'large'>('grid');
