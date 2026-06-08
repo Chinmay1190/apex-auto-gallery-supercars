@@ -16,7 +16,7 @@ const Shop = () => {
   const [selectedFuel, setSelectedFuel] = useState('');
   const [selectedTransmission, setSelectedTransmission] = useState('');
   const [selectedDrivetrain, setSelectedDrivetrain] = useState('');
-  const [priceRange, setPriceRange] = useState<[number, number]>([5000000, 700000000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([4000000, 700000000]);
   const [sortBy, setSortBy] = useState('popular');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'large'>('grid');
@@ -63,7 +63,7 @@ const Shop = () => {
     setSelectedFuel('');
     setSelectedTransmission('');
     setSelectedDrivetrain('');
-    setPriceRange([5000000, 700000000]);
+    setPriceRange([4000000, 700000000]);
     setSearchQuery('');
   };
 
@@ -268,7 +268,7 @@ const Shop = () => {
                 <div className="space-y-3">
                   <input
                     type="range"
-                    min={5000000}
+                    min={4000000}
                     max={700000000}
                     step={10000000}
                     value={priceRange[1]}
@@ -326,7 +326,7 @@ const Shop = () => {
                       : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
                   }`}
                 >
-                  {pagedCars.map((car, i) => <CarCard key={car.id} car={car} index={i} />)}
+                  {pagedCars.map((car, i) => <CarCard key={car.id} car={car} index={i} animate={perPage < 600} />)}
                 </motion.div>
 
                 {totalPages > 1 && (
