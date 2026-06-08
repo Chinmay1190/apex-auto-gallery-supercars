@@ -9,9 +9,10 @@ import { useState } from 'react';
 interface CarCardProps {
   car: Car;
   index?: number;
+  animate?: boolean;
 }
 
-const CarCard = ({ car, index = 0 }: CarCardProps) => {
+const CarCard = ({ car, index = 0, animate = true }: CarCardProps) => {
   const { addToCart } = useCart();
   const { isInWishlist, toggleWishlist } = useWishlist();
   const wishlisted = isInWishlist(car.id);
@@ -36,14 +37,8 @@ const CarCard = ({ car, index = 0 }: CarCardProps) => {
     }
   };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.1, duration: 0.5 }}
-      className="group glass-panel overflow-hidden hover-lift relative"
-    >
+  const cardContent = (
+    <>
       {/* Inline Notifications */}
       <AnimatePresence>
         {showCartNotif && (
@@ -76,6 +71,7 @@ const CarCard = ({ car, index = 0 }: CarCardProps) => {
           alt={`${car.brand} ${car.name}`}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           loading="lazy"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
         
@@ -104,7 +100,7 @@ const CarCard = ({ car, index = 0 }: CarCardProps) => {
         {/* Brand logo badge */}
         {brandLogos[car.brand] && (
           <div className="absolute bottom-3 left-3 w-10 h-10 rounded-xl bg-background/85 backdrop-blur-md border border-border/50 p-1.5 flex items-center justify-center shadow-lg">
-            <img src={brandLogos[car.brand]} alt={car.brand} className="w-full h-full object-contain" loading="lazy" />
+            <img src={brandLogos[car.brand]} alt={car.brand} className="w-full h-full object-contain" loading="lazy" decoding="async" />
           </div>
         )}
       </div>
@@ -131,6 +127,26 @@ const CarCard = ({ car, index = 0 }: CarCardProps) => {
           </Link>
         </div>
       </div>
+    </>
+  );
+
+  if (!animate) {
+    return (
+      <div className="group glass-panel overflow-hidden hover-lift relative">
+        {cardContent}
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: Math.min(index * 0.05, 0.6), duration: 0.5 }}
+      className="group glass-panel overflow-hidden hover-lift relative"
+    >
+      {cardContent}
     </motion.div>
   );
 };
