@@ -63,7 +63,7 @@ const Shop = () => {
     setSelectedFuel('');
     setSelectedTransmission('');
     setSelectedDrivetrain('');
-    setPriceRange([5000000, 700000000]);
+    setPriceRange([4000000, 700000000]);
     setSearchQuery('');
   };
 
@@ -268,7 +268,7 @@ const Shop = () => {
                 <div className="space-y-3">
                   <input
                     type="range"
-                    min={5000000}
+                    min={4000000}
                     max={700000000}
                     step={10000000}
                     value={priceRange[1]}
