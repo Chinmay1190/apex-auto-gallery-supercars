@@ -326,7 +326,7 @@ const Shop = () => {
                       : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
                   }`}
                 >
-                  {pagedCars.map((car, i) => <CarCard key={car.id} car={car} index={i} />)}
+                  {pagedCars.map((car, i) => <CarCard key={car.id} car={car} index={i} animate={perPage < 600} />)}
                 </motion.div>
 
                 {totalPages > 1 && (
