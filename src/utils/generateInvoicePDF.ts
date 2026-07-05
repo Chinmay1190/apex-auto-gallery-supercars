@@ -402,7 +402,7 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number): number => {
 const drawSignatory = (doc: jsPDF, afterY: number) => {
   const h = doc.internal.pageSize.height;
   let y = afterY + 8;
-  if (y + 32 > h - 18) { doc.addPage(); drawPageChrome(doc); y = 22; }
+  if (y + 32 > h - 18) { doc.addPage(); (doc as any).__chromePage?.(doc.getCurrentPageInfo().pageNumber); y = 22; }
 
   // Left — seal
   const sx = LEFT + 12, sy = y + 10;
