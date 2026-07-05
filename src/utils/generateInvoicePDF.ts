@@ -337,7 +337,7 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number): number => {
   const hasDiscount = toNumber(order.discount) > 0;
   const cardH = hasDiscount ? 46 : 38;
   let y = fromY + 6;
-  if (y + cardH + 50 > h - 14) { doc.addPage(); drawPageChrome(doc); y = 20; }
+  if (y + cardH + 50 > h - 14) { doc.addPage(); (doc as any).__chromePage?.(doc.getCurrentPageInfo().pageNumber); y = 20; }
 
   // Notes — left
   doc.setFont(FONT, 'normal');
