@@ -193,6 +193,28 @@ export const generateReportPDF = async (data: ReportData) => {
     { label: 'Delivered', value: String(delivered) },
   ]);
 
+  // Highlights strip — top category / top model
+  const topCat = [...data.categoryBreakdown].sort((a, b) => b.revenue - a.revenue)[0];
+  const topCar = (data.carsPurchased || []).slice().sort((a, b) => b.revenue - a.revenue)[0];
+  if (topCat || topCar) {
+    const hy = y;
+    doc.setFillColor(...C.cream);
+    doc.roundedRect(LEFT, hy, RIGHT - LEFT, 14, 2, 2, 'F');
+    doc.setDrawColor(...C.goldSoft); doc.setLineWidth(0.2);
+    doc.roundedRect(LEFT, hy, RIGHT - LEFT, 14, 2, 2, 'S');
+    doc.setFillColor(...C.gold);
+    doc.rect(LEFT, hy, 2, 14, 'F');
+    doc.setFont(FONT, 'bold'); doc.setFontSize(6.2); doc.setTextColor(...C.goldDeep);
+    doc.text('PERIOD HIGHLIGHTS', LEFT + 6, hy + 5);
+    doc.setFont(FONT, 'normal'); doc.setFontSize(8); doc.setTextColor(...C.body);
+    const parts: string[] = [];
+    if (topCat) parts.push(`Top category: ${topCat.category} (${formatMoney(topCat.revenue)})`);
+    if (topCar) parts.push(`Best seller: ${topCar.brand} ${topCar.name} \u00D7 ${topCar.units}`);
+    doc.setTextColor(...C.ink); doc.setFont(FONT, 'bold');
+    doc.text(parts.join('   \u00B7   '), LEFT + 6, hy + 10.5);
+    y = hy + 18;
+  }
+
   // Category-wise Sales
   y = drawSectionTitle(doc, y + 2, 'Category-wise Sales');
   if (data.categoryBreakdown.length === 0) {
