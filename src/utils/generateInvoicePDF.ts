@@ -327,7 +327,7 @@ const drawItems = (doc: jsPDF, startY: number, items: InvoiceItem[], carImages: 
         }
       }
     },
-    willDrawPage: () => drawPageChrome(doc),
+    willDrawPage: (d) => (doc as any).__chromePage?.(d.pageNumber),
   });
   return (doc as any).lastAutoTable?.finalY || startY + 30;
 };
