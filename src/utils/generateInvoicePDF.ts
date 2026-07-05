@@ -71,6 +71,33 @@ const formatDate = (v: unknown): string => {
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 };
 
+// Indian-numbering amount-in-words (rupees + paise)
+const numToWordsIN = (num: number): string => {
+  const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+    'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+  const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+  const two = (n: number): string => n < 20 ? a[n] : `${b[Math.floor(n / 10)]}${n % 10 ? ' ' + a[n % 10] : ''}`;
+  const three = (n: number): string => {
+    const h = Math.floor(n / 100), r = n % 100;
+    return `${h ? a[h] + ' Hundred' + (r ? ' ' : '') : ''}${r ? two(r) : ''}`;
+  };
+  if (!Number.isFinite(num) || num <= 0) return 'Zero';
+  const n = Math.floor(num);
+  const p = Math.round((num - n) * 100);
+  const crore = Math.floor(n / 10000000);
+  const lakh = Math.floor((n % 10000000) / 100000);
+  const thou = Math.floor((n % 100000) / 1000);
+  const rest = n % 1000;
+  let out = '';
+  if (crore) out += two(crore) + ' Crore ';
+  if (lakh) out += two(lakh) + ' Lakh ';
+  if (thou) out += two(thou) + ' Thousand ';
+  if (rest) out += three(rest);
+  out = out.trim() + ' Rupees';
+  if (p > 0) out += ' and ' + two(p) + ' Paise';
+  return out + ' Only';
+};
+
 const loadImageAsBase64 = (src: string): Promise<string | null> =>
   new Promise((resolve) => {
     const img = new Image();
