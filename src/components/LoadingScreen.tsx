@@ -291,7 +291,7 @@ const LoadingScreen = () => {
           </div>
 
           {/* Progress bar with shimmer */}
-          <div className="w-72 relative">
+          <div className="w-80 relative">
             <div className="h-[3px] bg-border/40 rounded-full overflow-hidden relative">
               <motion.div
                 className="h-full gold-gradient relative"
@@ -308,6 +308,25 @@ const LoadingScreen = () => {
             <div className="flex justify-between mt-3">
               <p className="text-muted-foreground/60 text-[10px] tracking-[0.3em] uppercase">Initializing Drive Systems</p>
               <p className="text-primary/90 text-[10px] tracking-[0.2em] tabular-nums font-bold">{Math.round(clamped)}%</p>
+            </div>
+
+            {/* Systems checklist */}
+            <div className="mt-5 grid grid-cols-4 gap-2">
+              {SYSTEMS.map((s) => {
+                const done = clamped >= s.at;
+                return (
+                  <div key={s.label} className="flex flex-col items-center gap-1.5">
+                    <motion.span
+                      className={`h-1.5 w-1.5 rounded-full ${done ? 'bg-primary' : 'bg-border/70'}`}
+                      animate={done ? { scale: [1, 1.6, 1], boxShadow: ['0 0 0 hsl(var(--gold)/0)', '0 0 10px hsl(var(--gold)/0.8)', '0 0 0 hsl(var(--gold)/0)'] } : {}}
+                      transition={{ duration: 1.2, repeat: done ? Infinity : 0 }}
+                    />
+                    <span className={`text-[8.5px] tracking-[0.28em] uppercase ${done ? 'text-primary/90' : 'text-muted-foreground/50'}`}>
+                      {s.label}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
