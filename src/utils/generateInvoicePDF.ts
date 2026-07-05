@@ -383,7 +383,20 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number): number => {
   ly += 2;
   row('GRAND TOTAL', formatMoney(order.total), { bold: true });
 
-  return y + cardH;
+  // Amount in words strip — spans full width below
+  const wordsY = y + cardH + 4;
+  doc.setFillColor(...C.cream);
+  doc.roundedRect(LEFT, wordsY, CONTENT_WIDTH, 10, 1.5, 1.5, 'F');
+  doc.setDrawColor(...C.goldSoft); doc.setLineWidth(0.2);
+  doc.roundedRect(LEFT, wordsY, CONTENT_WIDTH, 10, 1.5, 1.5, 'S');
+  doc.setFont(FONT, 'bold'); doc.setFontSize(6.2); doc.setTextColor(...C.goldDeep);
+  doc.text('AMOUNT IN WORDS', LEFT + 4, wordsY + 4);
+  doc.setFont(FONT, 'bold'); doc.setFontSize(8); doc.setTextColor(...C.ink);
+  const words = numToWordsIN(toNumber(order.total));
+  const wrapped = doc.splitTextToSize(words, CONTENT_WIDTH - 8);
+  doc.text(wrapped[0] || '', LEFT + 4, wordsY + 8);
+
+  return wordsY + 10;
 };
 
 const drawSignatory = (doc: jsPDF, afterY: number) => {
