@@ -3,11 +3,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const TAGLINES = [
   'Igniting twelve cylinders',
-  'Calibrating telemetry',
-  'Polishing carbon fiber',
-  'Unleashing horsepower',
+  'Calibrating launch control',
+  'Polishing carbon fibre',
   'Warming carbon-ceramics',
-  'Synchronizing gearbox',
+  'Syncing dual-clutch gearbox',
+  'Pressurising fuel rails',
+  'Aligning aero surfaces',
+];
+
+const SYSTEMS = [
+  { label: 'Powertrain', at: 18 },
+  { label: 'Aero', at: 42 },
+  { label: 'Telemetry', at: 68 },
+  { label: 'Cabin', at: 92 },
 ];
 
 const LoadingScreen = () => {
