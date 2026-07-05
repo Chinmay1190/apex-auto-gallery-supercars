@@ -327,7 +327,7 @@ const drawItems = (doc: jsPDF, startY: number, items: InvoiceItem[], carImages: 
         }
       }
     },
-    willDrawPage: () => drawPageChrome(doc),
+    willDrawPage: (d) => (doc as any).__chromePage?.(d.pageNumber),
   });
   return (doc as any).lastAutoTable?.finalY || startY + 30;
 };
@@ -337,7 +337,7 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number): number => {
   const hasDiscount = toNumber(order.discount) > 0;
   const cardH = hasDiscount ? 46 : 38;
   let y = fromY + 6;
-  if (y + cardH + 50 > h - 14) { doc.addPage(); drawPageChrome(doc); y = 20; }
+  if (y + cardH + 50 > h - 14) { doc.addPage(); (doc as any).__chromePage?.(doc.getCurrentPageInfo().pageNumber); y = 20; }
 
   // Notes — left
   doc.setFont(FONT, 'normal');
@@ -402,7 +402,7 @@ const drawTotals = (doc: jsPDF, order: InvoiceOrder, fromY: number): number => {
 const drawSignatory = (doc: jsPDF, afterY: number) => {
   const h = doc.internal.pageSize.height;
   let y = afterY + 8;
-  if (y + 32 > h - 18) { doc.addPage(); drawPageChrome(doc); y = 22; }
+  if (y + 32 > h - 18) { doc.addPage(); (doc as any).__chromePage?.(doc.getCurrentPageInfo().pageNumber); y = 22; }
 
   // Left — seal
   const sx = LEFT + 12, sy = y + 10;
@@ -462,7 +462,21 @@ export const generateInvoicePDF = async (order: InvoiceOrder, items: InvoiceItem
   const carImages = new Map<number, string>();
   carResults.forEach((r) => { if (r && r.data) carImages.set(r.idx, r.data); });
 
-  drawPageChrome(doc);
+  // Track pages that have already been chromed so autoTable's willDrawPage
+  // doesn't repaint the paper background over our header / body content.
+  const chromed = new Set<number>();
+  const chromePage = (n: number) => {
+    if (chromed.has(n)) return;
+    chromed.add(n);
+    const cur = doc.getCurrentPageInfo().pageNumber;
+    doc.setPage(n);
+    drawPageChrome(doc);
+    doc.setPage(cur);
+  };
+  // expose to helpers via closure
+  (doc as any).__chromePage = chromePage;
+
+  chromePage(1);
   drawHeader(doc, order, logoData);
   const afterParties = drawParties(doc, order);
   const afterItems = drawItems(doc, afterParties, items, carImages);
