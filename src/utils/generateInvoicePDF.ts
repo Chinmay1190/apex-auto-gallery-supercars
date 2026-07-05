@@ -462,7 +462,21 @@ export const generateInvoicePDF = async (order: InvoiceOrder, items: InvoiceItem
   const carImages = new Map<number, string>();
   carResults.forEach((r) => { if (r && r.data) carImages.set(r.idx, r.data); });
 
-  drawPageChrome(doc);
+  // Track pages that have already been chromed so autoTable's willDrawPage
+  // doesn't repaint the paper background over our header / body content.
+  const chromed = new Set<number>();
+  const chromePage = (n: number) => {
+    if (chromed.has(n)) return;
+    chromed.add(n);
+    const cur = doc.getCurrentPageInfo().pageNumber;
+    doc.setPage(n);
+    drawPageChrome(doc);
+    doc.setPage(cur);
+  };
+  // expose to helpers via closure
+  (doc as any).__chromePage = chromePage;
+
+  chromePage(1);
   drawHeader(doc, order, logoData);
   const afterParties = drawParties(doc, order);
   const afterItems = drawItems(doc, afterParties, items, carImages);
